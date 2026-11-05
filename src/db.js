@@ -1,0 +1,40 @@
+const { DatabaseSync } = require('node:sqlite');
+
+const db = new DatabaseSync(process.env.DB_PATH || 'data.db');
+
+db.exec(`
+  PRAGMA journal_mode = WAL;
+  CREATE TABLE IF NOT EXISTS links (discord_id TEXT PRIMARY KEY, steam_id TEXT, riot_id TEXT);
+  CREATE TABLE IF NOT EXISTS opt_out (discord_id TEXT PRIMARY KEY);
+  CREATE TABLE IF NOT EXISTS guilds (guild_id TEXT PRIMARY KEY, lfg_channel TEXT, panel_message TEXT, wrapped_channel TEXT, timezone TEXT NOT NULL DEFAULT 'Europe/Istanbul', last_wrapped TEXT);
+  CREATE TABLE IF NOT EXISTS games (guild_id TEXT, name TEXT, role_id TEXT, PRIMARY KEY (guild_id, name));
+  CREATE TABLE IF NOT EXISTS lfg (id INTEGER PRIMARY KEY AUTOINCREMENT, guild_id TEXT, channel_id TEXT, message_id TEXT, host_id TEXT, game TEXT, created_at INTEGER, start_at INTEGER, slots INTEGER, note TEXT, status TEXT NOT NULL DEFAULT 'open', reminded INTEGER NOT NULL DEFAULT 0, started INTEGER NOT NULL DEFAULT 0);
+  CREATE TABLE IF NOT EXISTS lfg_members (lfg_id INTEGER, user_id TEXT, state TEXT, joined_at INTEGER, PRIMARY KEY (lfg_id, user_id));
+  CREATE TABLE IF NOT EXISTS voice_minutes (guild_id TEXT, user_id TEXT, day TEXT, game TEXT NOT NULL DEFAULT '', minutes INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (guild_id, user_id, day, game));
+  CREATE TABLE IF NOT EXISTS pair_minutes (guild_id TEXT, user_a TEXT, user_b TEXT, day TEXT, minutes INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (guild_id, user_a, user_b, day));
+  CREATE TABLE IF NOT EXISTS channel_minutes (guild_id TEXT, day TEXT, minutes INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (guild_id, day));
+  CREATE TABLE IF NOT EXISTS sessions (guild_id TEXT, user_id TEXT, start_at INTEGER, end_at INTEGER);
+`);
+
+function guildSettings(guildId) {
+  db.prepare('INSERT OR IGNORE INTO guilds (guild_id) VALUES (?)').run(guildId);
+  return db.prepare('SELECT * FROM guilds WHERE guild_id = ?').get(guildId);
+}
+
+function setGuild(guildId, field, value) {
+  guildSettings(guildId);
+  db.prepare(`UPDATE guilds SET ${field} = ? WHERE guild_id = ?`).run(value, guildId);
+}
+
+function getLinks(discordId) {
+  return db.prepare('SELECT * FROM links WHERE discord_id = ?').get(discordId);
+}
+
+function saveLinks(discordId, steamId, riotId) {
+  db.prepare(`
+    INSERT INTO links (discord_id, steam_id, riot_id) VALUES (?, ?, ?)
+    ON CONFLICT(discord_id) DO UPDATE SET steam_id = COALESCE(excluded.steam_id, steam_id), riot_id = COALESCE(excluded.riot_id, riot_id)
+  `).run(discordId, steamId ?? null, riotId ?? null);
+}
+
+module.exports = { db, guildSettings, setGuild, getLinks, saveLinks };

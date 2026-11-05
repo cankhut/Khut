@@ -1,0 +1,17 @@
+{
+  "name": "khut",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Discord bot for LFG pings, voice time tracking and game stats",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "deploy": "node src/deploy.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "discord.js": "^14.19.0"
+  }
+}
