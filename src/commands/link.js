@@ -2,6 +2,7 @@ const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Messa
 const { saveLinks } = require('../db');
 const { resolveSteamId, riotAccount } = require('../api');
 const { oauthUrl } = require('../web');
+const { text } = require('../settings');
 
 const data = new SlashCommandBuilder()
   .setName('link')
@@ -16,11 +17,11 @@ async function execute(interaction) {
 
   if (!steamInput && !riotInput) {
     if (!process.env.PUBLIC_URL) {
-      return interaction.reply({ content: 'Use `/link steam:<profile link or friend code> riot:<Name#Tag>`', ...ephemeral });
+      return interaction.reply({ content: text('link.usage'), ...ephemeral });
     }
-    const button = new ButtonBuilder().setLabel('Connect with Discord').setStyle(ButtonStyle.Link).setURL(oauthUrl());
+    const button = new ButtonBuilder().setLabel(text('link.connectButton')).setStyle(ButtonStyle.Link).setURL(oauthUrl());
     return interaction.reply({
-      content: 'This reads the Steam and Riot accounts already connected to your Discord profile. Or use `/link steam:... riot:...` to add them yourself.',
+      content: text('link.connect'),
       components: [new ActionRowBuilder().addComponents(button)],
       ...ephemeral
     });
@@ -32,20 +33,20 @@ async function execute(interaction) {
   let steamId = null;
   if (steamInput) {
     steamId = await resolveSteamId(steamInput).catch(() => null);
-    if (!steamId) return interaction.editReply("Couldn't find that Steam account.");
+    if (!steamId) return interaction.editReply(text('link.badSteam'));
     done.push(`Steam: https://steamcommunity.com/profiles/${steamId}`);
   }
 
   let riotId = null;
   if (riotInput) {
     const account = await riotAccount(riotInput).catch(() => null);
-    if (!account) return interaction.editReply("Couldn't find that Riot ID.");
+    if (!account) return interaction.editReply(text('link.badRiot'));
     riotId = `${account.gameName}#${account.tagLine}`;
     done.push(`Riot: ${riotId}`);
   }
 
   saveLinks(interaction.user.id, steamId, riotId);
-  await interaction.editReply(`Linked!\n${done.join('\n')}`);
+  await interaction.editReply(`${text('link.done')}\n${done.join('\n')}`);
 }
 
 module.exports = { data, execute };

@@ -28,7 +28,8 @@ for (const sql of [
   'ALTER TABLE guilds ADD COLUMN wrapped_auto INTEGER NOT NULL DEFAULT 1',
   'ALTER TABLE guilds ADD COLUMN last_wrapped TEXT',
   'ALTER TABLE guilds ADD COLUMN panel_channel TEXT',
-  'ALTER TABLE guilds ADD COLUMN panel_message TEXT'
+  'ALTER TABLE guilds ADD COLUMN panel_message TEXT',
+  'ALTER TABLE guilds ADD COLUMN use_roles INTEGER NOT NULL DEFAULT 0'
 ]) {
   try {
     db.exec(sql);

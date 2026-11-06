@@ -1,5 +1,7 @@
 const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const { db, getLinks } = require('../db');
+const { text } = require('../settings');
+const roles = require('../roles');
 
 const data = new SlashCommandBuilder()
   .setName('mydata')
@@ -34,17 +36,17 @@ async function execute(interaction) {
 
   if (action === 'unlink') {
     db.prepare('DELETE FROM links WHERE discord_id = ?').run(id);
-    return reply('Your Steam and Riot links are removed.');
+    return reply(text('mydata.unlink'));
   }
 
   if (action === 'pause') {
     db.prepare('INSERT OR IGNORE INTO opt_out VALUES (?)').run(id);
-    return reply('Voice tracking paused. Your old data stays until you delete it.');
+    return reply(text('mydata.pause'));
   }
 
   if (action === 'resume') {
     db.prepare('DELETE FROM opt_out WHERE discord_id = ?').run(id);
-    return reply('Voice tracking is on again.');
+    return reply(text('mydata.resume'));
   }
 
   if (action === 'delete') {
@@ -53,10 +55,12 @@ async function execute(interaction) {
     db.prepare('DELETE FROM pair_minutes WHERE user_a = ? OR user_b = ?').run(id, id);
     db.prepare('DELETE FROM sessions WHERE user_id = ?').run(id);
     db.prepare('DELETE FROM lfg_members WHERE user_id = ?').run(id);
+    const subs = db.prepare('SELECT guild_id, game FROM subscriptions WHERE user_id = ?').all(id);
     db.prepare('DELETE FROM subscriptions WHERE user_id = ?').run(id);
     db.prepare('DELETE FROM dm_on WHERE discord_id = ?').run(id);
     db.prepare('INSERT OR IGNORE INTO opt_out VALUES (?)').run(id);
-    return reply('Everything about you is deleted and voice tracking is paused. Use /mydata Resume voice tracking to turn it back on.');
+    await reply(text('mydata.delete'));
+    for (const sub of subs) await roles.setMember(interaction.client.guilds.cache.get(sub.guild_id), sub.game, id, false);
   }
 }
 

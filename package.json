@@ -7,7 +7,8 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "deploy": "node src/deploy.js"
+    "deploy": "node src/deploy.js",
+    "panel": "node src/panel.js"
   },
   "engines": {
     "node": ">=22.13"

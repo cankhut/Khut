@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Khut Panel</title>
+<style>
+  :root {
+    --bg: #1e1f22; --panel: #2b2d31; --card: #313338; --line: #3f4147; --text: #dbdee1; --muted: #949ba4;
+    --accent: #5865F2; --green: #23a55a; --red: #da373c; --embed: #2b2d31;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 "gg sans", "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  header { display: flex; align-items: center; gap: 12px; padding: 14px 24px; background: var(--panel); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+  header h1 { font-size: 18px; margin: 0 8px 0 0; }
+  .pill { padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; background: var(--line); }
+  .pill.on { background: var(--green); color: #fff; }
+  header .spacer { flex: 1; }
+  nav { display: flex; gap: 4px; padding: 10px 24px 0; background: var(--panel); border-bottom: 1px solid var(--line); }
+  nav button { background: none; border: 0; color: var(--muted); padding: 8px 14px; border-bottom: 2px solid transparent; cursor: pointer; font: inherit; font-weight: 600; }
+  nav button.active { color: var(--text); border-color: var(--accent); }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  section { display: none; }
+  section.active { display: block; }
+  h2 { font-size: 16px; margin: 0 0 4px; }
+  p.hint { color: var(--muted); margin: 0 0 16px; }
+  .box { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  button.btn { background: var(--accent); color: #fff; border: 0; border-radius: 4px; padding: 7px 14px; font: inherit; font-weight: 600; cursor: pointer; }
+  button.btn.grey { background: #4e5058; }
+  button.btn.red { background: var(--red); }
+  button.btn.small { padding: 3px 8px; font-size: 12px; }
+  button.btn:disabled { opacity: .5; cursor: default; }
+  input, select, textarea { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 4px; padding: 7px 9px; font: inherit; width: 100%; }
+  textarea { resize: vertical; min-height: 38px; }
+  label.field { display: block; margin-bottom: 14px; }
+  label.field b { display: block; margin-bottom: 4px; }
+  label.field small { color: var(--muted); display: block; margin-top: 3px; }
+  a { color: #00a8fc; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+  #log { background: #111214; border-radius: 6px; padding: 10px; height: 420px; overflow: auto; font: 12px/1.5 Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
+  #log .ERROR { color: #f57c7c; } #log .WARN { color: #f0c674; } #log .DEBUG { color: #7d8590; } #log .PANEL { color: #8ea1ff; }
+  .savebar { position: sticky; bottom: 0; background: var(--bg); padding: 12px 0; display: flex; gap: 8px; justify-content: flex-end; border-top: 1px solid var(--line); }
+  #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--line); padding: 10px 16px; border-radius: 6px; display: none; z-index: 10; }
+  #toast.err { border-color: var(--red); }
+  .item { display: grid; grid-template-columns: 340px 1fr; gap: 20px; padding: 14px 0; border-bottom: 1px solid var(--line); align-items: start; }
+  .item:last-child { border: 0; }
+  .item .label b { display: block; }
+  .item .label small { color: var(--muted); }
+  .color-input { display: flex; gap: 6px; margin-top: 6px; }
+  .color-input input[type=color] { width: 44px; padding: 2px; height: 34px; }
+  .group-title { margin: 22px 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .preview { background: var(--card); border-radius: 6px; padding: 10px 14px; }
+  .msg { display: flex; gap: 12px; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); flex: none; display: grid; place-items: center; font-weight: 700; color: #fff; }
+  .name { font-weight: 600; } .tag { background: var(--accent); color: #fff; font-size: 10px; border-radius: 3px; padding: 0 4px; margin-left: 4px; vertical-align: 1px; }
+  .content { flex: 1; min-width: 0; }
+  .content .h2 { font-size: 20px; font-weight: 700; margin: 2px 0; }
+  .content .sub { font-size: 12px; color: var(--muted); }
+  .content code { background: #1e1f22; padding: 1px 4px; border-radius: 3px; font-size: 13px; }
+  .spoiler { background: #1e1f22; border-radius: 3px; padding: 0 2px; }
+  .mention { background: rgba(88,101,242,.3); color: #c9cdfb; border-radius: 3px; padding: 0 2px; }
+  .embed { background: var(--embed); border-left: 4px solid; border-radius: 4px; padding: 10px 14px; margin-top: 6px; width: 100%; max-width: 440px; }
+  .embed .author { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .embed .title { font-weight: 700; margin-bottom: 4px; }
+  .embed .fields { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 6px; }
+  .embed .f { min-width: 100%; } .embed .f.inline { min-width: 0; flex: 1; }
+  .embed .fn { font-weight: 700; font-size: 13px; }
+  .embed .foot { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .buttons { display: flex; gap: 8px; margin-top: 8px; }
+  .dbtn { padding: 5px 14px; border-radius: 4px; font-weight: 600; font-size: 13px; color: #fff; background: #4e5058; }
+  .dbtn.green { background: var(--green); } .dbtn.red { background: var(--red); }
+  .guild { display: flex; gap: 16px; }
+  .guild img, .guild .gi { width: 48px; height: 48px; border-radius: 50%; flex: none; background: var(--accent); display: grid; place-items: center; font-weight: 700; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+  .chip { background: var(--card); border: 1px solid var(--line); border-radius: 99px; padding: 3px 6px 3px 12px; display: flex; gap: 6px; align-items: center; }
+  .chip button { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 15px; }
+  .chip small { color: var(--muted); }
+  .switch { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+  .switch input { width: auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Khut</h1>
+  <span id="status" class="pill">Stopped</span>
+  <div class="spacer"></div>
+  <button class="btn" id="startBtn" onclick="botAction('start')">Start</button>
+  <button class="btn grey" id="restartBtn" onclick="botAction('restart')">Restart</button>
+  <button class="btn red" id="stopBtn" onclick="botAction('stop')">Stop</button>
+</header>
+<nav id="tabs"></nav>
+<main>
+  <section id="bot">
+    <div class="box">
+      <h2>Invite</h2>
+      <p class="hint">Use this link to add Khut to a server. You need Manage Server there.</p>
+      <div class="row"><input id="invite" readonly><button class="btn grey" onclick="copyInvite()">Copy</button></div>
+    </div>
+    <div class="box">
+      <h2>Commands</h2>
+      <p class="hint">Register the slash commands with Discord. Only needed the first time and after an update that changes commands.</p>
+      <button class="btn" onclick="botAction('deploy')">Register commands</button>
+    </div>
+    <div class="box">
+      <h2>Log</h2>
+      <div id="log"></div>
+    </div>
+    <div class="box">
+      <h2>Bot profile</h2>
+      <p class="hint">Changes the bot's name and picture everywhere. Discord only allows a couple of name changes per hour.</p>
+      <div class="grid2">
+        <label class="field"><b>Name</b><input id="username" placeholder="Khut"></label>
+        <label class="field"><b>Picture</b><input id="avatar" type="file" accept="image/png,image/jpeg,image/gif"></label>
+      </div>
+      <button class="btn" onclick="saveProfile()">Update profile</button>
+    </div>
+  </section>
+
+  <section id="keys">
+    <p class="hint">These are saved in <code>.env</code> next to the bot and never leave this computer. Restart the bot after changing them.</p>
+    <div class="box" id="envFields"></div>
+    <div class="savebar"><button class="btn" onclick="saveEnv()">Save keys</button></div>
+  </section>
+
+  <section id="servers">
+    <p class="hint">Settings for each server the bot is in. Same as <code>/setup</code> in Discord.</p>
+    <div id="guildList"><button class="btn" onclick="loadGuilds()">Load servers</button></div>
+  </section>
+
+  <section id="colours">
+    <p class="hint">Embed colours. The preview shows how each card will look in Discord.</p>
+    <div class="box" id="colourList"></div>
+    <div class="savebar"><button class="btn grey" onclick="resetSection('colors')">Reset all</button><button class="btn" onclick="saveSettings()">Save colours</button></div>
+  </section>
+
+  <section id="texts">
+    <p class="hint">Everything the bot says. Words in {curly brackets} are filled in by the bot, so keep them. <code>**bold**</code>, <code>`code`</code>, <code>## Heading</code> and <code>-# small text</code> work like in Discord.</p>
+    <div class="box" id="textList"></div>
+    <div class="savebar"><button class="btn grey" onclick="resetSection('texts')">Reset all</button><button class="btn" onclick="saveSettings()">Save texts</button></div>
+  </section>
+
+  <section id="limits">
+    <div class="box" id="limitList"></div>
+    <div class="savebar"><button class="btn grey" onclick="resetSection('limits')">Reset all</button><button class="btn" onclick="saveSettings()">Save</button></div>
+  </section>
+</main>
+<div id="toast"></div>
+
+<script>
+const TABS = [['bot', 'Bot'], ['keys', 'Keys'], ['servers', 'Servers'], ['colours', 'Colours'], ['texts', 'Texts'], ['limits', 'Limits']];
+
+const ENV = [
+  ['DISCORD_TOKEN', 'Bot token', 'Developer Portal > your app > Bot > Reset Token.', 'https://discord.com/developers/applications', true],
+  ['CLIENT_ID', 'Application ID', 'Developer Portal > General Information.', 'https://discord.com/developers/applications'],
+  ['DEV_GUILD_ID', 'Test server ID', 'Leave empty so commands work in every server. Only fill in to test commands in one server.'],
+  ['STEAM_KEY', 'Steam key', 'For Deadlock and CS2 stats.', 'https://steamcommunity.com/dev/apikey', true],
+  ['RIOT_KEY', 'Riot key', 'For League stats. Apply for a Personal API Key.', 'https://developer.riotgames.com', true],
+  ['FACEIT_KEY', 'FACEIT key', 'Optional. Create an app, then a Server side key.', 'https://developers.faceit.com', true],
+  ['LEETIFY_KEY', 'Leetify key', 'Optional. Higher rate limits for Leetify.', 'https://leetify.com/app/developer', true],
+  ['CLIENT_SECRET', 'Client secret', 'Optional, for one-click /link. Developer Portal > OAuth2.', null, true],
+  ['PUBLIC_URL', 'Public URL', 'Optional, for one-click /link. Like https://your-address'],
+  ['PORT', 'Link server port', 'Optional. Default 3000.'],
+  ['LOG_LEVEL', 'Log level', 'info is normal. debug shows everything, warn only problems.'],
+  ['PANEL_PORT', 'Panel port', 'Optional. Default 3001. Restart the panel after changing it.']
+];
+
+const COLOURS = {
+  deadlock: 'Deadlock card', cs2: 'CS2 card', lol: 'League card', discord: 'Discord voice card', wrapped: 'Wrapped', help: '/help',
+  lfgOpen: 'LFG open', lfgFull: 'LFG full', lfgClosed: 'LFG closed', lfgCancelled: 'LFG cancelled'
+};
+
+const LIMITS = {
+  lfgReminderMinutes: ['LFG reminder', 'Minutes before the start time to remind the group. Only for groups made at least 5 minutes earlier than that.'],
+  lfgCloseHours: ['LFG closes after', 'Hours after the start time.'],
+  lfgDeleteHours: ['LFG deleted after', 'Hours after it closes or is cancelled.'],
+  errorDeleteHours: ['/stats errors deleted after', 'Hours.'],
+  voiceMinPeople: ['Voice time counts with', 'People in the same channel (at least 2).']
+};
+
+const PANEL_OPTIONS = {
+  autoStart: 'Start the bot when the panel opens',
+  restartOnCrash: 'Restart the bot if it crashes'
+};
+
+const GROUPS = { error: 'General', stats: '/stats', lfg: 'LFG', games: '/games and the game picker', dm: '/dm', link: '/link', mydata: '/mydata', wrapped: '/wrapped', setup: '/setup' };
+
+const ABOUT = {
+  'error': 'Any unexpected error',
+  'stats.notFound': 'Player not found or a lookup failed',
+  'stats.rateLimit': 'Too many lookups',
+  'stats.noMatches': 'Player has no matches',
+  'stats.noSteam': 'Steam link or code not found',
+  'stats.noSteamLinked': 'No player given and Steam not linked',
+  'stats.noRiot': 'Riot ID not found',
+  'stats.noRiotLinked': 'No player given and Riot not linked',
+  'stats.noCs': 'No CS2 data anywhere',
+  'stats.discordServerOnly': 'Discord stats used in DMs',
+  'stats.discordMention': 'Discord stats without a mention',
+  'lfg.pingUsers': 'LFG ping without game roles',
+  'lfg.pingRole': 'LFG ping with game roles on',
+  'lfg.host': 'Card: host line',
+  'lfg.join': 'Card: Join button',
+  'lfg.leave': 'Card: Leave button',
+  'lfg.cancel': 'Card: Cancel button',
+  'lfg.footerCancelled': 'Card footer when cancelled',
+  'lfg.footerClosed': 'Card footer when closed',
+  'lfg.other': 'Card: 1 extra player',
+  'lfg.others': 'Card: more extra players',
+  'lfg.badTime': 'Wrong time format',
+  'lfg.badPlayers': 'Wrong players format',
+  'lfg.groupClosed': 'Button clicked on a closed group',
+  'lfg.onlyHost': 'Someone else clicked Cancel',
+  'lfg.alreadyIn': 'Clicked Join twice',
+  'lfg.groupFull': 'Group is full',
+  'lfg.squadFull': 'Ping when the group fills up',
+  'lfg.reminder': 'Reminder ping before the start',
+  'lfg.start': 'Ping at the start time',
+  'lfg.dm': 'DM to subscribers',
+  'lfg.dmStarts': 'Added to the DM when it starts later',
+  'lfg.dmButton': 'DM button',
+  'games.picker': '/games message',
+  'games.none': 'No games added yet',
+  'games.panel': 'Fixed game picker message',
+  'games.subscribed': 'Picker: subscribed',
+  'games.unsubscribed': 'Picker: unsubscribed',
+  'games.gone': 'Picker: game was removed',
+  'dm.on': '/dm on', 'dm.off': '/dm off',
+  'link.usage': '/link with nothing filled in',
+  'link.connect': '/link with one-click linking on',
+  'link.connectButton': 'One-click link button',
+  'link.badSteam': 'Steam account not found',
+  'link.badRiot': 'Riot ID not found',
+  'link.done': 'Linked',
+  'mydata.unlink': 'Unlink', 'mydata.pause': 'Pause voice tracking', 'mydata.resume': 'Resume voice tracking', 'mydata.delete': 'Delete everything',
+  'wrapped.none': 'No voice time yet',
+  'setup.added': 'Game added', 'setup.exists': 'Game already exists', 'setup.limit': 'Too many games', 'setup.removed': 'Game removed', 'setup.unknown': 'Game not found',
+  'setup.wrappedOn': 'Automatic Wrapped on', 'setup.wrappedOff': 'Automatic Wrapped off',
+  'setup.timezone': 'Timezone changed', 'setup.badTimezone': 'Unknown timezone',
+  'setup.rolesOn': 'Game roles turned on', 'setup.rolesOff': 'Game roles turned off', 'setup.noManageRoles': 'Missing Manage Roles',
+  'setup.panelPosted': 'Game picker posted', 'setup.panelFailed': "Game picker can't be posted"
+};
+
+const PINGS = ['lfg.squadFull', 'lfg.reminder', 'lfg.start'];
+const BUTTONS = ['lfg.join', 'lfg.leave', 'lfg.cancel', 'lfg.dmButton', 'link.connectButton'];
+
+let state;
+let lastLog = 0;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+async function api(method, url, body) {
+  const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: body && JSON.stringify(body) });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
+function toast(message, error) {
+  const t = $('toast');
+  t.textContent = message;
+  t.className = error ? 'err' : '';
+  t.style.display = 'block';
+  clearTimeout(t.timer);
+  t.timer = setTimeout(() => t.style.display = 'none', 3500);
+}
+
+async function attempt(job) {
+  try {
+    const result = await job();
+    if (result?.message) toast(result.message);
+    return result;
+  } catch (err) {
+    toast(err.message, true);
+  }
+}
+
+function fill(template, vars) {
+  return template.replace(/\{(\w+)\}/g, (m, k) => vars[k] ?? m);
+}
+
+function md(s) {
+  return esc(s).split('\n').map(line => {
+    const inline = l => l.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`(.+?)`/g, '<code>$1</code>').replace(/\|\|(.+?)\|\|/g, '<span class="spoiler">$1</span>').replace(/(^|\s|>)(@\w+)/g, '$1<span class="mention">$2</span>');
+    if (line.startsWith('## ')) return `<div class="h2">${inline(line.slice(3))}</div>`;
+    if (line.startsWith('-# ')) return `<div class="sub">${inline(line.slice(3))}</div>`;
+    return `<div>${inline(line) || '&nbsp;'}</div>`;
+  }).join('');
+}
+
+const t = (key, vars = {}) => fill(state.settings.texts[key] ?? state.defaults.texts[key], vars);
+
+function message(content, extra = '') {
+  return `<div class="preview"><div class="msg"><div class="avatar">K</div><div class="content"><span class="name">Khut</span><span class="tag">APP</span>${content ? md(content) : ''}${extra}</div></div></div>`;
+}
+
+function embed(e) {
+  const fields = (e.fields || []).map(f => `<div class="f ${f.inline ? 'inline' : ''}"><div class="fn">${md(f.name)}</div>${md(f.value)}</div>`).join('');
+  return `<div class="embed" style="border-color:${e.color}">${e.author ? `<div class="author">${esc(e.author)}</div>` : ''}${e.title ? `<div class="title">${esc(e.title)}</div>` : ''}${e.desc ? md(e.desc) : ''}${fields ? `<div class="fields">${fields}</div>` : ''}${e.footer ? `<div class="foot">${esc(e.footer)}</div>` : ''}</div>`;
+}
+
+function buttons(list) {
+  return `<div class="buttons">${list.map(([label, kind]) => `<span class="dbtn ${kind || ''}">${esc(label)}</span>`).join('')}</div>`;
+}
+
+function lfgCard(status) {
+  const color = state.settings.colors[{ open: 'lfgOpen', full: 'lfgFull', closed: 'lfgClosed', cancelled: 'lfgCancelled' }[status]];
+  const full = status === 'full';
+  const card = embed({
+    color,
+    title: '🎮 Deadlock',
+    desc: `${t('lfg.host', { host: '@Jankat' })}\n🕘 Friday 21:00 (in 2 hours)\n\nRanked, bring comms`,
+    fields: [{ name: `👥 ${full ? '6/6' : '3/6'}`, value: `@Jankat\n@Talha\n${t(full ? 'lfg.others' : 'lfg.other', { count: full ? 4 : 1 })}` }],
+    footer: status === 'cancelled' ? t('lfg.footerCancelled') : status === 'closed' ? t('lfg.footerClosed') : ''
+  });
+  return message('', card + (status === 'open' || full ? buttons([[t('lfg.join'), 'green'], [t('lfg.leave')], [t('lfg.cancel'), 'red']]) : ''));
+}
+
+function colourPreview(key) {
+  const c = state.settings.colors[key];
+  const cards = {
+    deadlock: { author: 'Talha', title: 'Deadlock', fields: [{ name: 'Overall', value: '54% WR (120 games)\n6.2 / 4.1 / 9.8 KDA', inline: true }, { name: 'Ranked', value: '**Archon 4**\n52% WR (40 games)', inline: true }], footer: 'Deadlock · Data from deadlock-api.com' },
+    cs2: { author: 'Talha', title: 'Counter-Strike 2', fields: [{ name: 'Ranks', value: 'Premier: **14,250**\nFACEIT: **Level 7** (1650 Elo)' }, { name: 'Lifetime (Steam)', value: '1.12 K/D · 46% HS', inline: true }], footer: 'Counter-Strike 2' },
+    lol: { author: 'shark#bard', title: 'League of Legends · EUW', fields: [{ name: 'Ranked Solo/Duo · season', value: '**Silver III** 91 LP\n30% WR (20 games)', inline: true }, { name: 'Ranked Flex · season', value: '**Gold II** 26 LP\n43% WR (30 games)', inline: true }], footer: 'League of Legends' },
+    discord: { author: 'Talha', title: '🎙️ Voice time', fields: [{ name: 'This week', value: '12h 30m', inline: true }, { name: 'This month', value: '48h', inline: true }, { name: 'All time', value: '310h', inline: true }], footer: 'Discord' },
+    wrapped: { title: '📊 November 2026 Wrapped', desc: '⏱️ 120h in voice together\n🤝 Top duo: @Jankat + @Talha (40h)', fields: [{ name: '🏆 Most time in voice', value: '🥇 @Jankat — 60h\n🥈 @Talha — 52h' }] },
+    help: { title: 'Khut commands', fields: [{ name: '📊 Stats', value: '`/stats game:Deadlock` — your Deadlock stats' }], footer: 'Khut · Open source (AGPL-3.0)' }
+  };
+  if (key.startsWith('lfg')) return lfgCard(key.slice(3).toLowerCase());
+  return message('', embed({ color: c, ...cards[key] }));
+}
+
+function textPreview(key) {
+  const vars = { users: '@Talha @Emre @Ali', role: '@Deadlock', game: 'Deadlock', host: key === 'lfg.host' ? '@Jankat' : 'Jankat', server: 'Friends', time: 'in 10 minutes', count: key === 'lfg.other' ? 1 : key === 'lfg.others' ? 4 : '3/6', timezone: 'Europe/Istanbul' };
+  const value = t(key, vars);
+  if (BUTTONS.includes(key)) return message('', buttons([[value, key === 'lfg.join' ? 'green' : key === 'lfg.cancel' ? 'red' : '']]));
+  if (key.startsWith('lfg.') && ['host', 'other', 'others', 'footerCancelled', 'footerClosed'].includes(key.slice(4))) return lfgCard(key === 'lfg.footerCancelled' ? 'cancelled' : key === 'lfg.footerClosed' ? 'closed' : key === 'lfg.others' ? 'full' : 'open');
+  if (key === 'lfg.dmStarts') return message(t('lfg.dm', vars) + value);
+  if (PINGS.includes(key)) return message(`@Jankat @Talha ${value}`);
+  if (key === 'lfg.pingUsers' || key === 'lfg.pingRole') return message(value, embed({ color: state.settings.colors.lfgOpen, title: '🎮 Deadlock', desc: t('lfg.host', { host: '@Jankat' }) }));
+  if (key === 'games.subscribed' || key === 'games.unsubscribed') return message(`${value}\n${t('games.picker')}`);
+  if (key === 'games.panel') return message(value, buttons([['CS2'], ['Deadlock'], ['League']]));
+  if (key === 'link.done') return message(`${value}\nSteam: https://steamcommunity.com/profiles/7656…\nRiot: shark#bard`);
+  return message(value);
+}
+
+function renderTabs() {
+  $('tabs').innerHTML = TABS.map(([id, name]) => `<button data-tab="${id}">${name}</button>`).join('');
+  $('tabs').onclick = e => e.target.dataset.tab && showTab(e.target.dataset.tab);
+  showTab(location.hash.slice(1) || 'bot');
+  window.onhashchange = () => showTab(location.hash.slice(1) || 'bot');
+}
+
+function showTab(id) {
+  location.hash = id;
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+  document.querySelectorAll('section').forEach(s => s.classList.toggle('active', s.id === id));
+}
+
+function renderEnv() {
+  $('envFields').innerHTML = `<div class="grid2">${ENV.map(([key, name, help, link, secret]) => {
+    const value = esc(state.env[key] ?? '');
+    const input = key === 'LOG_LEVEL'
+      ? `<select data-env="${key}">${['info', 'debug', 'warn', 'error'].map(l => `<option ${state.env[key] === l ? 'selected' : ''}>${l}</option>`).join('')}</select>`
+      : `<div class="row"><input data-env="${key}" value="${value}" ${secret ? 'type="password"' : ''} autocomplete="off" spellcheck="false">${secret ? `<button class="btn grey small" onclick="peek(this)">Show</button>` : ''}</div>`;
+    return `<label class="field"><b>${name}</b>${input}<small>${help}${link ? ` <a href="${link}" target="_blank">Get it</a>` : ''}</small></label>`;
+  }).join('')}</div>`;
+}
+
+function peek(button) {
+  const input = button.previousElementSibling;
+  input.type = input.type === 'password' ? 'text' : 'password';
+  button.textContent = input.type === 'password' ? 'Show' : 'Hide';
+}
+
+function renderColours() {
+  $('colourList').innerHTML = Object.entries(COLOURS).map(([key, name]) => `
+    <div class="item">
+      <div class="label"><b>${name}</b>
+        <div class="color-input">
+          <input type="color" value="${state.settings.colors[key]}" oninput="setColour('${key}', this.value)">
+          <input value="${state.settings.colors[key]}" maxlength="7" oninput="/^#[0-9a-fA-F]{6}$/.test(this.value) && setColour('${key}', this.value)">
+          <button class="btn grey small" onclick="setColour('${key}', state.defaults.colors['${key}'], true)">Reset</button>
+        </div>
+      </div>
+      <div id="cp-${key}">${colourPreview(key)}</div>
+    </div>`).join('');
+}
+
+function setColour(key, value, redraw) {
+  state.settings.colors[key] = value.toUpperCase();
+  if (redraw) return renderColours();
+  $(`cp-${key}`).innerHTML = colourPreview(key);
+  const row = $(`cp-${key}`).previousElementSibling;
+  row.querySelector('input[type=color]').value = value;
+}
+
+function renderTexts() {
+  let html = '';
+  let group = '';
+  for (const key of Object.keys(state.defaults.texts)) {
+    const g = key.split('.')[0];
+    if (g !== group) {
+      group = g;
+      html += `<div class="group-title">${GROUPS[g] ?? g}</div>`;
+    }
+    const value = state.settings.texts[key];
+    html += `
+      <div class="item">
+        <div class="label"><b>${ABOUT[key] ?? key}</b>
+          <textarea rows="${Math.min(6, value.split('\n').length + Math.floor(value.length / 40))}" oninput="setText('${key}', this.value)">${esc(value)}</textarea>
+          <div class="row" style="margin-top:4px"><button class="btn grey small" onclick="setText('${key}', state.defaults.texts['${key}'], true)">Reset</button></div>
+        </div>
+        <div id="tp-${key.replace('.', '-')}">${textPreview(key)}</div>
+      </div>`;
+  }
+  $('textList').innerHTML = html;
+}
+
+function setText(key, value, redraw) {
+  state.settings.texts[key] = value;
+  if (redraw) return renderTexts();
+  $(`tp-${key.replace('.', '-')}`).innerHTML = textPreview(key);
+}
+
+function renderLimits() {
+  $('limitList').innerHTML = Object.entries(LIMITS).map(([key, [name, help]]) => `
+    <label class="field"><b>${name}</b><input type="number" min="${key === 'voiceMinPeople' ? 2 : 1}" value="${state.settings.limits[key]}" oninput="state.settings.limits['${key}'] = Number(this.value)"><small>${help}</small></label>`).join('')
+    + `<div class="group-title">Panel</div>` + Object.entries(PANEL_OPTIONS).map(([key, name]) => `
+    <label class="switch field"><input type="checkbox" ${state.settings.panel[key] ? 'checked' : ''} onchange="state.settings.panel['${key}'] = this.checked">${name}</label>`).join('');
+}
+
+function resetSection(section) {
+  state.settings[section] = { ...state.defaults[section] };
+  renderAll();
+  toast('Reset. Click Save to keep it.');
+}
+
+function renderAll() {
+  $('invite').value = state.invite ?? 'Add the Application ID on the Keys page first.';
+  renderEnv();
+  renderColours();
+  renderTexts();
+  renderLimits();
+}
+
+function setRunning(running) {
+  $('status').textContent = running ? 'Running' : 'Stopped';
+  $('status').classList.toggle('on', running);
+  $('startBtn').disabled = running;
+  $('stopBtn').disabled = !running;
+}
+
+async function pollLogs() {
+  try {
+    const data = await api('GET', `/api/logs?after=${lastLog}`);
+    setRunning(data.running);
+    if (data.logs.length) {
+      const box = $('log');
+      const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 30;
+      for (const { id, line } of data.logs) {
+        lastLog = id;
+        const level = line.startsWith('[Panel]') ? 'PANEL' : (line.match(/\] (ERROR|WARN|DEBUG)/)?.[1] ?? '');
+        box.insertAdjacentHTML('beforeend', `<div class="${level}">${esc(line)}</div>`);
+      }
+      while (box.children.length > 1000) box.firstChild.remove();
+      if (atBottom) box.scrollTop = box.scrollHeight;
+    }
+  } catch {
+    $('status').textContent = 'Panel offline';
+    $('status').classList.remove('on');
+  }
+  setTimeout(pollLogs, 1000);
+}
+
+function botAction(action) {
+  attempt(() => api('POST', `/api/${action}`));
+}
+
+function copyInvite() {
+  navigator.clipboard.writeText($('invite').value);
+  toast('Copied.');
+}
+
+function saveEnv() {
+  const values = {};
+  document.querySelectorAll('[data-env]').forEach(i => values[i.dataset.env] = i.value.trim());
+  attempt(async () => {
+    const result = await api('POST', '/api/env', values);
+    state = await api('GET', '/api/state');
+    $('invite').value = state.invite ?? '';
+    return result;
+  });
+}
+
+function saveSettings() {
+  for (const [key, value] of Object.entries(state.settings.colors)) {
+    if (!/^#[0-9A-Fa-f]{6}$/.test(value)) return toast(`${COLOURS[key]} needs a colour like #5865F2.`, true);
+  }
+  attempt(() => api('POST', '/api/settings', state.settings));
+}
+
+function saveProfile() {
+  const file = $('avatar').files[0];
+  const username = $('username').value.trim();
+  if (!file && !username) return toast('Type a name or pick a picture.', true);
+  const send = avatar => attempt(() => api('POST', '/api/profile', { username, avatar }));
+  if (!file) return send();
+  const reader = new FileReader();
+  reader.onload = () => send(reader.result);
+  reader.readAsDataURL(file);
+}
+
+function renderGuilds(list) {
+  if (!list.length) return $('guildList').innerHTML = '<div class="box">The bot isn\'t in any server yet. Use the invite link on the Bot page.</div>';
+  $('guildList').innerHTML = list.map(g => `
+    <div class="box guild">
+      ${g.icon ? `<img src="${g.icon}" alt="">` : `<div class="gi">${esc(g.name[0])}</div>`}
+      <div style="flex:1">
+        <h2>${esc(g.name)}</h2>
+        <div class="grid2" style="margin-top:10px">
+          <label class="field"><b>Timezone</b><div class="row"><input value="${esc(g.timezone)}" id="tz-${g.id}"><button class="btn grey" onclick="guild('${g.id}', { timezone: $('tz-${g.id}').value.trim() })">Save</button></div></label>
+          <div style="margin-top:22px">
+            <label class="switch field"><input type="checkbox" ${g.wrapped ? 'checked' : ''} onchange="guild('${g.id}', { wrapped: this.checked })">Post Wrapped automatically every month</label>
+            <label class="switch field"><input type="checkbox" ${g.roles ? 'checked' : ''} onchange="guild('${g.id}', { roles: this.checked })">Make a role for each game</label>
+          </div>
+        </div>
+        <p class="hint">${g.roles ? 'LFG posts ping the game\'s role. Khut needs the Manage Roles permission. Changes apply within 30 seconds while the bot runs.' : 'LFG posts quietly ping each subscriber. Turn on game roles to ping a role instead.'}</p>
+        <b>Games</b>${g.picker ? ' <small style="color:var(--muted)">(the game picker updates by itself)</small>' : ''}
+        <div class="chips">${g.games.map(x => `<span class="chip">${esc(x.name)} <small>${x.subs}</small><button title="Remove" onclick="removeGame('${g.id}', this.dataset.name)" data-name="${esc(x.name)}">×</button></span>`).join('') || '<small style="color:var(--muted)">No games yet</small>'}</div>
+        <div class="row" style="max-width:360px"><input id="add-${g.id}" placeholder="Game name" maxlength="50" onkeydown="event.key === 'Enter' && addGame('${g.id}')"><button class="btn" onclick="addGame('${g.id}')">Add</button></div>
+      </div>
+    </div>`).join('') + '<button class="btn grey" onclick="loadGuilds()">Refresh</button>';
+}
+
+async function loadGuilds() {
+  const list = await attempt(() => api('GET', '/api/guilds'));
+  if (list) renderGuilds(list);
+}
+
+async function guild(id, change) {
+  const result = await attempt(() => api('POST', '/api/guild', { id, ...change }));
+  if (result) renderGuilds(result.guilds);
+}
+
+function addGame(id) {
+  guild(id, { addGame: $(`add-${id}`).value });
+}
+
+function removeGame(id, name) {
+  if (confirm(`Remove ${name}? Everyone's subscription to it goes too.`)) guild(id, { removeGame: name });
+}
+
+(async () => {
+  state = await api('GET', '/api/state');
+  renderTabs();
+  renderAll();
+  pollLogs();
+})();
+</script>
+</body>
+</html>

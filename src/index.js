@@ -4,8 +4,10 @@ const commands = require('./commands');
 const lfg = require('./commands/lfg');
 const tracker = require('./tracker');
 const cleanup = require('./cleanup');
+const roles = require('./roles');
 const web = require('./web');
 const log = require('./log');
+const { text } = require('./settings');
 const { syncEmojis } = require('./assets');
 
 process.on('unhandledRejection', err => log.error('Unhandled promise rejection:', err));
@@ -32,6 +34,7 @@ client.once(Events.ClientReady, c => {
   every('Voice tracker', 60000, () => tracker.tick(client));
   every('LFG', 30000, () => lfg.tick(client));
   every('Cleanup', 60000, () => cleanup.tick(client));
+  every('Game roles', 30000, () => roles.tick(client));
   syncEmojis(client).catch(err => log.error('Emoji sync failed:', err));
 });
 
@@ -66,7 +69,7 @@ client.on(Events.InteractionCreate, async interaction => {
   } catch (err) {
     log.error(`Failed: ${describe(interaction)}`, err);
     if (!interaction.isRepliable()) return;
-    const message = { content: 'Something went wrong.', flags: MessageFlags.Ephemeral };
+    const message = { content: text('error'), flags: MessageFlags.Ephemeral };
     if (interaction.deferred || interaction.replied) await interaction.followUp(message).catch(() => {});
     else await interaction.reply(message).catch(() => {});
   }

@@ -2,7 +2,9 @@ const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, InteractionConte
 const { db, setGuild } = require('../db');
 const { validTimezone } = require('../time');
 const { postPanel, refreshPanel } = require('./lfg');
+const roles = require('../roles');
 const log = require('../log');
+const { text } = require('../settings');
 
 const data = new SlashCommandBuilder()
   .setName('setup')
@@ -10,6 +12,8 @@ const data = new SlashCommandBuilder()
   .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
   .setContexts(InteractionContextType.Guild)
   .addSubcommand(s => s.setName('games').setDescription('Post a fixed game picker in this channel, like for onboarding'))
+  .addSubcommand(s => s.setName('roles').setDescription('Make a role for each game and ping the role in LFG posts')
+    .addBooleanOption(o => o.setName('on').setDescription('On: one role per game. Off: ping subscribers directly').setRequired(true)))
   .addSubcommand(s => s.setName('addgame').setDescription('Add a game people can subscribe to')
     .addStringOption(o => o.setName('game').setDescription('Game name').setRequired(true).setMaxLength(50)))
   .addSubcommand(s => s.setName('removegame').setDescription('Remove a game from /games')
@@ -36,44 +40,52 @@ async function execute(interaction) {
       await postPanel(interaction);
     } catch (err) {
       log.warn(`Games panel failed in ${guild.name}: ${err.message}`);
-      return interaction.editReply("I can't post here. Give Khut View Channel and Send Messages in this channel.");
+      return interaction.editReply(text('setup.panelFailed'));
     }
-    return interaction.editReply('Posted. It updates by itself when you add or remove games.');
+    return interaction.editReply(text('setup.panelPosted'));
+  }
+
+  if (sub === 'roles') {
+    const on = interaction.options.getBoolean('on');
+    if (!roles.canManage(guild)) return reply(text('setup.noManageRoles'));
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    roles.turn(guild.id, on);
+    await roles.sync(guild);
+    return interaction.editReply(text(on ? 'setup.rolesOn' : 'setup.rolesOff'));
   }
 
   if (sub === 'addgame') {
     const name = interaction.options.getString('game').trim();
-    if (db.prepare('SELECT 1 FROM games WHERE guild_id = ? AND name = ?').get(guild.id, name)) return reply(`**${name}** already exists.`);
-    if (db.prepare('SELECT COUNT(*) AS n FROM games WHERE guild_id = ?').get(guild.id).n >= 25) return reply('Up to 25 games are supported.');
+    if (db.prepare('SELECT 1 FROM games WHERE guild_id = ? AND name = ?').get(guild.id, name)) return reply(text('setup.exists', { game: name }));
+    if (db.prepare('SELECT COUNT(*) AS n FROM games WHERE guild_id = ?').get(guild.id).n >= 25) return reply(text('setup.limit'));
     db.prepare('INSERT INTO games VALUES (?, ?, NULL)').run(guild.id, name);
-    await reply(`Added **${name}**.`);
+    await reply(text('setup.added', { game: name }));
+    await roles.sync(guild).catch(err => log.warn(`Game role for ${name} failed: ${err.message}`));
     return refreshPanel(guild);
   }
 
   if (sub === 'removegame') {
     const name = interaction.options.getString('game');
     const game = db.prepare('SELECT role_id FROM games WHERE guild_id = ? AND name = ?').get(guild.id, name);
-    if (!game) return reply(`**${name}** isn't on the list.`);
+    if (!game) return reply(text('setup.unknown', { game: name }));
     if (game.role_id) await guild.roles.delete(game.role_id).catch(() => {});
     db.prepare('DELETE FROM games WHERE guild_id = ? AND name = ?').run(guild.id, name);
     db.prepare('DELETE FROM subscriptions WHERE guild_id = ? AND game = ?').run(guild.id, name);
-    await reply(`Removed **${name}**.`);
+    await reply(text('setup.removed', { game: name }));
     return refreshPanel(guild);
   }
 
   if (sub === 'wrapped') {
     const auto = interaction.options.getBoolean('auto');
     setGuild(guild.id, 'wrapped_auto', auto ? 1 : 0);
-    return reply(auto
-      ? "Wrapped will be posted automatically in the server's system messages channel at the start of each month."
-      : 'Automatic Wrapped is off. Anyone can still use /wrapped.');
+    return reply(text(auto ? 'setup.wrappedOn' : 'setup.wrappedOff'));
   }
 
   if (sub === 'timezone') {
     const tz = interaction.options.getString('timezone').trim();
-    if (!validTimezone(tz)) return reply('Unknown timezone. Use a name like Europe/Istanbul or America/Toronto.');
+    if (!validTimezone(tz)) return reply(text('setup.badTimezone'));
     setGuild(guild.id, 'timezone', tz);
-    return reply(`Timezone set to **${tz}**.`);
+    return reply(text('setup.timezone', { timezone: tz }));
   }
 }
 

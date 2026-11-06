@@ -26,6 +26,7 @@ const sections = [
   ]],
   ['⚙️ Admins', [
     '`/setup games` — post a fixed game picker in this channel (for onboarding or a rules-like channel)',
+    '`/setup roles` — make a role for each game and ping the role in LFG posts instead of each person',
     '`/setup addgame` · `/setup removegame` · `/setup wrapped` · `/setup timezone`'
   ]]
 ];

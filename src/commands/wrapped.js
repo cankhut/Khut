@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, MessageFlags, InteractionContextType } = require('discord.js');
 const { guildSettings } = require('../db');
 const { wrappedEmbed } = require('../tracker');
+const { text } = require('../settings');
 
 const data = new SlashCommandBuilder()
   .setName('wrapped')
@@ -16,7 +17,7 @@ const data = new SlashCommandBuilder()
 async function execute(interaction) {
   const tz = guildSettings(interaction.guildId).timezone;
   const embed = wrappedEmbed(interaction.guildId, interaction.options.getString('period') ?? 'month', tz);
-  if (!embed) return interaction.reply({ content: 'No voice time recorded yet.', flags: MessageFlags.Ephemeral });
+  if (!embed) return interaction.reply({ content: text('wrapped.none'), flags: MessageFlags.Ephemeral });
   await interaction.reply({ embeds: [embed] });
 }
 

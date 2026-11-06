@@ -8,6 +8,7 @@ const icons = require('../icons');
 const { periodStart, formatMinutes } = require('../time');
 const { later } = require('../cleanup');
 const log = require('../log');
+const { settings, text } = require('../settings');
 
 const data = new SlashCommandBuilder()
   .setName('stats')
@@ -138,7 +139,7 @@ async function csEmbed(steamId) {
   ]);
 
   const hasSteam = steamStats.total_kills > 0;
-  if (!hasSteam && !lt && !fc) return "No CS2 stats found. Their Steam game details are private and they aren't on Leetify or FACEIT.";
+  if (!hasSteam && !lt && !fc) return text('stats.noCs');
 
   const embed = new EmbedBuilder()
     .setAuthor({ name: profile.personaname, iconURL: profile.avatarfull, url: profile.profileurl })
@@ -239,11 +240,9 @@ async function discordEmbed(interaction, userId, withUser) {
     );
 }
 
-const ERROR_TTL = 2 * 3600000;
-
-async function fail(interaction, text) {
-  log.info(`/stats reply: ${text}`);
-  later(await interaction.editReply({ content: text, embeds: [] }), ERROR_TTL);
+async function fail(interaction, message) {
+  log.info(`/stats reply: ${message}`);
+  later(await interaction.editReply({ content: message, embeds: [] }), settings.limits.errorDeleteHours * 3600000);
 }
 
 async function execute(interaction) {
@@ -254,27 +253,27 @@ async function execute(interaction) {
   try {
     let embed;
     if (game === 'discord') {
-      if (!interaction.guildId) return fail(interaction, 'Discord stats only work inside a server.');
+      if (!interaction.guildId) return fail(interaction, text('stats.discordServerOnly'));
       const userId = input ? mentionedUser(input) : interaction.user.id;
-      if (!userId) return fail(interaction, 'For Discord, mention someone in player, like @Emre.');
+      if (!userId) return fail(interaction, text('stats.discordMention'));
       embed = await discordEmbed(interaction, userId, interaction.options.getUser('with'));
     } else if (game === 'lol') {
       const riotId = riotIdFor(input, interaction.user.id);
-      if (!riotId) return fail(interaction, input ? 'No Riot ID found. Use a Riot ID like Name#Tag.' : 'No Riot ID linked. Use /link or a Riot ID like Name#Tag.');
+      if (!riotId) return fail(interaction, text(input ? 'stats.noRiot' : 'stats.noRiotLinked'));
       log.info(`/stats League lookup: ${riotId}`);
       embed = await lolStats(riotId, update => interaction.editReply({ embeds: [update] }));
     } else {
       const steamId = await steamIdFor(input, interaction.user.id);
-      if (!steamId) return fail(interaction, input ? 'No Steam account found. Use their Steam profile link or friend code.' : 'No Steam account linked. Use /link or a Steam profile link.');
+      if (!steamId) return fail(interaction, text(input ? 'stats.noSteam' : 'stats.noSteamLinked'));
       log.info(`/stats ${game} lookup: ${steamId}`);
       embed = game === 'deadlock' ? await deadlockEmbed(steamId) : await csEmbed(steamId);
     }
-    if (!embed) return fail(interaction, 'No match data found for that player.');
+    if (!embed) return fail(interaction, text('stats.noMatches'));
     if (typeof embed === 'string') return fail(interaction, embed);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
     log.error(`/stats ${game} ${input ?? '(self)'} failed:`, err);
-    await fail(interaction, err.status === 429 ? 'Too many lookups right now. Try again in a minute.' : "Couldn't find stats for that player.");
+    await fail(interaction, text(err.status === 429 ? 'stats.rateLimit' : 'stats.notFound'));
   }
 }
 

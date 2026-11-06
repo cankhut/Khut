@@ -3,8 +3,8 @@ const { db, guildSettings } = require('../db');
 const { parseStart } = require('../time');
 const colors = require('../colors');
 const log = require('../log');
-
-const DELETE_AFTER = 12 * 3600000;
+const { settings, text } = require('../settings');
+const roles = require('../roles');
 
 const data = new SlashCommandBuilder()
   .setName('lfg')
@@ -37,23 +37,23 @@ function card(id) {
   const players = getMembers(id);
   const ts = Math.floor(group.start_at / 1000);
   const list = players.map(u => `<@${u}>`);
-  if (group.extra) list.push(`+${group.extra} other${group.extra === 1 ? '' : 's'}`);
+  if (group.extra) list.push(text(group.extra === 1 ? 'lfg.other' : 'lfg.others', { count: group.extra }));
 
   const embed = new EmbedBuilder()
     .setTitle(`🎮 ${group.game}`)
-    .setDescription(`Host: <@${group.host_id}>\n🕘 <t:${ts}:F> (<t:${ts}:R>)${group.note ? `\n\n${group.note}` : ''}`)
+    .setDescription(`${text('lfg.host', { host: `<@${group.host_id}>` })}\n🕘 <t:${ts}:F> (<t:${ts}:R>)${group.note ? `\n\n${group.note}` : ''}`)
     .addFields({ name: `👥 ${players.length + group.extra}/${group.slots}`, value: list.join('\n') || '-' })
     .setColor(group.status === 'cancelled' ? colors.lfgCancelled : group.status !== 'open' ? colors.lfgClosed : players.length + group.extra >= group.slots ? colors.lfgFull : colors.lfgOpen);
 
   if (group.status !== 'open') {
-    embed.setFooter({ text: group.status === 'cancelled' ? 'Cancelled' : 'Closed' });
+    embed.setFooter({ text: text(group.status === 'cancelled' ? 'lfg.footerCancelled' : 'lfg.footerClosed') });
     return { embeds: [embed], components: [] };
   }
 
   const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(`lfg:in:${id}`).setLabel('Join').setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId(`lfg:leave:${id}`).setLabel('Leave').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId(`lfg:cancel:${id}`).setLabel('Cancel').setStyle(ButtonStyle.Danger)
+    new ButtonBuilder().setCustomId(`lfg:in:${id}`).setLabel(text('lfg.join')).setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId(`lfg:leave:${id}`).setLabel(text('lfg.leave')).setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`lfg:cancel:${id}`).setLabel(text('lfg.cancel')).setStyle(ButtonStyle.Danger)
   );
   return { embeds: [embed], components: [row] };
 }
@@ -76,9 +76,9 @@ async function execute(interaction) {
   const settings = guildSettings(interaction.guildId);
   const game = interaction.options.getString('game');
   const start = parseStart(interaction.options.getString('time'), settings.timezone);
-  if (!start) return interaction.reply({ content: 'Time format: now, 30m, 2h, 21:00 or 9pm', flags: MessageFlags.Ephemeral });
+  if (!start) return interaction.reply({ content: text('lfg.badTime'), flags: MessageFlags.Ephemeral });
   const players = parsePlayers(interaction.options.getString('players'));
-  if (!players) return interaction.reply({ content: 'Players format: 3/6 or just 6.', flags: MessageFlags.Ephemeral });
+  if (!players) return interaction.reply({ content: text('lfg.badPlayers'), flags: MessageFlags.Ephemeral });
 
   const { lastInsertRowid } = db.prepare('INSERT INTO lfg (guild_id, channel_id, host_id, game, created_at, start_at, slots, extra, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
     .run(interaction.guildId, interaction.channelId, interaction.user.id, game, Date.now(), start, players.size, players.extra, interaction.options.getString('note'));
@@ -87,23 +87,23 @@ async function execute(interaction) {
 
   const subscribers = db.prepare('SELECT user_id FROM subscriptions WHERE guild_id = ? AND game = ? AND user_id != ?')
     .all(interaction.guildId, game, interaction.user.id).map(r => r.user_id);
-  await interaction.reply({
-    content: subscribers.length ? `-# 🔔 ||${subscribers.map(u => `<@${u}>`).join(' ')}||` : undefined,
-    allowedMentions: { users: subscribers },
-    ...card(id)
-  });
+  const role = roles.roleFor(interaction.guild, game);
+  const notify = role
+    ? { content: text('lfg.pingRole', { role: `<@&${role}>` }), allowedMentions: { roles: [role] } }
+    : { content: subscribers.length ? text('lfg.pingUsers', { users: subscribers.map(u => `<@${u}>`).join(' ') }) : undefined, allowedMentions: { users: subscribers } };
+  await interaction.reply({ ...notify, ...card(id) });
   const message = await interaction.fetchReply();
   db.prepare('UPDATE lfg SET message_id = ? WHERE id = ?').run(message.id, id);
-  log.info(`LFG #${id} ${game} by ${interaction.user.tag} in ${interaction.guild.name}, ${subscribers.length} subscriber(s) pinged`);
+  log.info(`LFG #${id} ${game} by ${interaction.user.tag} in ${interaction.guild.name}, ${role ? 'role' : `${subscribers.length} subscriber(s)`} pinged`);
   await dmSubscribers(interaction, subscribers, game, start, message.url);
 }
 
 async function dmSubscribers(interaction, subscribers, game, start, url) {
   const wantDm = new Set(db.prepare('SELECT discord_id FROM dm_on').all().map(r => r.discord_id));
-  const when = start - Date.now() > 60000 ? ` Starts <t:${Math.floor(start / 1000)}:R>.` : '';
+  const when = start - Date.now() > 60000 ? text('lfg.dmStarts', { time: `<t:${Math.floor(start / 1000)}:R>` }) : '';
   const message = {
-    content: `🎮 **${interaction.user.displayName}** is looking for **${interaction.options.getString('game')}** players in **${interaction.guild.name}**.${when}`,
-    components: [new ActionRowBuilder().addComponents(new ButtonBuilder().setLabel('Take Me There').setStyle(ButtonStyle.Link).setURL(url))]
+    content: text('lfg.dm', { host: interaction.user.displayName, game, server: interaction.guild.name }) + when,
+    components: [new ActionRowBuilder().addComponents(new ButtonBuilder().setLabel(text('lfg.dmButton')).setStyle(ButtonStyle.Link).setURL(url))]
   };
   const results = await Promise.allSettled(subscribers.filter(u => wantDm.has(u)).map(async u => (await interaction.client.users.fetch(u)).send(message)));
   for (const r of results.filter(r => r.status === 'rejected')) log.warn(`LFG DM failed: ${r.reason.message}`);
@@ -116,10 +116,10 @@ async function button(interaction) {
   const user = interaction.user.id;
   const ephemeral = { flags: MessageFlags.Ephemeral };
 
-  if (!group || group.status !== 'open') return interaction.reply({ content: 'This group is closed.', ...ephemeral });
+  if (!group || group.status !== 'open') return interaction.reply({ content: text('lfg.groupClosed'), ...ephemeral });
 
   if (action === 'cancel') {
-    if (user !== group.host_id) return interaction.reply({ content: 'Only the host can cancel.', ...ephemeral });
+    if (user !== group.host_id) return interaction.reply({ content: text('lfg.onlyHost'), ...ephemeral });
     db.prepare("UPDATE lfg SET status = 'cancelled', ended_at = ? WHERE id = ?").run(Date.now(), id);
     log.info(`LFG #${id} cancelled`);
     return interaction.update(card(id));
@@ -128,8 +128,8 @@ async function button(interaction) {
   if (action === 'leave') {
     db.prepare('DELETE FROM lfg_members WHERE lfg_id = ? AND user_id = ?').run(id, user);
   } else if (action === 'in') {
-    if (getMembers(id).includes(user)) return interaction.reply({ content: "You're already in.", ...ephemeral });
-    if (getMembers(id).length + group.extra >= group.slots) return interaction.reply({ content: 'This group is full.', ...ephemeral });
+    if (getMembers(id).includes(user)) return interaction.reply({ content: text('lfg.alreadyIn'), ...ephemeral });
+    if (getMembers(id).length + group.extra >= group.slots) return interaction.reply({ content: text('lfg.groupFull'), ...ephemeral });
     db.prepare('INSERT INTO lfg_members VALUES (?, ?, ?, ?)').run(id, user, 'in', Date.now());
   }
 
@@ -137,7 +137,7 @@ async function button(interaction) {
 
   const players = getMembers(id);
   if (action === 'in' && players.length + group.extra === group.slots) {
-    track(id, await interaction.followUp(ping(players, `squad is full for **${group.game}**.`)));
+    track(id, await interaction.followUp(ping(players, text('lfg.squadFull', { game: group.game }))));
   }
 }
 
@@ -153,24 +153,25 @@ async function tick(client) {
     const players = getMembers(group.id);
     const lead = group.start_at - group.created_at;
 
-    if (lead > 15 * 60000 && !group.reminded && group.start_at - now <= 10 * 60000) {
+    const remind = settings.limits.lfgReminderMinutes * 60000;
+    if (lead > remind + 5 * 60000 && !group.reminded && group.start_at - now <= remind) {
       db.prepare('UPDATE lfg SET reminded = 1 WHERE id = ?').run(group.id);
-      track(group.id, await channel.send(ping(players, `**${group.game}** starts <t:${Math.floor(group.start_at / 1000)}:R> (${players.length + group.extra}/${group.slots})`)));
+      track(group.id, await channel.send(ping(players, text('lfg.reminder', { game: group.game, time: `<t:${Math.floor(group.start_at / 1000)}:R>`, count: `${players.length + group.extra}/${group.slots}` }))));
     }
 
     if (lead > 60000 && !group.started && now >= group.start_at) {
       db.prepare('UPDATE lfg SET started = 1 WHERE id = ?').run(group.id);
-      track(group.id, await channel.send(ping(players, `time to play **${group.game}**!`)));
+      track(group.id, await channel.send(ping(players, text('lfg.start', { game: group.game }))));
     }
 
-    if (now >= group.start_at + 2 * 3600000) {
+    if (now >= group.start_at + settings.limits.lfgCloseHours * 3600000) {
       db.prepare("UPDATE lfg SET status = 'closed', ended_at = ? WHERE id = ?").run(now, group.id);
       log.info(`LFG #${group.id} closed`);
       await channel.messages.edit(group.message_id, card(group.id)).catch(() => {});
     }
   }
 
-  const old = db.prepare("SELECT * FROM lfg WHERE status IN ('closed', 'cancelled') AND COALESCE(ended_at, start_at + 7200000) <= ?").all(now - DELETE_AFTER);
+  const old = db.prepare("SELECT * FROM lfg WHERE status IN ('closed', 'cancelled') AND COALESCE(ended_at, start_at + 7200000) <= ?").all(now - settings.limits.lfgDeleteHours * 3600000);
   for (const group of old) {
     const channel = await client.channels.fetch(group.channel_id).catch(() => null);
     const ids = [group.message_id, ...db.prepare('SELECT message_id FROM lfg_messages WHERE lfg_id = ?').all(group.id).map(r => r.message_id)];
@@ -192,9 +193,9 @@ function picker(guildId, userId) {
     LEFT JOIN subscriptions s ON s.guild_id = g.guild_id AND s.game = g.name AND s.user_id = ?
     WHERE g.guild_id = ? ORDER BY g.name
   `).all(userId, guildId).slice(0, 25);
-  if (!list.length) return { content: 'No games yet. An admin can add them with /setup addgame.', components: [] };
+  if (!list.length) return { content: text('games.none'), components: [] };
   return {
-    content: 'Green means you subscribed to that game. Click to turn on or off.',
+    content: text('games.picker'),
     components: gameRows(list.map(g => ({ ...g, id: 'sub' })), g => g.on_ ? ButtonStyle.Success : ButtonStyle.Secondary)
   };
 }
@@ -214,8 +215,8 @@ function panel(guildId) {
   const list = db.prepare('SELECT name FROM games WHERE guild_id = ? ORDER BY name').all(guildId).slice(0, 25);
   return {
     content: list.length
-      ? '## 🎮 Pick your games\nClick a game to get notified when someone is looking for players. Click it again to turn it off.\nYou can change this later with `/games`.'
-      : 'No games yet. An admin can add them with /setup addgame.',
+      ? text('games.panel')
+      : text('games.none'),
     components: gameRows(list.map(g => ({ id: 'pick', name: g.name })), () => ButtonStyle.Secondary)
   };
 }
@@ -247,10 +248,11 @@ function toggle(guildId, game, userId) {
 async function pickButton(interaction) {
   const game = interaction.customId.slice('pick:'.length);
   const on = toggle(interaction.guildId, game, interaction.user.id);
-  if (on === null) return interaction.reply({ content: `**${game}** isn't on the list anymore.`, flags: MessageFlags.Ephemeral });
+  if (on !== null) await roles.setMember(interaction.guild, game, interaction.user.id, on);
+  if (on === null) return interaction.reply({ content: text('games.gone', { game }), flags: MessageFlags.Ephemeral });
   log.info(`${interaction.user.tag} ${on ? 'subscribed to' : 'unsubscribed from'} ${game} (panel)`);
   const view = picker(interaction.guildId, interaction.user.id);
-  await interaction.reply({ ...view, content: `${on ? '✅ Subscribed to' : '❌ Unsubscribed from'} **${game}**.\n${view.content}`, flags: MessageFlags.Ephemeral });
+  await interaction.reply({ ...view, content: `${text(on ? 'games.subscribed' : 'games.unsubscribed', { game })}\n${view.content}`, flags: MessageFlags.Ephemeral });
 }
 
 async function executeGames(interaction) {
@@ -260,8 +262,9 @@ async function executeGames(interaction) {
 async function subscribeButton(interaction) {
   const game = interaction.customId.slice('sub:'.length);
   const on = toggle(interaction.guildId, game, interaction.user.id);
+  if (on !== null) await roles.setMember(interaction.guild, game, interaction.user.id, on);
   if (on !== null) log.info(`${interaction.user.tag} ${on ? 'subscribed to' : 'unsubscribed from'} ${game}`);
   await interaction.update(picker(interaction.guildId, interaction.user.id));
 }
 
-module.exports = { data, execute, autocomplete, button, subscribeButton, pickButton, postPanel, refreshPanel, tick, games: { data: games, execute: executeGames } };
+module.exports = { data, execute, autocomplete, button, subscribeButton, pickButton, panel, postPanel, refreshPanel, tick, games: { data: games, execute: executeGames } };

@@ -17,7 +17,7 @@ All commands work in any channel. `/help` shows this list in Discord.
 | `/wrapped period` | Server voice Wrapped: this month, last month, this year or all time. |
 | `/link` | Link your Steam and Riot accounts so people can use `player:@you`. |
 | `/mydata` | See, pause or delete what Khut stores about you. |
-| `/setup` | Admins: `games`, `addgame`, `removegame`, `wrapped`, `timezone`. |
+| `/setup` | Admins: `games`, `roles`, `addgame`, `removegame`, `wrapped`, `timezone`. |
 
 Voice time only counts when 2 or more people are in a channel (AFK channel and bots are ignored).
 
@@ -45,9 +45,9 @@ Hero and champion icons gets added to the bot as app emojis the first time it st
 4. **Installation** tab: set Install Link to **None**.
 5. Invite it to your server with this link (replace `CLIENT_ID`):
 
-   `https://discord.com/oauth2/authorize?client_id=CLIENT_ID&scope=bot%20applications.commands&permissions=19456`
+   `https://discord.com/oauth2/authorize?client_id=CLIENT_ID&scope=bot%20applications.commands&permissions=268454912`
 
-   Permissions: View Channels, Send Messages, Embed Links.
+   Permissions: View Channels, Send Messages, Embed Links, Manage Roles. <sub><sup>(Manage Roles is only used if you turn on game roles)</sup></sub>
 6. In Discord, turn on **Settings > Advanced > Developer Mode**, right-click your server > **Copy Server ID** > `DEV_GUILD_ID`.
 
 ## 3. Get the API keys <sub><sup>(all free)</sup></sub>
@@ -93,6 +93,8 @@ Then in Discord:
 
 For onboarding, make a channel people can read but not write in, give Khut **View Channel** and **Send Messages** there, and run `/setup games` in it. It posts a fixed game picker that updates by itself when you add or remove games. People can still change their games later with `/games`.
 
+By default, `/lfg` quietly pings each subscriber. With `/setup roles on:True` Khut makes a role for each game instead, gives it to everyone subscribed and pings the role. `on:False` deletes those roles and goes back to pinging people directly. Each server picks its own. Khut needs **Manage Roles** for this, and its own role has to be above the game roles in Server Settings > Roles (new roles are placed right below it automatically).
+
 The default timezone is Türkiye (`Europe/Istanbul`). Change it with `/setup timezone` if needed.
 
 The bot only runs while `npm start` is running. Data is saved in `data.db`.
@@ -100,6 +102,35 @@ The bot only runs while `npm start` is running. Data is saved in `data.db`.
 ### Logs
 
 The console shows every command, LFG event, failed API call and error with a timestamp. API keys are hidden in the logs. For more detail (every API call, button click and voice tick) set `LOG_LEVEL=debug` in `.env` and restart. `LOG_LEVEL=warn` shows only problems.
+
+## Control panel <sub><sup>(optional)</sup></sub>
+
+Instead of the terminal, you can run Khut from a page in your browser. On Windows, double-click **`Khut Panel.bat`**. Anywhere else, run:
+
+```bash
+npm run panel
+```
+
+Then open <http://localhost:3001>. From there you can:
+
+- Fill in the API keys (saved to `.env`)
+- Start, stop and restart the bot, register commands and watch the log
+- Copy the invite link and change the bot's name and picture
+- Change each server's games, timezone and Wrapped
+- Change embed colours and everything the bot says, with a live preview
+- Change the LFG and cleanup timings
+
+Colours, texts and timings are saved in `settings.json` and the bot picks up changes within a few seconds, no restart needed. Delete `settings.json` to go back to the defaults.
+
+Closing the panel also stops the bot. Turn on **Start the bot when the panel opens** under **Limits** if the panel is how you host it.
+
+The panel only listens on the computer it runs on. To use it for a bot on another machine (a home server, a VPS), run `npm run panel` there and connect with an SSH tunnel:
+
+```bash
+ssh -L 3001:localhost:3001 user@your-server
+```
+
+Then open <http://localhost:3001> on your own computer.
 
 ## Updating
 
@@ -123,7 +154,7 @@ Without this, `/link steam:... riot:...` works the same way.
 
 ## 6. Keep the keys private
 
-- All keys live only in `.env`. `.gitignore` keeps `.env` and `data.db` out of Git.
+- All keys live only in `.env`. `.gitignore` keeps `.env`, `settings.json` and `data.db` out of Git.
 - Before every commit, `git status` should **NOT** list `.env`.
 - **IF A KEY EVER LEAKS**, reset it right away on the site where you created it.
 
