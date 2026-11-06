@@ -21,11 +21,14 @@ async function execute(interaction) {
     const links = getLinks(id);
     const minutes = db.prepare('SELECT COALESCE(SUM(minutes), 0) AS m FROM voice_minutes WHERE user_id = ?').get(id).m;
     const paused = db.prepare('SELECT 1 FROM opt_out WHERE discord_id = ?').get(id);
+    const subs = db.prepare('SELECT game FROM subscriptions WHERE user_id = ? AND guild_id = ?').all(id, interaction.guildId ?? '').map(r => r.game);
     return reply([
       `Steam: ${links?.steam_id ?? '-'}`,
       `Riot: ${links?.riot_id ?? '-'}`,
       `Voice minutes stored: ${minutes}`,
-      `Voice tracking: ${paused ? 'paused' : 'on'}`
+      `Voice tracking: ${paused ? 'paused' : 'on'}`,
+      `LFG pings here: ${subs.join(', ') || '-'}`,
+      `LFG DMs: ${db.prepare('SELECT 1 FROM dm_on WHERE discord_id = ?').get(id) ? 'on' : 'off'}`
     ].join('\n'));
   }
 
@@ -50,6 +53,8 @@ async function execute(interaction) {
     db.prepare('DELETE FROM pair_minutes WHERE user_a = ? OR user_b = ?').run(id, id);
     db.prepare('DELETE FROM sessions WHERE user_id = ?').run(id);
     db.prepare('DELETE FROM lfg_members WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM subscriptions WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM dm_on WHERE discord_id = ?').run(id);
     db.prepare('INSERT OR IGNORE INTO opt_out VALUES (?)').run(id);
     return reply('Everything about you is deleted and voice tracking is paused. Use /mydata Resume voice tracking to turn it back on.');
   }

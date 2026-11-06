@@ -1,21 +1,18 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags, InteractionContextType } = require('discord.js');
-const { db, guildSettings, setGuild } = require('../db');
-const { validTimezone, monthKey } = require('../time');
-const { panel, refreshPanel } = require('./lfg');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, InteractionContextType } = require('discord.js');
+const { db, setGuild } = require('../db');
+const { validTimezone } = require('../time');
 
 const data = new SlashCommandBuilder()
   .setName('setup')
   .setDescription('Server settings (admins)')
   .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
   .setContexts(InteractionContextType.Guild)
-  .addSubcommand(s => s.setName('lfg').setDescription('Set the LFG channel and post the game picker there')
-    .addChannelOption(o => o.setName('channel').setDescription('Channel').addChannelTypes(ChannelType.GuildText).setRequired(true)))
-  .addSubcommand(s => s.setName('addgame').setDescription('Add a game and its ping role')
+  .addSubcommand(s => s.setName('addgame').setDescription('Add a game people can subscribe to')
     .addStringOption(o => o.setName('game').setDescription('Game name').setRequired(true).setMaxLength(50)))
-  .addSubcommand(s => s.setName('removegame').setDescription('Remove a game and its ping role')
+  .addSubcommand(s => s.setName('removegame').setDescription('Remove a game from /games')
     .addStringOption(o => o.setName('game').setDescription('Game name').setRequired(true).setAutocomplete(true)))
-  .addSubcommand(s => s.setName('wrapped').setDescription('Set the channel for the monthly Wrapped post')
-    .addChannelOption(o => o.setName('channel').setDescription('Channel').addChannelTypes(ChannelType.GuildText).setRequired(true)))
+  .addSubcommand(s => s.setName('wrapped').setDescription('Turn the automatic monthly Wrapped post on or off')
+    .addBooleanOption(o => o.setName('auto').setDescription('Post Wrapped automatically at the start of each month').setRequired(true)))
   .addSubcommand(s => s.setName('timezone').setDescription('Server timezone for LFG times and Wrapped')
     .addStringOption(o => o.setName('timezone').setDescription('Like Europe/Istanbul or America/Toronto').setRequired(true)));
 
@@ -30,39 +27,30 @@ async function execute(interaction) {
   const guild = interaction.guild;
   const reply = content => interaction.reply({ content, flags: MessageFlags.Ephemeral });
 
-  if (sub === 'lfg') {
-    const channel = interaction.options.getChannel('channel');
-    const message = await channel.send(panel(guild.id));
-    setGuild(guild.id, 'lfg_channel', channel.id);
-    setGuild(guild.id, 'panel_message', message.id);
-    return reply(`LFG posts will go to <#${channel.id}>. Game picker posted.`);
-  }
-
   if (sub === 'addgame') {
     const name = interaction.options.getString('game').trim();
     if (db.prepare('SELECT 1 FROM games WHERE guild_id = ? AND name = ?').get(guild.id, name)) return reply(`**${name}** already exists.`);
-    if (db.prepare('SELECT COUNT(*) AS n FROM games WHERE guild_id = ?').get(guild.id).n >= 25) return reply('The game picker holds up to 25 games.');
-    const role = await guild.roles.create({ name, mentionable: true, reason: 'LFG game role' });
-    db.prepare('INSERT INTO games VALUES (?, ?, ?)').run(guild.id, name, role.id);
-    await refreshPanel(guild);
-    return reply(`Added **${name}** with role <@&${role.id}>.`);
+    if (db.prepare('SELECT COUNT(*) AS n FROM games WHERE guild_id = ?').get(guild.id).n >= 25) return reply('Up to 25 games are supported.');
+    db.prepare('INSERT INTO games VALUES (?, ?, NULL)').run(guild.id, name);
+    return reply(`Added **${name}**.`);
   }
 
   if (sub === 'removegame') {
     const name = interaction.options.getString('game');
     const game = db.prepare('SELECT role_id FROM games WHERE guild_id = ? AND name = ?').get(guild.id, name);
     if (!game) return reply(`**${name}** isn't on the list.`);
-    await guild.roles.delete(game.role_id).catch(() => {});
+    if (game.role_id) await guild.roles.delete(game.role_id).catch(() => {});
     db.prepare('DELETE FROM games WHERE guild_id = ? AND name = ?').run(guild.id, name);
-    await refreshPanel(guild);
+    db.prepare('DELETE FROM subscriptions WHERE guild_id = ? AND game = ?').run(guild.id, name);
     return reply(`Removed **${name}**.`);
   }
 
   if (sub === 'wrapped') {
-    const channel = interaction.options.getChannel('channel');
-    setGuild(guild.id, 'wrapped_channel', channel.id);
-    setGuild(guild.id, 'last_wrapped', monthKey(guildSettings(guild.id).timezone, Date.now(), -1));
-    return reply(`Monthly Wrapped will be posted in <#${channel.id}> at the start of each month.`);
+    const auto = interaction.options.getBoolean('auto');
+    setGuild(guild.id, 'wrapped_auto', auto ? 1 : 0);
+    return reply(auto
+      ? "Wrapped will be posted automatically in the server's system messages channel at the start of each month."
+      : 'Automatic Wrapped is off. Anyone can still use /wrapped.');
   }
 
   if (sub === 'timezone') {

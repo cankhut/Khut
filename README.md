@@ -1,61 +1,72 @@
 # Khut
 
-A Discord bot for game groups: LFG pings, voice time tracking with a monthly Wrapped, and player stats for Deadlock, Counter-Strike 2 and League of Legends.
+A Discord bot made for small groups. LFG pings, voice time tracking with Wrapped and player stats for Deadlock, Counter-Strike 2 and League of Legends.
 
 ## Commands
 
+All commands work in any channel. `/help` shows this list in Discord.
+
 | Command | What it does |
 |---|---|
-| `/stats game player` | Stats for Deadlock, CS2 or League. Valorant shows a tracker.gg profile link. `player` = @user, Steam profile link / friend code, or Riot ID (`Name#Tag`). Empty = you. |
-| `/link` | Link your Steam and Riot accounts (`/link steam:... riot:Name#Tag`, or the Connect button if enabled). |
-| `/lfg game time slots note` | Post a group. Time: `now`, `30m`, `2h`, `21:00`, `9pm`. Pings the game's role, pings everyone when full, reminds 10 min before. |
-| `/voicetime player` | Voice time this week / month / all time, plus top games. |
-| `/leaderboard period` | Most voice time on the server. |
-| `/duo player period` | Who someone spends the most voice time with. |
-| `/mydata action` | Show, unlink, pause tracking, or delete everything stored about you. |
-| `/setup ...` | Admins: `lfg`, `addgame`, `removegame`, `wrapped`, `timezone`. |
+| `/help` | Every command, with examples. |
+| `/stats game player` | Deadlock, CS2 or League stats. `player` = @user, Steam link / friend code, or Riot ID (`Name#Tag`). Empty = you. |
+| `/stats game:Discord player with` | Someone's voice time, or with `with:` the voice time between two people. |
+| `/lfg game time players note` | Look for players. Time: `now`, `30m`, `2h`, `21:00`, `9pm`. Players: `3/6` if 3 of you are already together, or just `6`. Quietly pings everyone subscribed to that game, pings the group when full and reminds them 10 minutes before. Closes 2 hours after the start time and is deleted 12 hours after it closes or is cancelled. |
+| `/games` | Subscribe to games so you get pinged when someone uses `/lfg` for them. |
+| `/dm on` / `/dm off` | Also get those pings as a DM. |
+| `/wrapped period` | Server voice Wrapped: this month, last month, this year or all time. |
+| `/link` | Link your Steam and Riot accounts so people can use `player:@you`. |
+| `/mydata` | See, pause or delete what Khut stores about you. |
+| `/setup` | Admins: `addgame`, `removegame`, `wrapped`, `timezone`. |
 
-Voice time only counts when 2+ people are in a channel (AFK channel and bots ignored).
+Voice time only counts when 2 or more people are in a channel (AFK channel and bots are ignored).
+
+At the start of each month, Wrapped is posted automatically in the server's **System Messages Channel** (Server Settings > Engagement). You can turn it off with `/setup wrapped auto:False`.
+
+League stats only count Summoner's Rift games (no ARAM, Arena or other game modes). Ranked KDA covers the current season.
+
+Hero and champion icons gets added to the bot as app emojis the first time it starts, this can take some time, the console prints `Icons ready` when done.
 
 ## 1. Install the tools
 
-- [Node.js](https://nodejs.org) 22.13 or newer (the LTS version is fine)
+- [Node.js](https://nodejs.org) <sub><sup>(22.13 or newer)</sup></sub>
 - [Git](https://git-scm.com)
 
 ## 2. Create the Discord bot
 
-1. Go to <https://discord.com/developers/applications> → **New Application**, name it.
-2. **General Information**: copy **Application ID** → `CLIENT_ID`.
+1. Go to <https://discord.com/developers/applications> > **New Application**, give it a name.
+2. **General Information**: copy **Application ID** > `CLIENT_ID`.
 3. **Bot** tab:
-   - **Reset Token** → copy → `DISCORD_TOKEN`. Treat this like a password.
+   - **Reset Token** > copy > `DISCORD_TOKEN`. Treat this like a password.
    - Turn **Public Bot** off, so only you can add it to servers.
-   - Under **Privileged Gateway Intents**, turn on **Presence Intent** (used to see which game people are playing while in voice).
+   - Under **Privileged Gateway Intents**, turn on **Presence Intent**. <sub><sup>(this is used to see which game people are playing while in voice)</sup></sub>
 4. **Installation** tab: set Install Link to **None**.
 5. Invite it to your server with this link (replace `CLIENT_ID`):
 
-   `https://discord.com/oauth2/authorize?client_id=CLIENT_ID&scope=bot%20applications.commands&permissions=268454912`
+   `https://discord.com/oauth2/authorize?client_id=CLIENT_ID&scope=bot%20applications.commands&permissions=19456`
 
-   Permissions: View Channels, Send Messages, Embed Links, Manage Roles (for game ping roles).
-6. In Discord, turn on **Settings → Advanced → Developer Mode**, right-click your server → **Copy Server ID** → `DEV_GUILD_ID`.
+   Permissions: View Channels, Send Messages, Embed Links.
+6. In Discord, turn on **Settings > Advanced > Developer Mode**, right-click your server > **Copy Server ID** > `DEV_GUILD_ID`.
 
-## 3. Get the API keys (all free)
+## 3. Get the API keys <sub><sup>(all free)</sup></sub>
 
 | Key | Where | Notes |
 |---|---|---|
 | `STEAM_KEY` | <https://steamcommunity.com/dev/apikey> | Domain can be `localhost`. Your Steam account must not be limited. |
-| `RIOT_KEY` | <https://developer.riotgames.com> | Register a product and apply for a **Personal API Key**. The default development key works for testing but expires every 24 hours. |
-| `LEETIFY_KEY` | <https://leetify.com/app/developer> | Optional, gives higher rate limits for CS2 stats. |
+| `RIOT_KEY` | <https://developer.riotgames.com> | Register a product and apply for a **Personal API Key**. The default development key works for testing but it expires every 24 hours. |
+| `LEETIFY_KEY` | <https://leetify.com/app/developer> | Pretty much optional but gives higher rate limits for CS2 stats. |
 
-Deadlock stats use deadlock-api.com and need no key.
+Deadlock stats come from deadlock-api.com and need no key.
 
 ## 4. Run it
 
 ```bash
-git clone <your repo url>
+git clone https://github.com/cankhut/khut.git
 cd khut
 npm install
 cp .env.example .env
 ```
+
 
 Fill in `.env`, then:
 
@@ -68,19 +79,29 @@ npm start
 
 Then in Discord:
 
-1. `/setup addgame game:Deadlock` (repeat for each game)
-2. `/setup lfg channel:#lfg` (posts the game picker there)
-3. `/setup wrapped channel:#general`
+1. `/setup addgame game:Deadlock` <sub><sup>(repeat for each game)</sup></sub>
+2. Everyone runs `/games` to pick their games.
 
 The default timezone is Türkiye (`Europe/Istanbul`). Change it with `/setup timezone` if needed.
 
-The bot only runs while `npm start` is running. Data is saved in `data.db`, so back that file up.
+The bot only runs while `npm start` is running. Data is saved in `data.db`.
+
+## Updating
+
+```bash
+git pull
+npm install
+npm run deploy
+npm start
+```
+
+`npm run deploy` is only needed when commands or their descriptions changed. `data.db` updates itself.
 
 ## 5. Optional: one-click linking
 
 `/link` with no options can read the Steam and Riot accounts already connected to someone's Discord profile. This needs a public HTTPS address for the bot:
 
-1. Developer Portal → **OAuth2**: copy **Client Secret** → `CLIENT_SECRET`, and add the redirect `https://your-address/callback`.
+1. Developer Portal > **OAuth2**: copy **Client Secret** > `CLIENT_SECRET`, and add the redirect `https://your-address/callback`.
 2. Set `PUBLIC_URL=https://your-address` in `.env`.
 
 Without this, `/link steam:... riot:...` works the same way.
@@ -88,14 +109,21 @@ Without this, `/link steam:... riot:...` works the same way.
 ## 6. Keep the keys private
 
 - All keys live only in `.env`. `.gitignore` keeps `.env` and `data.db` out of Git.
-- Before every commit, `git status` should **not** list `.env`.
-- If a key ever leaks, reset it right away on the site where you created it.
+- Before every commit, `git status` should **NOT** list `.env`.
+- **IF A KEY EVER LEAKS**, reset it right away on the site where you created it.
 
 ## Legal
 
 - Khut isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
 - CS2 data provided by [Leetify](https://leetify.com/). Not affiliated with Leetify.
-- Deadlock data from [deadlock-api.com](https://deadlock-api.com). Not affiliated with Valve.
-- Valorant stats are not fetched: Riot only allows them through a production key with Riot Sign On, where each player opts in. `/stats` links to the player's tracker.gg profile instead.
+- Deadlock data from [deadlock-api.com](https://deadlock-api.com), with links to [Statlocker](https://statlocker.gg) profiles. Not affiliated with Valve.
 - A Personal Riot API key is for your own server. Before opening the bot to the public, apply for a Production key.
 - See [PRIVACY.md](PRIVACY.md) for what the bot stores.
+
+## License
+
+Khut is licensed under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0).
+
+You can use, change and share it, but if you share a changed version, or run a changed version as a bot other people use, you have to publish your source code under the same license.
+
+Game icons, hero and champion images and rank badges belong to their owners (Valve, Riot Games) and are not covered by this license.

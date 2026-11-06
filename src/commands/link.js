@@ -7,7 +7,7 @@ const data = new SlashCommandBuilder()
   .setName('link')
   .setDescription('Link your Steam and Riot accounts')
   .addStringOption(o => o.setName('steam').setDescription('Steam profile link or friend code'))
-  .addStringOption(o => o.setName('riot').setDescription('Riot ID, like Name#Tag'));
+  .addStringOption(o => o.setName('riot').setDescription('Name#Tag'));
 
 async function execute(interaction) {
   const steamInput = interaction.options.getString('steam');
@@ -39,7 +39,7 @@ async function execute(interaction) {
   let riotId = null;
   if (riotInput) {
     const account = await riotAccount(riotInput).catch(() => null);
-    if (!account) return interaction.editReply("Couldn't find that Riot ID. Use the format Name#Tag.");
+    if (!account) return interaction.editReply("Couldn't find that Riot ID.");
     riotId = `${account.gameName}#${account.tagLine}`;
     done.push(`Riot: ${riotId}`);
   }

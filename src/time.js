@@ -88,4 +88,4 @@ function formatMinutes(min) {
   return h ? `${h}h ${min % 60}m` : `${min}m`;
 }
 
-module.exports = { parts, dayKey, monthKey, monthRange, periodStart, validTimezone, parseStart, formatMinutes };
+module.exports = { parts, localToUtc, dayKey, monthKey, monthRange, periodStart, validTimezone, parseStart, formatMinutes };

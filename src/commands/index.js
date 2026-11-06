@@ -1,8 +1,11 @@
 const list = [
+  require('./help'),
   require('./stats'),
-  require('./link'),
   require('./lfg'),
-  ...require('./voice'),
+  require('./lfg').games,
+  require('./dm'),
+  require('./wrapped'),
+  require('./link'),
   require('./mydata'),
   require('./setup')
 ];

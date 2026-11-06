@@ -42,8 +42,32 @@ async function steamProfile(steamId) {
   return player;
 }
 
-function riot(url) {
-  return getJson(url, { 'X-Riot-Token': process.env.RIOT_KEY });
+const RIOT_LIMITS = [[20, 1000], [100, 120000]];
+const riotSent = [];
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function riotSlot() {
+  for (;;) {
+    const now = Date.now();
+    while (riotSent.length && now - riotSent[0] > 120000) riotSent.shift();
+    const wait = Math.max(0, ...RIOT_LIMITS.map(([limit, ms]) => {
+      const recent = riotSent.filter(t => now - t < ms);
+      return recent.length >= limit ? recent[recent.length - limit] + ms - now : 0;
+    }));
+    if (!wait) return riotSent.push(now);
+    await sleep(wait + 50);
+  }
+}
+
+async function riot(url) {
+  await riotSlot();
+  try {
+    return await getJson(url, { 'X-Riot-Token': process.env.RIOT_KEY });
+  } catch (err) {
+    if (err.status !== 429) throw err;
+    await sleep(10000);
+    return riot(url);
+  }
 }
 
 function splitRiotId(riotId) {

@@ -35,7 +35,7 @@ async function handleCallback(code) {
   const steam = connections.find(c => c.type === 'steam');
   const riot = connections.find(c => c.type === 'riotgames' && c.name?.includes('#'));
 
-  if (!steam && !riot) return 'No Steam or Riot account found in your Discord connections. Use /link steam:... riot:... in Discord instead.';
+  if (!steam && !riot) return 'No Steam or Riot account found in your Discord connections.';
   saveLinks(user.id, steam?.id, riot?.name);
   return `Linked ${[steam && `Steam (${steam.name})`, riot && `Riot (${riot.name})`].filter(Boolean).join(' and ')}. You can close this tab.`;
 }

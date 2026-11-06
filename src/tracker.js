@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require('discord.js');
 const { db, guildSettings, setGuild } = require('./db');
-const { parts, dayKey, monthKey, monthRange, formatMinutes } = require('./time');
+const colors = require('./colors');
+const { parts, localToUtc, dayKey, monthKey, monthRange, formatMinutes } = require('./time');
 
 const active = new Map();
 
@@ -60,15 +61,26 @@ async function tick(client) {
   }
 }
 
-function wrappedEmbed(guildId, month, tz) {
-  const from = `${month}-01`;
-  const to = `${month}-31`;
+function wrappedRange(period, tz) {
+  const now = parts(tz);
+  if (period === 'all') return { title: 'All-time', from: '0000-00-00', to: '9999-12-31', start: 0, end: Number.MAX_SAFE_INTEGER };
+  if (period === 'year') {
+    return { title: `${now.year}`, from: `${now.year}-01-01`, to: `${now.year}-12-31`, start: localToUtc(tz, now.year, 1, 1), end: localToUtc(tz, now.year + 1, 1, 1) };
+  }
+  const month = monthKey(tz, Date.now(), period === 'last' ? -1 : 0);
+  const [year, m] = month.split('-').map(Number);
   const [start, end] = monthRange(tz, month);
+  const title = new Date(Date.UTC(year, m - 1, 1)).toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  return { title, from: `${month}-01`, to: `${month}-31`, start, end };
+}
+
+function wrappedEmbed(guildId, period, tz) {
+  const { title, from, to, start, end } = wrappedRange(period, tz);
   const get = sql => db.prepare(sql).get(guildId, from, to);
 
   const total = get('SELECT SUM(minutes) AS m FROM channel_minutes WHERE guild_id = ? AND day BETWEEN ? AND ?').m;
   if (!total) return null;
-  const top = get('SELECT user_id, SUM(minutes) AS m FROM voice_minutes WHERE guild_id = ? AND day BETWEEN ? AND ? GROUP BY user_id ORDER BY m DESC LIMIT 1');
+  const top = db.prepare('SELECT user_id, SUM(minutes) AS m FROM voice_minutes WHERE guild_id = ? AND day BETWEEN ? AND ? GROUP BY user_id ORDER BY m DESC LIMIT 5').all(guildId, from, to);
   const duo = get('SELECT user_a, user_b, SUM(minutes) AS m FROM pair_minutes WHERE guild_id = ? AND day BETWEEN ? AND ? GROUP BY user_a, user_b ORDER BY m DESC LIMIT 1');
   const game = get("SELECT game, SUM(minutes) AS m FROM voice_minutes WHERE guild_id = ? AND day BETWEEN ? AND ? AND game != '' GROUP BY game ORDER BY m DESC LIMIT 1");
 
@@ -79,33 +91,32 @@ function wrappedEmbed(guildId, month, tz) {
     return (p.hour * 60 + p.minute + 12 * 60) % (24 * 60);
   };
   const latest = sessions.reduce((best, s) => (!best || lateScore(s) > lateScore(best) ? s : best), null);
+  const latestTime = latest && parts(tz, latest.end_at);
 
-  const [year, m] = month.split('-').map(Number);
-  const title = new Date(Date.UTC(year, m - 1, 1)).toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-  const lines = [
+  const highlights = [
     `⏱️ ${formatMinutes(total)} in voice together`,
-    top && `👑 Most active: <@${top.user_id}> (${formatMinutes(top.m)})`,
     duo && `🤝 Top duo: <@${duo.user_a}> + <@${duo.user_b}> (${formatMinutes(duo.m)})`,
     game && `🎮 Most played: ${game.game} (${formatMinutes(game.m)})`,
     longest && `🔥 Longest session: <@${longest.user_id}> (${formatMinutes(Math.round((longest.end_at - longest.start_at) / 60000))})`,
-    latest && (() => {
-      const p = parts(tz, latest.end_at);
-      return `🌙 Latest night: ${p.weekday}, ended ${String(p.hour).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}`;
-    })()
+    latest && `🌙 Latest night: ${latestTime.weekday}, ended ${String(latestTime.hour).padStart(2, '0')}:${String(latestTime.minute).padStart(2, '0')}`
   ];
+  const medals = ['🥇', '🥈', '🥉', '4.', '5.'];
 
-  return new EmbedBuilder().setTitle(`📊 ${title} Wrapped`).setDescription(lines.filter(Boolean).join('\n'));
+  return new EmbedBuilder()
+    .setColor(colors.wrapped)
+    .setTitle(`📊 ${title} Wrapped`)
+    .setDescription(highlights.filter(Boolean).join('\n'))
+    .addFields({ name: '🏆 Most time in voice', value: top.map((r, i) => `${medals[i]} <@${r.user_id}> — ${formatMinutes(r.m)}`).join('\n') });
 }
 
 async function postWrapped(guild, settings) {
-  if (!settings.wrapped_channel) return;
   const month = monthKey(settings.timezone, Date.now(), -1);
   if (settings.last_wrapped === month) return;
   setGuild(guild.id, 'last_wrapped', month);
+  if (!settings.wrapped_auto || !guild.systemChannel) return;
 
-  const embed = wrappedEmbed(guild.id, month, settings.timezone);
-  const channel = await guild.channels.fetch(settings.wrapped_channel).catch(() => null);
-  if (embed && channel) await channel.send({ embeds: [embed] });
+  const embed = wrappedEmbed(guild.id, 'last', settings.timezone);
+  if (embed) await guild.systemChannel.send({ embeds: [embed] });
 }
 
 module.exports = { tick, wrappedEmbed };

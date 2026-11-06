@@ -4,6 +4,7 @@ const commands = require('./commands');
 const lfg = require('./commands/lfg');
 const tracker = require('./tracker');
 const web = require('./web');
+const { syncEmojis } = require('./assets');
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildPresences]
@@ -11,13 +12,14 @@ const client = new Client({
 
 const buttons = {
   lfg: lfg.button,
-  role: lfg.roleButton
+  sub: lfg.subscribeButton
 };
 
 client.once(Events.ClientReady, c => {
   console.log(`Logged in as ${c.user.tag}`);
   setInterval(() => tracker.tick(client).catch(console.error), 60000);
   setInterval(() => lfg.tick(client).catch(console.error), 30000);
+  syncEmojis(client).catch(console.error);
 });
 
 client.on(Events.InteractionCreate, async interaction => {
