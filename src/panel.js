@@ -189,13 +189,6 @@ const routes = {
       await refreshPicker(body.id);
     }
     return { message: 'Saved.', guilds: await guilds() };
-  },
-  'POST /api/profile': async body => {
-    const change = {};
-    if (body.username) change.username = body.username;
-    if (body.avatar) change.avatar = body.avatar;
-    await discord('PATCH', '/users/@me', change);
-    return { message: 'Profile updated.' };
   }
 };
 

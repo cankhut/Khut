@@ -115,7 +115,7 @@ Then open <http://localhost:3001>. From there you can:
 
 - Fill in the API keys (saved to `.env`)
 - Start, stop and restart the bot, register commands and watch the log
-- Copy the invite link and change the bot's name and picture
+- Copy the invite link
 - Change each server's games, timezone and Wrapped
 - Change embed colours and everything the bot says, with a live preview
 - Change the LFG and cleanup timings

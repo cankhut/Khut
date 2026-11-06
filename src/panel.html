@@ -11,7 +11,8 @@
   }
   * { box-sizing: border-box; }
   body { margin: 0; font: 14px/1.45 "gg sans", "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); }
-  header { display: flex; align-items: center; gap: 12px; padding: 14px 24px; background: var(--panel); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+  .top { position: sticky; top: 0; z-index: 5; }
+  header { display: flex; align-items: center; gap: 12px; padding: 14px 24px; background: var(--panel); border-bottom: 1px solid var(--line); }
   header h1 { font-size: 18px; margin: 0 8px 0 0; }
   .pill { padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; background: var(--line); }
   .pill.on { background: var(--green); color: #fff; }
@@ -81,6 +82,7 @@
 </style>
 </head>
 <body>
+<div class="top">
 <header>
   <h1>Khut</h1>
   <span id="status" class="pill">Stopped</span>
@@ -90,6 +92,7 @@
   <button class="btn red" id="stopBtn" onclick="botAction('stop')">Stop</button>
 </header>
 <nav id="tabs"></nav>
+</div>
 <main>
   <section id="bot">
     <div class="box">
@@ -105,15 +108,6 @@
     <div class="box">
       <h2>Log</h2>
       <div id="log"></div>
-    </div>
-    <div class="box">
-      <h2>Bot profile</h2>
-      <p class="hint">Changes the bot's name and picture everywhere. Discord only allows a couple of name changes per hour.</p>
-      <div class="grid2">
-        <label class="field"><b>Name</b><input id="username" placeholder="Khut"></label>
-        <label class="field"><b>Picture</b><input id="avatar" type="file" accept="image/png,image/jpeg,image/gif"></label>
-      </div>
-      <button class="btn" onclick="saveProfile()">Update profile</button>
     </div>
   </section>
 
@@ -353,7 +347,8 @@ function renderTabs() {
 }
 
 function showTab(id) {
-  location.hash = id;
+  history.replaceState(null, '', `#${id}`);
+  window.scrollTo(0, 0);
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
   document.querySelectorAll('section').forEach(s => s.classList.toggle('active', s.id === id));
 }
@@ -499,17 +494,6 @@ function saveSettings() {
     if (!/^#[0-9A-Fa-f]{6}$/.test(value)) return toast(`${COLOURS[key]} needs a colour like #5865F2.`, true);
   }
   attempt(() => api('POST', '/api/settings', state.settings));
-}
-
-function saveProfile() {
-  const file = $('avatar').files[0];
-  const username = $('username').value.trim();
-  if (!file && !username) return toast('Type a name or pick a picture.', true);
-  const send = avatar => attempt(() => api('POST', '/api/profile', { username, avatar }));
-  if (!file) return send();
-  const reader = new FileReader();
-  reader.onload = () => send(reader.result);
-  reader.readAsDataURL(file);
 }
 
 function renderGuilds(list) {
