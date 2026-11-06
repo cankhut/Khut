@@ -24,6 +24,9 @@ db.exec(`
 for (const sql of [
   'ALTER TABLE lfg ADD COLUMN extra INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE lfg ADD COLUMN ended_at INTEGER',
+  "ALTER TABLE guilds ADD COLUMN timezone TEXT NOT NULL DEFAULT 'Europe/Istanbul'",
+  'ALTER TABLE guilds ADD COLUMN wrapped_auto INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE guilds ADD COLUMN last_wrapped TEXT',
   'ALTER TABLE guilds ADD COLUMN panel_channel TEXT',
   'ALTER TABLE guilds ADD COLUMN panel_message TEXT'
 ]) {
