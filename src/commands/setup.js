@@ -1,12 +1,15 @@
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, InteractionContextType } = require('discord.js');
 const { db, setGuild } = require('../db');
 const { validTimezone } = require('../time');
+const { postPanel, refreshPanel } = require('./lfg');
+const log = require('../log');
 
 const data = new SlashCommandBuilder()
   .setName('setup')
   .setDescription('Server settings (admins)')
   .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
   .setContexts(InteractionContextType.Guild)
+  .addSubcommand(s => s.setName('games').setDescription('Post a fixed game picker in this channel, like for onboarding'))
   .addSubcommand(s => s.setName('addgame').setDescription('Add a game people can subscribe to')
     .addStringOption(o => o.setName('game').setDescription('Game name').setRequired(true).setMaxLength(50)))
   .addSubcommand(s => s.setName('removegame').setDescription('Remove a game from /games')
@@ -27,12 +30,24 @@ async function execute(interaction) {
   const guild = interaction.guild;
   const reply = content => interaction.reply({ content, flags: MessageFlags.Ephemeral });
 
+  if (sub === 'games') {
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    try {
+      await postPanel(interaction);
+    } catch (err) {
+      log.warn(`Games panel failed in ${guild.name}: ${err.message}`);
+      return interaction.editReply("I can't post here. Give Khut View Channel and Send Messages in this channel.");
+    }
+    return interaction.editReply('Posted. It updates by itself when you add or remove games.');
+  }
+
   if (sub === 'addgame') {
     const name = interaction.options.getString('game').trim();
     if (db.prepare('SELECT 1 FROM games WHERE guild_id = ? AND name = ?').get(guild.id, name)) return reply(`**${name}** already exists.`);
     if (db.prepare('SELECT COUNT(*) AS n FROM games WHERE guild_id = ?').get(guild.id).n >= 25) return reply('Up to 25 games are supported.');
     db.prepare('INSERT INTO games VALUES (?, ?, NULL)').run(guild.id, name);
-    return reply(`Added **${name}**.`);
+    await reply(`Added **${name}**.`);
+    return refreshPanel(guild);
   }
 
   if (sub === 'removegame') {
@@ -42,7 +57,8 @@ async function execute(interaction) {
     if (game.role_id) await guild.roles.delete(game.role_id).catch(() => {});
     db.prepare('DELETE FROM games WHERE guild_id = ? AND name = ?').run(guild.id, name);
     db.prepare('DELETE FROM subscriptions WHERE guild_id = ? AND game = ?').run(guild.id, name);
-    return reply(`Removed **${name}**.`);
+    await reply(`Removed **${name}**.`);
+    return refreshPanel(guild);
   }
 
   if (sub === 'wrapped') {

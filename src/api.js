@@ -1,9 +1,20 @@
+const log = require('./log');
+
 const STEAM_OFFSET = 76561197960265728n;
 
 async function getJson(url, headers = {}) {
-  const res = await fetch(url, { headers });
+  const started = Date.now();
+  let res;
+  try {
+    res = await fetch(url, { headers, signal: AbortSignal.timeout(15000) });
+  } catch (err) {
+    log.warn(`API failed: ${url} (${err.cause?.code ?? err.name})`);
+    throw err;
+  }
+  log.debug(`API ${res.status} ${url} ${Date.now() - started}ms`);
   if (!res.ok) {
-    const err = new Error(`${res.status} ${url}`);
+    (res.status === 404 ? log.info : log.warn)(`API ${res.status}: ${url}`);
+    const err = new Error(`${res.status} ${log.redact(url)}`);
     err.status = res.status;
     throw err;
   }
@@ -65,6 +76,7 @@ async function riot(url) {
     return await getJson(url, { 'X-Riot-Token': process.env.RIOT_KEY });
   } catch (err) {
     if (err.status !== 429) throw err;
+    log.warn('Riot rate limit hit, waiting 10s');
     await sleep(10000);
     return riot(url);
   }

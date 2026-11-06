@@ -1,5 +1,6 @@
 const http = require('node:http');
 const { saveLinks } = require('./db');
+const log = require('./log');
 
 function redirectUri() {
   return `${process.env.PUBLIC_URL}/callback`;
@@ -37,6 +38,7 @@ async function handleCallback(code) {
 
   if (!steam && !riot) return 'No Steam or Riot account found in your Discord connections.';
   saveLinks(user.id, steam?.id, riot?.name);
+  log.info(`${user.username} linked ${[steam && 'Steam', riot && 'Riot'].filter(Boolean).join(' and ')} with Discord connections`);
   return `Linked ${[steam && `Steam (${steam.name})`, riot && `Riot (${riot.name})`].filter(Boolean).join(' and ')}. You can close this tab.`;
 }
 
@@ -54,12 +56,12 @@ function start() {
     try {
       res.end(await handleCallback(code));
     } catch (err) {
-      console.error(err);
+      log.error('Linking failed:', err);
       res.statusCode = 400;
       res.end('Linking failed. Run /link again.');
     }
   });
-  server.listen(process.env.PORT || 3000, () => console.log(`Link server on port ${process.env.PORT || 3000}`));
+  server.listen(process.env.PORT || 3000, () => log.info(`Link server on port ${process.env.PORT || 3000}`));
 }
 
 module.exports = { start, oauthUrl };

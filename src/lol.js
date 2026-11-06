@@ -2,6 +2,7 @@ const { EmbedBuilder } = require('discord.js');
 const { db } = require('./db');
 const { riot, riotAccount } = require('./api');
 const { championLabel, profileIconUrl } = require('./assets');
+const log = require('./log');
 const colors = require('./colors');
 const icons = require('./icons');
 
@@ -27,6 +28,8 @@ const SOLO = 420;
 const FLEX = 440;
 const NORMALS = [400, 430, 480, 490];
 const SEASON_CAP = 300;
+const TIERS = ['IRON', 'BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'EMERALD', 'DIAMOND', 'MASTER', 'GRANDMASTER', 'CHALLENGER'];
+const DIVISIONS = ['IV', 'III', 'II', 'I'];
 const NOTICE = 'Not endorsed by Riot Games. Riot Games and all associated properties are trademarks of Riot Games, Inc.';
 
 const loading = new Set();
@@ -36,6 +39,17 @@ const getMatch = db.prepare('SELECT * FROM lol_matches WHERE match_id = ? AND pu
 
 function pct(wins, total) {
   return total ? Math.round(wins / total * 100) : 0;
+}
+
+function rankScore(entry) {
+  return entry ? TIERS.indexOf(entry.tier) * 10000 + DIVISIONS.indexOf(entry.rank) * 1000 + entry.leaguePoints : -1;
+}
+
+function crestUrl(solo, flex) {
+  const best = rankScore(solo) >= rankScore(flex) ? solo : flex;
+  const name = best ? best.tier[0] + best.tier.slice(1).toLowerCase() : 'Unranked';
+  const file = `Season_2023_-_${name}.png`;
+  return `https://wiki.leagueoflegends.com/en-us/images/thumb/${file}/240px-${file}`;
 }
 
 function kda(rows) {
@@ -117,6 +131,7 @@ async function buildEmbed(data) {
     .setColor(colors.lol)
     .setTitle(`League of Legends · ${opgg.toUpperCase()}`)
     .setURL(`https://op.gg/lol/summoners/${opgg}/${encodeURIComponent(account.gameName)}-${encodeURIComponent(account.tagLine)}`)
+    .setThumbnail(crestUrl(solo, flex))
     .addFields(
       { name: `Last ${recent.length} Summoner's Rift games`, value: recent.length ? `${pct(recent.filter(r => r.win).length, recent.length)}% WR\n${kda(recent)}` : 'No games yet' },
       queueField('Ranked Solo/Duo · season', solo, soloIds),
@@ -139,10 +154,12 @@ async function lolStats(riotId, onUpdate) {
 
   if (missing.length && !loading.has(data.account.puuid)) {
     loading.add(data.account.puuid);
+    log.info(`League: loading ${missing.length} more games for ${riotId} in the background`);
     (async () => {
       for (const id of missing) await loadMatch(data.route, data.account.puuid, id);
       await onUpdate(await buildEmbed(data));
-    })().catch(console.error).finally(() => loading.delete(data.account.puuid));
+      log.info(`League: finished loading games for ${riotId}`);
+    })().catch(err => log.error(`League background load failed for ${riotId}:`, err)).finally(() => loading.delete(data.account.puuid));
   }
 
   return buildEmbed(data);

@@ -18,9 +18,15 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS channel_minutes (guild_id TEXT, day TEXT, minutes INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (guild_id, day));
   CREATE TABLE IF NOT EXISTS lol_matches (match_id TEXT, puuid TEXT, queue INTEGER, champion INTEGER, kills INTEGER, deaths INTEGER, assists INTEGER, win INTEGER, PRIMARY KEY (match_id, puuid));
   CREATE TABLE IF NOT EXISTS sessions (guild_id TEXT, user_id TEXT, start_at INTEGER, end_at INTEGER);
+  CREATE TABLE IF NOT EXISTS cleanup (channel_id TEXT, message_id TEXT PRIMARY KEY, delete_at INTEGER);
 `);
 
-for (const sql of ['ALTER TABLE lfg ADD COLUMN extra INTEGER NOT NULL DEFAULT 0', 'ALTER TABLE lfg ADD COLUMN ended_at INTEGER']) {
+for (const sql of [
+  'ALTER TABLE lfg ADD COLUMN extra INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE lfg ADD COLUMN ended_at INTEGER',
+  'ALTER TABLE guilds ADD COLUMN panel_channel TEXT',
+  'ALTER TABLE guilds ADD COLUMN panel_message TEXT'
+]) {
   try {
     db.exec(sql);
   } catch {}

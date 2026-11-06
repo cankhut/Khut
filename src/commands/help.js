@@ -25,6 +25,7 @@ const sections = [
     '`/mydata` — see, pause or delete what Khut stores about you'
   ]],
   ['⚙️ Admins', [
+    '`/setup games` — post a fixed game picker in this channel (for onboarding or a rules-like channel)',
     '`/setup addgame` · `/setup removegame` · `/setup wrapped` · `/setup timezone`'
   ]]
 ];

@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require('discord.js');
 const { db, guildSettings, setGuild } = require('./db');
 const colors = require('./colors');
+const log = require('./log');
 const { parts, localToUtc, dayKey, monthKey, monthRange, formatMinutes } = require('./time');
 
 const active = new Map();
@@ -50,8 +51,10 @@ async function tick(client) {
       }
     }
 
-    await postWrapped(guild, settings).catch(console.error);
+    await postWrapped(guild, settings).catch(err => log.error(`Wrapped post failed in ${guild.name}:`, err));
   }
+
+  log.debug(`Voice tick: ${seen.size} people counted`);
 
   for (const [key, session] of active) {
     if (seen.has(key)) continue;
@@ -116,7 +119,9 @@ async function postWrapped(guild, settings) {
   if (!settings.wrapped_auto || !guild.systemChannel) return;
 
   const embed = wrappedEmbed(guild.id, 'last', settings.timezone);
-  if (embed) await guild.systemChannel.send({ embeds: [embed] });
+  if (!embed) return;
+  await guild.systemChannel.send({ embeds: [embed] });
+  log.info(`Posted ${month} Wrapped in ${guild.name}`);
 }
 
 module.exports = { tick, wrappedEmbed };

@@ -12,16 +12,18 @@ All commands work in any channel. `/help` shows this list in Discord.
 | `/stats game player` | Deadlock, CS2 or League stats. `player` = @user, Steam link / friend code, or Riot ID (`Name#Tag`). Empty = you. |
 | `/stats game:Discord player with` | Someone's voice time, or with `with:` the voice time between two people. |
 | `/lfg game time players note` | Look for players. Time: `now`, `30m`, `2h`, `21:00`, `9pm`. Players: `3/6` if 3 of you are already together, or just `6`. Quietly pings everyone subscribed to that game, pings the group when full and reminds them 10 minutes before. Closes 2 hours after the start time and is deleted 12 hours after it closes or is cancelled. |
-| `/games` | Subscribe to games so you get pinged when someone uses `/lfg` for them. |
+| `/games` | Subscribe to games so you get pinged when someone uses `/lfg` for them. Only you see it. |
 | `/dm on` / `/dm off` | Also get those pings as a DM. |
 | `/wrapped period` | Server voice Wrapped: this month, last month, this year or all time. |
 | `/link` | Link your Steam and Riot accounts so people can use `player:@you`. |
 | `/mydata` | See, pause or delete what Khut stores about you. |
-| `/setup` | Admins: `addgame`, `removegame`, `wrapped`, `timezone`. |
+| `/setup` | Admins: `games`, `addgame`, `removegame`, `wrapped`, `timezone`. |
 
 Voice time only counts when 2 or more people are in a channel (AFK channel and bots are ignored).
 
 At the start of each month, Wrapped is posted automatically in the server's **System Messages Channel** (Server Settings > Engagement). You can turn it off with `/setup wrapped auto:False`.
+
+Failed `/stats` replies (player not found, private profile and so on) delete themselves after 2 hours.
 
 League stats only count Summoner's Rift games (no ARAM, Arena or other game modes). Ranked KDA covers the current season.
 
@@ -54,9 +56,16 @@ Hero and champion icons gets added to the bot as app emojis the first time it st
 |---|---|---|
 | `STEAM_KEY` | <https://steamcommunity.com/dev/apikey> | Domain can be `localhost`. Your Steam account must not be limited. |
 | `RIOT_KEY` | <https://developer.riotgames.com> | Register a product and apply for a **Personal API Key**. The default development key works for testing but it expires every 24 hours. |
-| `LEETIFY_KEY` | <https://leetify.com/app/developer> | Pretty much optional but gives higher rate limits for CS2 stats. |
+| `FACEIT_KEY` | <https://developers.faceit.com> | Optional. Create an app, then a **Server side** API key. Adds FACEIT level, Elo and stats to CS2 cards. |
+| `LEETIFY_KEY` | <https://leetify.com/app/developer> | Optional. Gives higher rate limits for Leetify. |
 
 Deadlock stats come from deadlock-api.com and need no key.
+
+CS2 cards combine three sources, so they work for almost everyone:
+
+- **Steam**: lifetime K/D, headshot %, win rate and hours. Needs the player's Steam **Game details** to be public. Covers CS:GO and CS2 together.
+- **FACEIT**: level, Elo and stats, if they play FACEIT and `FACEIT_KEY` is set.
+- **Leetify**: Premier, Competitive and Wingman ranks and ratings, if they use Leetify. Valve doesn't share Premier rating anywhere else.
 
 ## 4. Run it
 
@@ -82,9 +91,15 @@ Then in Discord:
 1. `/setup addgame game:Deadlock` <sub><sup>(repeat for each game)</sup></sub>
 2. Everyone runs `/games` to pick their games.
 
+For onboarding, make a channel people can read but not write in, give Khut **View Channel** and **Send Messages** there, and run `/setup games` in it. It posts a fixed game picker that updates by itself when you add or remove games. People can still change their games later with `/games`.
+
 The default timezone is Türkiye (`Europe/Istanbul`). Change it with `/setup timezone` if needed.
 
 The bot only runs while `npm start` is running. Data is saved in `data.db`.
+
+### Logs
+
+The console shows every command, LFG event, failed API call and error with a timestamp. API keys are hidden in the logs. For more detail (every API call, button click and voice tick) set `LOG_LEVEL=debug` in `.env` and restart. `LOG_LEVEL=warn` shows only problems.
 
 ## Updating
 
@@ -115,7 +130,7 @@ Without this, `/link steam:... riot:...` works the same way.
 ## Legal
 
 - Khut isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
-- CS2 data provided by [Leetify](https://leetify.com/). Not affiliated with Leetify.
+- CS2 data from the Steam Web API, [FACEIT](https://www.faceit.com) and [Leetify](https://leetify.com/) (Data Provided by Leetify). Not affiliated with Valve, FACEIT or Leetify.
 - Deadlock data from [deadlock-api.com](https://deadlock-api.com), with links to [Statlocker](https://statlocker.gg) profiles. Not affiliated with Valve.
 - A Personal Riot API key is for your own server. Before opening the bot to the public, apply for a Production key.
 - See [PRIVACY.md](PRIVACY.md) for what the bot stores.

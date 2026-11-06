@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, Butt
 const { db, guildSettings } = require('../db');
 const { parseStart } = require('../time');
 const colors = require('../colors');
+const log = require('../log');
 
 const DELETE_AFTER = 12 * 3600000;
 
@@ -93,6 +94,7 @@ async function execute(interaction) {
   });
   const message = await interaction.fetchReply();
   db.prepare('UPDATE lfg SET message_id = ? WHERE id = ?').run(message.id, id);
+  log.info(`LFG #${id} ${game} by ${interaction.user.tag} in ${interaction.guild.name}, ${subscribers.length} subscriber(s) pinged`);
   await dmSubscribers(interaction, subscribers, game, start, message.url);
 }
 
@@ -103,7 +105,8 @@ async function dmSubscribers(interaction, subscribers, game, start, url) {
     content: `🎮 **${interaction.user.displayName}** is looking for **${interaction.options.getString('game')}** players in **${interaction.guild.name}**.${when}`,
     components: [new ActionRowBuilder().addComponents(new ButtonBuilder().setLabel('Take Me There').setStyle(ButtonStyle.Link).setURL(url))]
   };
-  await Promise.allSettled(subscribers.filter(u => wantDm.has(u)).map(async u => (await interaction.client.users.fetch(u)).send(message)));
+  const results = await Promise.allSettled(subscribers.filter(u => wantDm.has(u)).map(async u => (await interaction.client.users.fetch(u)).send(message)));
+  for (const r of results.filter(r => r.status === 'rejected')) log.warn(`LFG DM failed: ${r.reason.message}`);
 }
 
 async function button(interaction) {
@@ -118,6 +121,7 @@ async function button(interaction) {
   if (action === 'cancel') {
     if (user !== group.host_id) return interaction.reply({ content: 'Only the host can cancel.', ...ephemeral });
     db.prepare("UPDATE lfg SET status = 'cancelled', ended_at = ? WHERE id = ?").run(Date.now(), id);
+    log.info(`LFG #${id} cancelled`);
     return interaction.update(card(id));
   }
 
@@ -161,6 +165,7 @@ async function tick(client) {
 
     if (now >= group.start_at + 2 * 3600000) {
       db.prepare("UPDATE lfg SET status = 'closed', ended_at = ? WHERE id = ?").run(now, group.id);
+      log.info(`LFG #${group.id} closed`);
       await channel.messages.edit(group.message_id, card(group.id)).catch(() => {});
     }
   }
@@ -172,6 +177,7 @@ async function tick(client) {
     for (const messageId of ids.filter(Boolean)) await channel?.messages.delete(messageId).catch(() => {});
     db.prepare("UPDATE lfg SET status = 'deleted' WHERE id = ?").run(group.id);
     db.prepare('DELETE FROM lfg_messages WHERE lfg_id = ?').run(group.id);
+    log.info(`LFG #${group.id} deleted`);
   }
 }
 
@@ -187,14 +193,64 @@ function picker(guildId, userId) {
     WHERE g.guild_id = ? ORDER BY g.name
   `).all(userId, guildId).slice(0, 25);
   if (!list.length) return { content: 'No games yet. An admin can add them with /setup addgame.', components: [] };
+  return {
+    content: 'Green means you subscribed to that game. Click to turn on or off.',
+    components: gameRows(list.map(g => ({ ...g, id: 'sub' })), g => g.on_ ? ButtonStyle.Success : ButtonStyle.Secondary)
+  };
+}
+
+function gameRows(list, style) {
   const rows = [];
   for (let i = 0; i < list.length; i += 5) {
     rows.push(new ActionRowBuilder().addComponents(list.slice(i, i + 5).map(g => new ButtonBuilder()
-      .setCustomId(`sub:${g.name}`)
+      .setCustomId(`${g.id}:${g.name}`)
       .setLabel(g.name)
-      .setStyle(g.on_ ? ButtonStyle.Success : ButtonStyle.Secondary))));
+      .setStyle(style(g)))));
   }
-  return { content: 'Green means you subscribed to that game. Click to turn on or off.', components: rows };
+  return rows;
+}
+
+function panel(guildId) {
+  const list = db.prepare('SELECT name FROM games WHERE guild_id = ? ORDER BY name').all(guildId).slice(0, 25);
+  return {
+    content: list.length
+      ? '## 🎮 Pick your games\nClick a game to get notified when someone is looking for players. Click it again to turn it off.\nYou can change this later with `/games`.'
+      : 'No games yet. An admin can add them with /setup addgame.',
+    components: gameRows(list.map(g => ({ id: 'pick', name: g.name })), () => ButtonStyle.Secondary)
+  };
+}
+
+async function refreshPanel(guild) {
+  const settings = guildSettings(guild.id);
+  if (!settings.panel_message) return;
+  const channel = await guild.channels.fetch(settings.panel_channel).catch(() => null);
+  await channel?.messages.edit(settings.panel_message, panel(guild.id)).catch(err => log.warn(`Couldn't update the games panel in ${guild.name}: ${err.message}`));
+}
+
+async function postPanel(interaction) {
+  const settings = guildSettings(interaction.guildId);
+  const old = settings.panel_message && await interaction.guild.channels.fetch(settings.panel_channel).catch(() => null);
+  await old?.messages.delete(settings.panel_message).catch(() => {});
+  const message = await interaction.channel.send(panel(interaction.guildId));
+  db.prepare('UPDATE guilds SET panel_channel = ?, panel_message = ? WHERE guild_id = ?').run(message.channelId, message.id, interaction.guildId);
+  log.info(`Games panel posted in #${interaction.channel.name} (${interaction.guild.name})`);
+}
+
+function toggle(guildId, game, userId) {
+  const args = [guildId, game, userId];
+  if (db.prepare('DELETE FROM subscriptions WHERE guild_id = ? AND game = ? AND user_id = ?').run(...args).changes) return false;
+  if (!db.prepare('SELECT 1 FROM games WHERE guild_id = ? AND name = ?').get(guildId, game)) return null;
+  db.prepare('INSERT INTO subscriptions VALUES (?, ?, ?)').run(...args);
+  return true;
+}
+
+async function pickButton(interaction) {
+  const game = interaction.customId.slice('pick:'.length);
+  const on = toggle(interaction.guildId, game, interaction.user.id);
+  if (on === null) return interaction.reply({ content: `**${game}** isn't on the list anymore.`, flags: MessageFlags.Ephemeral });
+  log.info(`${interaction.user.tag} ${on ? 'subscribed to' : 'unsubscribed from'} ${game} (panel)`);
+  const view = picker(interaction.guildId, interaction.user.id);
+  await interaction.reply({ ...view, content: `${on ? '✅ Subscribed to' : '❌ Unsubscribed from'} **${game}**.\n${view.content}`, flags: MessageFlags.Ephemeral });
 }
 
 async function executeGames(interaction) {
@@ -203,12 +259,9 @@ async function executeGames(interaction) {
 
 async function subscribeButton(interaction) {
   const game = interaction.customId.slice('sub:'.length);
-  const args = [interaction.guildId, game, interaction.user.id];
-  const removed = db.prepare('DELETE FROM subscriptions WHERE guild_id = ? AND game = ? AND user_id = ?').run(...args).changes;
-  if (!removed && db.prepare('SELECT 1 FROM games WHERE guild_id = ? AND name = ?').get(interaction.guildId, game)) {
-    db.prepare('INSERT INTO subscriptions VALUES (?, ?, ?)').run(...args);
-  }
+  const on = toggle(interaction.guildId, game, interaction.user.id);
+  if (on !== null) log.info(`${interaction.user.tag} ${on ? 'subscribed to' : 'unsubscribed from'} ${game}`);
   await interaction.update(picker(interaction.guildId, interaction.user.id));
 }
 
-module.exports = { data, execute, autocomplete, button, subscribeButton, tick, games: { data: games, execute: executeGames } };
+module.exports = { data, execute, autocomplete, button, subscribeButton, pickButton, postPanel, refreshPanel, tick, games: { data: games, execute: executeGames } };

@@ -6,6 +6,8 @@ const { lolStats } = require('../lol');
 const colors = require('../colors');
 const icons = require('../icons');
 const { periodStart, formatMinutes } = require('../time');
+const { later } = require('../cleanup');
+const log = require('../log');
 
 const data = new SlashCommandBuilder()
   .setName('stats')
@@ -110,38 +112,89 @@ async function deadlockEmbed(steamId) {
 
 const CS_RANKS = ['Unranked', 'Silver I', 'Silver II', 'Silver III', 'Silver IV', 'Silver Elite', 'Silver Elite Master', 'Gold Nova I', 'Gold Nova II', 'Gold Nova III', 'Gold Nova Master', 'Master Guardian I', 'Master Guardian II', 'Master Guardian Elite', 'Distinguished Master Guardian', 'Legendary Eagle', 'Legendary Eagle Master', 'Supreme Master First Class', 'Global Elite'];
 
+function statMap(data) {
+  return Object.fromEntries((data?.playerstats?.stats ?? []).map(x => [x.name, x.value]));
+}
+
+async function faceitData(steamId) {
+  if (!process.env.FACEIT_KEY) return null;
+  const headers = { Authorization: `Bearer ${process.env.FACEIT_KEY}` };
+  const player = await getJson(`https://open.faceit.com/data/v4/players?game=cs2&game_player_id=${steamId}`, headers).catch(() => null);
+  if (!player?.games?.cs2) return null;
+  const stats = await getJson(`https://open.faceit.com/data/v4/players/${player.player_id}/stats/cs2`, headers).catch(() => null);
+  return { player, game: player.games.cs2, lifetime: stats?.lifetime ?? {} };
+}
+
 async function csEmbed(steamId) {
-  const headers = process.env.LEETIFY_KEY ? { _leetify_key: process.env.LEETIFY_KEY } : {};
-  const [profile, lt] = await Promise.all([
+  const key = process.env.STEAM_KEY;
+  const leetifyHeaders = process.env.LEETIFY_KEY ? { _leetify_key: process.env.LEETIFY_KEY } : {};
+  const [profile, steamStats, owned, bans, lt, fc] = await Promise.all([
     steamProfile(steamId),
-    getJson(`https://api-public.cs-prod.leetify.com/v3/profile?steam64_id=${steamId}`, headers)
+    getJson(`https://api.steampowered.com/ISteamUserStats/GetUserStatsForGame/v2/?key=${key}&steamid=${steamId}&appid=730`).then(statMap).catch(() => ({})),
+    getJson(`https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${key}&steamid=${steamId}&include_played_free_games=1&appids_filter%5B0%5D=730`).then(d => d.response?.games?.[0]).catch(() => null),
+    getJson(`https://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=${key}&steamids=${steamId}`).then(d => d.players?.[0]).catch(() => null),
+    getJson(`https://api-public.cs-prod.leetify.com/v3/profile?steam64_id=${steamId}`, leetifyHeaders).catch(() => null),
+    faceitData(steamId)
   ]);
 
-  const premierGames = (lt.recent_matches ?? []).filter(m => m.rank_type === 11 && m.rank > 0);
-  const premier = lt.ranks?.premier || premierGames[0]?.rank;
-  const premierBest = Math.max(premier ?? 0, ...premierGames.map(m => m.rank));
-  const maps = (lt.ranks?.competitive ?? []).filter(m => m.rank > 0).sort((a, b) => b.rank - a.rank);
-  const name = map => map.replace(/^(de|cs)_/, '').replace(/^./, c => c.toUpperCase());
-
-  const ranks = [`Premier: ${premier ? `**${premier.toLocaleString('en-US')}**${premierBest > premier ? ` (best ${premierBest.toLocaleString('en-US')})` : ''}` : 'Unranked'}`];
-  if (maps.length) ranks.push(`Competitive: **${CS_RANKS[maps[0].rank]}** (${name(maps[0].map_name)})`);
-  if (lt.ranks?.wingman) ranks.push(`Wingman: **${CS_RANKS[lt.ranks.wingman]}**`);
-  if (lt.ranks?.faceit) ranks.push(`FACEIT: **Level ${lt.ranks.faceit}** (${lt.ranks.faceit_elo} Elo)`);
+  const hasSteam = steamStats.total_kills > 0;
+  if (!hasSteam && !lt && !fc) return "No CS2 stats found. Their Steam game details are private and they aren't on Leetify or FACEIT.";
 
   const embed = new EmbedBuilder()
     .setAuthor({ name: profile.personaname, iconURL: profile.avatarfull, url: profile.profileurl })
     .setColor(colors.cs2)
     .setTitle('Counter-Strike 2')
-    .setURL(`https://leetify.com/app/profile/${steamId}`)
-    .addFields(
-      { name: 'Ranks', value: ranks.join('\n') },
-      { name: 'Overall', value: `${Math.round(lt.winrate * 100)}% WR (${lt.total_matches} games)\nLeetify rating ${lt.ranks?.leetify > 0 ? '+' : ''}${lt.ranks?.leetify ?? '-'}` },
+    .setURL(lt ? `https://leetify.com/app/profile/${steamId}` : `https://csstats.gg/player/${steamId}`);
+
+  const ranks = [];
+  if (lt) {
+    const premierGames = (lt.recent_matches ?? []).filter(m => m.rank_type === 11 && m.rank > 0);
+    const premier = lt.ranks?.premier || premierGames[0]?.rank;
+    const premierBest = Math.max(premier ?? 0, ...premierGames.map(m => m.rank));
+    const maps = (lt.ranks?.competitive ?? []).filter(m => m.rank > 0).sort((a, b) => b.rank - a.rank);
+    const name = map => map.replace(/^(de|cs)_/, '').replace(/^./, c => c.toUpperCase());
+    ranks.push(`Premier: ${premier ? `**${premier.toLocaleString('en-US')}**${premierBest > premier ? ` (best ${premierBest.toLocaleString('en-US')})` : ''}` : 'Unranked'}`);
+    if (maps.length) ranks.push(`Competitive: **${CS_RANKS[maps[0].rank]}** (${name(maps[0].map_name)})`);
+    if (lt.ranks?.wingman) ranks.push(`Wingman: **${CS_RANKS[lt.ranks.wingman]}**`);
+  }
+  if (fc) ranks.push(`FACEIT: **Level ${fc.game.skill_level}** (${fc.game.faceit_elo} Elo)`);
+  else if (lt?.ranks?.faceit) ranks.push(`FACEIT: **Level ${lt.ranks.faceit}** (${lt.ranks.faceit_elo} Elo)`);
+  if (ranks.length) embed.addFields({ name: 'Ranks', value: ranks.join('\n') });
+
+  const hours = owned ? Math.round(owned.playtime_forever / 60) : Math.round((steamStats.total_time_played ?? 0) / 3600);
+  if (hasSteam) {
+    const lines = [`${(steamStats.total_kills / Math.max(1, steamStats.total_deaths)).toFixed(2)} K/D · ${pct(steamStats.total_kills_headshot ?? 0, steamStats.total_kills)}% HS`];
+    if (steamStats.total_matches_played) lines.push(`${pct(steamStats.total_matches_won ?? 0, steamStats.total_matches_played)}% WR (${steamStats.total_matches_played.toLocaleString('en-US')} matches)`);
+    if (hours) lines.push(`${hours.toLocaleString('en-US')} hours played`);
+    embed.addFields({ name: 'Lifetime (Steam)', value: lines.join('\n'), inline: true });
+  } else if (hours) {
+    embed.addFields({ name: 'Playtime', value: `${hours.toLocaleString('en-US')} hours played`, inline: true });
+  }
+
+  if (fc && fc.lifetime.Matches) {
+    const l = fc.lifetime;
+    embed.addFields({ name: 'FACEIT', value: `${l['Win Rate %'] ?? '-'}% WR (${Number(l.Matches).toLocaleString('en-US')} matches)\n${l['Average K/D Ratio'] ?? '-'} K/D · ${l['Average Headshots %'] ?? '-'}% HS`, inline: true });
+  }
+
+  if (lt) {
+    embed.addFields(
+      { name: 'Leetify', value: `${Math.round(lt.winrate * 100)}% WR (${lt.total_matches} games)\nRating ${lt.ranks?.leetify > 0 ? '+' : ''}${lt.ranks?.leetify ?? '-'}`, inline: true },
       { name: 'Ratings', value: `Aim ${Math.round(lt.rating.aim)} · Positioning ${Math.round(lt.rating.positioning)} · Utility ${Math.round(lt.rating.utility)}` }
     );
+  }
 
-  if (lt.bans?.length) embed.addFields({ name: '⚠️ Bans', value: lt.bans.map(b => b.platform).join(', ') });
-  embed.addFields({ name: '\u200b', value: `[**Data Provided by Leetify**](https://leetify.com/) · [Profile](https://leetify.com/app/profile/${steamId})` });
-  embed.setFooter({ text: 'Counter-Strike 2', iconURL: icons.cs2 });
+  if (bans?.NumberOfVACBans || bans?.NumberOfGameBans) {
+    const list = [bans.NumberOfVACBans && `${bans.NumberOfVACBans} VAC`, bans.NumberOfGameBans && `${bans.NumberOfGameBans} game`].filter(Boolean).join(', ');
+    const total = bans.NumberOfVACBans + bans.NumberOfGameBans;
+    embed.addFields({ name: '⚠️ Bans', value: `${list} ban${total === 1 ? '' : 's'} (last one ${bans.DaysSinceLastBan} days ago)` });
+  }
+
+  const links = [];
+  if (lt) links.push(`[**Data Provided by Leetify**](https://leetify.com/app/profile/${steamId})`);
+  if (fc) links.push(`[FACEIT](${fc.player.faceit_url.replace('{lang}', 'en')})`);
+  links.push(`[csstats.gg](https://csstats.gg/player/${steamId})`, `[Steam profile](${profile.profileurl})`);
+  embed.addFields({ name: '\u200b', value: links.join(' · ') });
+  embed.setFooter({ text: hasSteam ? 'Counter-Strike 2 · Steam lifetime stats include CS:GO' : 'Counter-Strike 2', iconURL: icons.cs2 });
   return embed;
 }
 
@@ -186,6 +239,13 @@ async function discordEmbed(interaction, userId, withUser) {
     );
 }
 
+const ERROR_TTL = 2 * 3600000;
+
+async function fail(interaction, text) {
+  log.info(`/stats reply: ${text}`);
+  later(await interaction.editReply({ content: text, embeds: [] }), ERROR_TTL);
+}
+
 async function execute(interaction) {
   await interaction.deferReply();
   const game = interaction.options.getString('game');
@@ -194,24 +254,27 @@ async function execute(interaction) {
   try {
     let embed;
     if (game === 'discord') {
-      if (!interaction.guildId) return interaction.editReply('Discord stats only work inside a server.');
+      if (!interaction.guildId) return fail(interaction, 'Discord stats only work inside a server.');
       const userId = input ? mentionedUser(input) : interaction.user.id;
-      if (!userId) return interaction.editReply('For Discord, mention someone in player, like @Emre.');
+      if (!userId) return fail(interaction, 'For Discord, mention someone in player, like @Emre.');
       embed = await discordEmbed(interaction, userId, interaction.options.getUser('with'));
     } else if (game === 'lol') {
       const riotId = riotIdFor(input, interaction.user.id);
-      if (!riotId) return interaction.editReply('No Riot ID found. Use a Riot ID like Name#Tag.');
+      if (!riotId) return fail(interaction, input ? 'No Riot ID found. Use a Riot ID like Name#Tag.' : 'No Riot ID linked. Use /link or a Riot ID like Name#Tag.');
+      log.info(`/stats League lookup: ${riotId}`);
       embed = await lolStats(riotId, update => interaction.editReply({ embeds: [update] }));
     } else {
       const steamId = await steamIdFor(input, interaction.user.id);
-      if (!steamId) return interaction.editReply('No Steam account found. Use their Steam profile link or friend code.');
+      if (!steamId) return fail(interaction, input ? 'No Steam account found. Use their Steam profile link or friend code.' : 'No Steam account linked. Use /link or a Steam profile link.');
+      log.info(`/stats ${game} lookup: ${steamId}`);
       embed = game === 'deadlock' ? await deadlockEmbed(steamId) : await csEmbed(steamId);
     }
-    if (!embed) return interaction.editReply('No match data found for that player.');
+    if (!embed) return fail(interaction, 'No match data found for that player.');
+    if (typeof embed === 'string') return fail(interaction, embed);
     await interaction.editReply({ embeds: [embed] });
   } catch (err) {
-    console.error(err);
-    await interaction.editReply(err.status === 429 ? 'Too many lookups right now. Try again in a minute.' : "Couldn't find stats for that player.");
+    log.error(`/stats ${game} ${input ?? '(self)'} failed:`, err);
+    await fail(interaction, err.status === 429 ? 'Too many lookups right now. Try again in a minute.' : "Couldn't find stats for that player.");
   }
 }
 

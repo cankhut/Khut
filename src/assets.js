@@ -1,4 +1,5 @@
 const { getJson } = require('./api');
+const log = require('./log');
 
 const emojis = new Map();
 let heroes;
@@ -73,12 +74,12 @@ async function syncEmojis(client) {
     for (const url of item.urls) {
       const image = await fetchImage(url).catch(() => null);
       if (!image) continue;
-      const created = await client.application.emojis.create({ attachment: image, name: item.name }).catch(err => console.error(`Emoji ${item.name}: ${err.message}`));
+      const created = await client.application.emojis.create({ attachment: image, name: item.name }).catch(err => log.warn(`Emoji ${item.name}: ${err.message}`));
       if (created) emojis.set(created.name, created.toString());
       break;
     }
   }
-  console.log(`Icons ready: ${emojis.size}`);
+  log.info(`Icons ready: ${emojis.size}`);
 }
 
 module.exports = { syncEmojis, heroLabel, championLabel, profileIconUrl };
