@@ -128,7 +128,7 @@ async function render(p, state, mode, day, guildId, view, notice) {
   const slots = Math.max(12, Math.ceil(owned.length / 6) * 6);
   const icons = Array.from({ length: slots }, (_, n) => (owned[n] ? emoji(`di_${owned[n][0]}`) || '🟫' : '⬛'));
   const grid = [];
-  for (let n = 0; n < slots; n += 6) grid.push(icons.slice(n, n + 6).join(' '));
+  for (let n = 0; n < slots; n += 6) grid.push(`### ${icons.slice(n, n + 6).join(' ')}`);
   const names = owned.map(([id]) => items.get(id)?.name ?? 'Item').join(' · ');
 
   const description = [];

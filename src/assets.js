@@ -1,5 +1,6 @@
 const { getJson } = require('./api');
 const log = require('./log');
+const { db } = require('./db');
 
 const emojis = new Map();
 let heroes;
@@ -83,7 +84,7 @@ async function wantedEmojis() {
     }
   }
   for (const item of (await deadlockItems()).values()) {
-    if (item.shop_image) list.push({ name: `di_${item.id}`, urls: [item.shop_image] });
+    if (item.shop_image) list.push({ name: `di_${item.id}`, urls: [item.shop_image], fresh: true });
   }
   for (const champion of (await lolChampions()).values()) {
     const file = encodeURIComponent(`${champion.name.replace(/ /g, '_')}_OriginalCircle.png`);
@@ -103,12 +104,24 @@ async function syncEmojis(client) {
   for (const e of existing.values()) emojis.set(e.name, e.toString());
 
   for (const item of await wantedEmojis()) {
+    let stamp;
+    if (item.fresh) {
+      const res = await fetch(item.urls[0], { method: 'HEAD' }).catch(() => null);
+      stamp = res?.ok ? res.headers.get('etag') ?? res.headers.get('last-modified') : null;
+      const saved = db.prepare('SELECT stamp FROM emoji_sources WHERE name = ?').get(item.name)?.stamp;
+      if (stamp && stamp !== saved && emojis.has(item.name)) {
+        const old = existing.find(e => e.name === item.name);
+        if (old) await old.delete().catch(err => log.warn(`Emoji ${item.name}: ${err.message}`));
+        emojis.delete(item.name);
+      }
+    }
     if (emojis.has(item.name)) continue;
     for (const url of item.urls) {
       const image = await fetchImage(url).catch(() => null);
       if (!image) continue;
       const created = await client.application.emojis.create({ attachment: image, name: item.name }).catch(err => log.warn(`Emoji ${item.name}: ${err.message}`));
       if (created) emojis.set(created.name, created.toString());
+      if (created && stamp) db.prepare('INSERT OR REPLACE INTO emoji_sources (name, stamp) VALUES (?, ?)').run(item.name, stamp);
       break;
     }
   }

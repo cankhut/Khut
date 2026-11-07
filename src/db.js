@@ -20,6 +20,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS sessions (guild_id TEXT, user_id TEXT, start_at INTEGER, end_at INTEGER);
   CREATE TABLE IF NOT EXISTS cleanup (channel_id TEXT, message_id TEXT PRIMARY KEY, delete_at INTEGER);
   CREATE TABLE IF NOT EXISTS play_puzzles (game TEXT, mode TEXT, day TEXT, data TEXT, PRIMARY KEY (game, mode, day));
+  CREATE TABLE IF NOT EXISTS emoji_sources (name TEXT PRIMARY KEY, stamp TEXT);
   CREATE TABLE IF NOT EXISTS play_progress (user_id TEXT, game TEXT, mode TEXT, day TEXT, state TEXT, done INTEGER NOT NULL DEFAULT 0, guild_id TEXT, PRIMARY KEY (user_id, game, mode, day));
 `);
 
