@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, InteractionContextType } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, InteractionContextType, ChannelType } = require('discord.js');
 const { db, setGuild } = require('../db');
 const { validTimezone } = require('../time');
 const { postPanel, refreshPanel } = require('./lfg');
@@ -14,6 +14,8 @@ const data = new SlashCommandBuilder()
   .addSubcommand(s => s.setName('games').setDescription('Post a fixed game picker in this channel, like for onboarding'))
   .addSubcommand(s => s.setName('roles').setDescription('Make a role for each game and ping the role in LFG posts')
     .addBooleanOption(o => o.setName('on').setDescription('On: one role per game. Off: ping subscribers directly').setRequired(true)))
+  .addSubcommand(s => s.setName('answers').setDescription('Post yesterday\'s /play answers in a channel after midnight')
+    .addChannelOption(o => o.setName('channel').setDescription('Leave empty to stop posting').addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)))
   .addSubcommand(s => s.setName('addgame').setDescription('Add a game people can subscribe to')
     .addStringOption(o => o.setName('game').setDescription('Game name').setRequired(true).setMaxLength(50)))
   .addSubcommand(s => s.setName('removegame').setDescription('Remove a game from /games')
@@ -52,6 +54,12 @@ async function execute(interaction) {
     roles.turn(guild.id, on);
     await roles.sync(guild);
     return interaction.editReply(text(on ? 'setup.rolesOn' : 'setup.rolesOff'));
+  }
+
+  if (sub === 'answers') {
+    const channel = interaction.options.getChannel('channel');
+    setGuild(guild.id, 'play_channel', channel?.id ?? null);
+    return reply(channel ? text('setup.answers', { channel: `<#${channel.id}>` }) : text('setup.answersOff'));
   }
 
   if (sub === 'addgame') {

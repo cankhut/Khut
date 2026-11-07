@@ -5,6 +5,7 @@ const lfg = require('./commands/lfg');
 const tracker = require('./tracker');
 const cleanup = require('./cleanup');
 const roles = require('./roles');
+const play = require('./commands/play');
 const web = require('./web');
 const log = require('./log');
 const { text } = require('./settings');
@@ -20,7 +21,8 @@ const client = new Client({
 const buttons = {
   lfg: lfg.button,
   sub: lfg.subscribeButton,
-  pick: lfg.pickButton
+  pick: lfg.pickButton,
+  play: play.component
 };
 
 function every(name, ms, job) {
@@ -35,6 +37,7 @@ client.once(Events.ClientReady, c => {
   every('LFG', 30000, () => lfg.tick(client));
   every('Cleanup', 60000, () => cleanup.tick(client));
   every('Game roles', 30000, () => roles.tick(client));
+  every('Daily answers', 60000, () => play.tick(client));
   syncEmojis(client).catch(err => log.error('Emoji sync failed:', err));
 });
 
@@ -60,11 +63,11 @@ client.on(Events.InteractionCreate, async interaction => {
   if (interaction.isAutocomplete()) return Promise.resolve(commands.get(interaction.commandName)?.autocomplete?.(interaction)).catch(err => log.debug(`Autocomplete failed: ${err.message}`));
   const started = Date.now();
   if (interaction.isChatInputCommand()) log.info(describe(interaction));
-  else if (interaction.isButton()) log.debug(describe(interaction));
+  else if (interaction.isButton() || interaction.isStringSelectMenu() || interaction.isModalSubmit()) log.debug(describe(interaction));
 
   try {
     if (interaction.isChatInputCommand()) await commands.get(interaction.commandName)?.execute(interaction);
-    else if (interaction.isButton()) await buttons[interaction.customId.split(':')[0]]?.(interaction);
+    else if (interaction.isButton() || interaction.isStringSelectMenu() || interaction.isModalSubmit()) await buttons[interaction.customId.split(':')[0]]?.(interaction);
     log.debug(`Done in ${Date.now() - started}ms`);
   } catch (err) {
     log.error(`Failed: ${describe(interaction)}`, err);

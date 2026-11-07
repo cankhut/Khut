@@ -12,6 +12,10 @@ const sections = [
     '`/stats game:Discord player:@Talha` — their voice time',
     '`/stats game:Discord player:@Talha with:@Jankat` — voice time between two people'
   ]],
+  ['🎲 Games', [
+    '`/play dlbuild mode:High rank guess:Haze` — guess Deadlock heroes from their items in a real match',
+    '`/play lolhero mode:Classic guess:Ahri` — guess today\'s League champion (also Ability mode)'
+  ]],
   ['👥 Group', [
     '`/lfg game:Deadlock time:9pm players:3/6` — look for players (time: now, 30m, 2h, 21:00, 9pm · players: how many you have / team size)',
     '`/games` — subscribe to games so you get pinged when someone looks for players',
@@ -26,6 +30,7 @@ const sections = [
   ]],
   ['⚙️ Admins', [
     '`/setup games` — post a fixed game picker in this channel (for onboarding or a rules-like channel)',
+    '`/setup answers` — post yesterday\'s /play answers in a channel',
     '`/setup roles` — make a role for each game and ping the role in LFG posts instead of each person',
     '`/setup addgame` · `/setup removegame` · `/setup wrapped` · `/setup timezone`'
   ]]

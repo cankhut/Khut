@@ -11,17 +11,29 @@ All commands work in any channel. `/help` shows this list in Discord.
 | `/help` | Every command, with examples. |
 | `/stats game player` | Deadlock, CS2 or League stats. `player` = @user, Steam link / friend code, or Riot ID (`Name#Tag`). Empty = you. |
 | `/stats game:Discord player with` | Someone's voice time, or with `with:` the voice time between two people. |
+| `/play dlbuild mode guess` | Daily Deadlock game: guess heroes from their items in a real match. |
+| `/play lolhero mode guess` | Daily League game: Classic (champion properties) or Ability (a rotated, greyed ability icon). |
 | `/lfg game time players note` | Look for players. Time: `now`, `30m`, `2h`, `21:00`, `9pm`. Players: `3/6` if 3 of you are already together, or just `6`. Quietly pings everyone subscribed to that game, pings the group when full and reminds them 10 minutes before. Closes 2 hours after the start time and is deleted 12 hours after it closes or is cancelled. |
 | `/games` | Subscribe to games so you get pinged when someone uses `/lfg` for them. Only you see it. |
 | `/dm on` / `/dm off` | Also get those pings as a DM. |
 | `/wrapped period` | Server voice Wrapped: this month, last month, this year or all time. |
 | `/link` | Link your Steam and Riot accounts so people can use `player:@you`. |
 | `/mydata` | See, pause or delete what Khut stores about you. |
-| `/setup` | Admins: `games`, `roles`, `addgame`, `removegame`, `wrapped`, `timezone`. |
+| `/setup` | Admins: `games`, `roles`, `answers`, `addgame`, `removegame`, `wrapped`, `timezone`. |
 
 Voice time only counts when 2 or more people are in a channel (AFK channel and bots are ignored).
 
 At the start of each month, Wrapped is posted automatically in the server's **System Messages Channel** (Server Settings > Engagement). You can turn it off with `/setup wrapped auto:False`.
+
+### Games
+
+Everyone gets the same puzzle each day and plays it privately on one board that updates in place: press ✏️ **Guess** and pick a hero from the list (dlbuild) or type a champion (lolhero, small typos are fine). You can also use `guess:` in the command. Using the command again replaces your previous board. When someone finishes, Khut posts a spoiler-free result in that channel. A new day starts at midnight in the server's timezone. With `/setup answers channel:#games` (or in the control panel), Khut posts yesterday's answers there after midnight.
+
+- **dlbuild**: a real ranked match from two days earlier, picked from high rank (Ascendant+) or all ranks. 4 rounds, each with a different player. The board is laid out like Lockle: every player's souls, the Hidden King and Archmother totals and average ranks, and the player's items. Every wrong guess moves the match forward: 6:00, 12:00, 20:00, 25:00, then the end. 5 guesses per round, 25/18/15/12/10 points.
+- **lolhero classic**: guess the champion. Each guess shows gender, positions, species, resource, range, regions and release year: 🟩 match, 🟧 partly, 🟥 no. After 6 wrong guesses one of their ability icons shows up as a clue.
+- **lolhero ability**: guess the champion from one ability icon. It starts greyed out and rotated, gets its colour back after 3 wrong guesses and turns upright after 6.
+
+Champion properties live in `data/lol-champions.json`. Gender follows each champion's official pronouns. When a new champion comes out, add them there; until then they can't be the Classic answer.
 
 Failed `/stats` replies (player not found, private profile and so on) delete themselves after 2 hours.
 
@@ -162,6 +174,7 @@ Without this, `/link steam:... riot:...` works the same way.
 
 - Khut isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
 - CS2 data from the Steam Web API, [FACEIT](https://www.faceit.com) and [Leetify](https://leetify.com/) (Data Provided by Leetify). Not affiliated with Valve, FACEIT or Leetify.
+- League champion properties in `data/lol-champions.json` are compiled from the [League of Legends Wiki](https://wiki.leagueoflegends.com) (CC BY-SA). Ability icons come from Riot's Data Dragon.
 - Deadlock data from [deadlock-api.com](https://deadlock-api.com), with links to [Statlocker](https://statlocker.gg) profiles. Not affiliated with Valve.
 - A Personal Riot API key is for your own server. Before opening the bot to the public, apply for a Production key.
 - See [PRIVACY.md](PRIVACY.md) for what the bot stores.

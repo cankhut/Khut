@@ -58,6 +58,7 @@ async function execute(interaction) {
     const subs = db.prepare('SELECT guild_id, game FROM subscriptions WHERE user_id = ?').all(id);
     db.prepare('DELETE FROM subscriptions WHERE user_id = ?').run(id);
     db.prepare('DELETE FROM dm_on WHERE discord_id = ?').run(id);
+    db.prepare('DELETE FROM play_progress WHERE user_id = ?').run(id);
     db.prepare('INSERT OR IGNORE INTO opt_out VALUES (?)').run(id);
     await reply(text('mydata.delete'));
     for (const sub of subs) await roles.setMember(interaction.client.guilds.cache.get(sub.guild_id), sub.game, id, false);

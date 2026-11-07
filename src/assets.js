@@ -3,12 +3,36 @@ const log = require('./log');
 
 const emojis = new Map();
 let heroes;
+let items;
 let champions;
 let ddragonVersion;
+const championDetails = new Map();
 
 async function deadlockHeroes() {
   if (!heroes) heroes = new Map((await getJson('https://api.deadlock-api.com/v1/assets/heroes')).map(h => [h.id, h]));
   return heroes;
+}
+
+async function deadlockItems() {
+  if (!items) items = new Map((await getJson('https://api.deadlock-api.com/v1/assets/items')).filter(i => i.type === 'upgrade').map(i => [i.id, i]));
+  return items;
+}
+
+async function playableHeroes() {
+  return [...(await deadlockHeroes()).values()].filter(h => h.player_selectable && !h.disabled && !h.in_development).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function lolChampionDetail(id) {
+  await lolChampions();
+  if (!championDetails.has(id)) {
+    const { data } = await getJson(`https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/data/en_US/champion/${id}.json`);
+    championDetails.set(id, data[id]);
+  }
+  return championDetails.get(id);
+}
+
+function ddragon(path) {
+  return `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/${path}`;
 }
 
 async function lolChampions() {
@@ -52,6 +76,15 @@ async function wantedEmojis() {
     const image = hero.images?.minimap_image ?? hero.images?.icon_image_small;
     if (image) list.push({ name: `dl_${hero.id}`, urls: [image] });
   }
+  for (const rank of await getJson('https://api.deadlock-api.com/v1/assets/ranks')) {
+    for (let sub = 1; sub <= 6; sub++) {
+      const url = rank.images?.[`small_subrank${sub}`];
+      if (url) list.push({ name: `rank_${rank.tier}_${sub}`, urls: [url] });
+    }
+  }
+  for (const item of (await deadlockItems()).values()) {
+    if (item.shop_image) list.push({ name: `di_${item.id}`, urls: [item.shop_image] });
+  }
   for (const champion of (await lolChampions()).values()) {
     const file = encodeURIComponent(`${champion.name.replace(/ /g, '_')}_OriginalCircle.png`);
     list.push({
@@ -82,4 +115,4 @@ async function syncEmojis(client) {
   log.info(`Icons ready: ${emojis.size}`);
 }
 
-module.exports = { syncEmojis, heroLabel, championLabel, profileIconUrl };
+module.exports = { syncEmojis, emoji, heroLabel, championLabel, profileIconUrl, deadlockHeroes, deadlockItems, playableHeroes, lolChampions, lolChampionDetail, ddragon, fetchImage };

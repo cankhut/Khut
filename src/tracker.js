@@ -2,7 +2,7 @@ const { EmbedBuilder } = require('discord.js');
 const { db, guildSettings, setGuild } = require('./db');
 const colors = require('./colors');
 const log = require('./log');
-const { settings } = require('./settings');
+const { settings: botSettings } = require('./settings');
 const { parts, localToUtc, dayKey, monthKey, monthRange, formatMinutes } = require('./time');
 
 const active = new Map();
@@ -33,7 +33,7 @@ async function tick(client) {
     for (const channel of guild.channels.cache.values()) {
       if (!channel.isVoiceBased() || channel.id === guild.afkChannelId) continue;
       const members = [...channel.members.values()].filter(m => !m.user.bot && !optedOut.has(m.id));
-      if (members.length < Math.max(2, settings.limits.voiceMinPeople)) continue;
+      if (members.length < Math.max(2, botSettings.limits.voiceMinPeople)) continue;
 
       addChannel.run(guild.id, day);
       for (const member of members) {

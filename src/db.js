@@ -19,6 +19,8 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS lol_matches (match_id TEXT, puuid TEXT, queue INTEGER, champion INTEGER, kills INTEGER, deaths INTEGER, assists INTEGER, win INTEGER, PRIMARY KEY (match_id, puuid));
   CREATE TABLE IF NOT EXISTS sessions (guild_id TEXT, user_id TEXT, start_at INTEGER, end_at INTEGER);
   CREATE TABLE IF NOT EXISTS cleanup (channel_id TEXT, message_id TEXT PRIMARY KEY, delete_at INTEGER);
+  CREATE TABLE IF NOT EXISTS play_puzzles (game TEXT, mode TEXT, day TEXT, data TEXT, PRIMARY KEY (game, mode, day));
+  CREATE TABLE IF NOT EXISTS play_progress (user_id TEXT, game TEXT, mode TEXT, day TEXT, state TEXT, done INTEGER NOT NULL DEFAULT 0, guild_id TEXT, PRIMARY KEY (user_id, game, mode, day));
 `);
 
 for (const sql of [
@@ -29,7 +31,9 @@ for (const sql of [
   'ALTER TABLE guilds ADD COLUMN last_wrapped TEXT',
   'ALTER TABLE guilds ADD COLUMN panel_channel TEXT',
   'ALTER TABLE guilds ADD COLUMN panel_message TEXT',
-  'ALTER TABLE guilds ADD COLUMN use_roles INTEGER NOT NULL DEFAULT 0'
+  'ALTER TABLE guilds ADD COLUMN use_roles INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE guilds ADD COLUMN play_channel TEXT',
+  'ALTER TABLE guilds ADD COLUMN play_posted TEXT'
 ]) {
   try {
     db.exec(sql);

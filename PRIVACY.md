@@ -7,6 +7,8 @@
 - **Voice sessions**: start and end times, used for the monthly Wrapped.
 - **LFG groups**: groups you hosted or joined, the games you subscribed to with `/games`, and whether you turned on DMs with `/dm`.
 
+- **Games**: your guesses and results in `/play` games, for the days you played.
+
 The console log shows who used which command and when. It is only visible to whoever runs the bot.
 
 ## What it does not store

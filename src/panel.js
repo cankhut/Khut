@@ -108,10 +108,12 @@ async function refreshPicker(guildId) {
 
 async function guilds() {
   const list = await discord('GET', '/users/@me/guilds');
+  const channels = Object.fromEntries(await Promise.all(list.map(async g => [g.id, (await discord('GET', `/guilds/${g.id}/channels`).catch(() => []))
+    .filter(c => c.type === 0 || c.type === 5).sort((a, b) => a.position - b.position).map(c => ({ id: c.id, name: c.name }))])));
   return list.map(g => {
     const s = guildSettings(g.id);
     const games = db.prepare('SELECT name, (SELECT COUNT(*) FROM subscriptions s WHERE s.guild_id = g.guild_id AND s.game = g.name) AS subs FROM games g WHERE guild_id = ? ORDER BY name').all(g.id);
-    return { id: g.id, name: g.name, icon: g.icon && `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=64`, timezone: s.timezone, wrapped: !!s.wrapped_auto, roles: roles.isOn(g.id), picker: !!s.panel_message, games };
+    return { id: g.id, name: g.name, icon: g.icon && `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=64`, timezone: s.timezone, wrapped: !!s.wrapped_auto, roles: roles.isOn(g.id), picker: !!s.panel_message, playChannel: s.play_channel, channels: channels[g.id], games };
   });
 }
 
@@ -174,6 +176,7 @@ const routes = {
     }
     if (body.wrapped !== undefined) setGuild(body.id, 'wrapped_auto', body.wrapped ? 1 : 0);
     if (body.roles !== undefined) roles.turn(body.id, body.roles);
+    if (body.playChannel !== undefined) setGuild(body.id, 'play_channel', body.playChannel || null);
     if (body.addGame) {
       const name = String(body.addGame).trim().slice(0, 50);
       if (!name) throw new Error('Type a game name.');
