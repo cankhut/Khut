@@ -5,6 +5,7 @@ const colors = require('../colors');
 const log = require('../log');
 const { settings, text } = require('../settings');
 const roles = require('../roles');
+const { gameEmoji } = require('../assets');
 
 const data = new SlashCommandBuilder()
   .setName('lfg')
@@ -39,10 +40,12 @@ function card(id) {
   const list = players.map(u => `<@${u}>`);
   if (group.extra) list.push(text(group.extra === 1 ? 'lfg.other' : 'lfg.others', { count: group.extra }));
 
+  const icon = settings.icons.games.find(g => g.big && g.url && g.name.toLowerCase() === group.game.toLowerCase());
   const embed = new EmbedBuilder()
-    .setTitle(`🎮 ${group.game}`)
+    .setTitle(icon ? group.game : `${gameEmoji(group.game) || '🎮'} ${group.game}`)
     .setDescription(`${text('lfg.host', { host: `<@${group.host_id}>` })}\n🕘 <t:${ts}:F> (<t:${ts}:R>)${group.note ? `\n\n${group.note}` : ''}`)
     .addFields({ name: `👥 ${players.length + group.extra}/${group.slots}`, value: list.join('\n') || '-' })
+    .setThumbnail(icon?.url ?? null)
     .setColor(group.status === 'cancelled' ? colors.lfgCancelled : group.status !== 'open' ? colors.lfgClosed : players.length + group.extra >= group.slots ? colors.lfgFull : colors.lfgOpen);
 
   if (group.status !== 'open') {

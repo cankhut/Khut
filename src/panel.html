@@ -64,6 +64,7 @@
   .embed { background: var(--embed); border-left: 4px solid; border-radius: 4px; padding: 10px 14px; margin-top: 6px; width: 100%; max-width: 440px; }
   .embed .author { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
   .embed .title { font-weight: 700; margin-bottom: 4px; }
+  .embed .thumb { float: right; width: 64px; height: 64px; object-fit: contain; margin-left: 12px; }
   .embed .fields { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 6px; }
   .embed .f { min-width: 100%; } .embed .f.inline { min-width: 0; flex: 1; }
   .embed .fn { font-weight: 700; font-size: 13px; }
@@ -134,6 +135,19 @@
     <div class="savebar"><button class="btn grey" onclick="resetSection('texts')">Reset all</button><button class="btn" onclick="saveSettings()">Save texts</button></div>
   </section>
 
+  <section id="results">
+    <p class="hint">What the bot posts in the channel when someone finishes a /play game. It uses the first row that fits, and the last row covers everything after it. Words in {curly brackets} are filled in by the bot.</p>
+    <div class="box"><h2>lolhero</h2><p class="hint">By number of guesses. You can use {user} {mode} {count} {guesses}</p><div id="res-lolhero"></div><button class="btn grey small" onclick="addResult('lolhero')">Add row</button></div>
+    <div class="box"><h2>dlbuild</h2><p class="hint">By total points, out of 100. You can use {user} {mode} {points} {grid}</p><div id="res-dlbuild"></div><button class="btn grey small" onclick="addResult('dlbuild')">Add row</button></div>
+    <div class="savebar"><button class="btn grey" onclick="resetSection('results')">Reset all</button><button class="btn" onclick="saveSettings()">Save results</button></div>
+  </section>
+
+  <section id="icons">
+    <p class="hint">Icons for LFG posts. The name has to match the game's name in /setup (capital letters don't matter). Use an image link from the game's official wiki or wiki.gg. Small icons go in front of the game name: keep them under 256 KB and restart the bot after saving to load them. Big icons show at the top right and work right away.</p>
+    <div class="box" id="iconList"></div>
+    <div class="savebar"><button class="btn grey" onclick="addIcon()">Add game</button><button class="btn" onclick="saveSettings()">Save icons</button></div>
+  </section>
+
   <section id="limits">
     <div class="box" id="limitList"></div>
     <div class="savebar"><button class="btn grey" onclick="resetSection('limits')">Reset all</button><button class="btn" onclick="saveSettings()">Save</button></div>
@@ -142,7 +156,7 @@
 <div id="toast"></div>
 
 <script>
-const TABS = [['bot', 'Bot'], ['keys', 'Keys'], ['servers', 'Servers'], ['colours', 'Colours'], ['texts', 'Texts'], ['limits', 'Limits']];
+const TABS = [['bot', 'Bot'], ['keys', 'Keys'], ['servers', 'Servers'], ['colours', 'Colours'], ['texts', 'Texts'], ['results', 'Game results'], ['icons', 'Game icons'], ['limits', 'Limits']];
 
 const ENV = [
   ['DISCORD_TOKEN', 'Bot token', 'Developer Portal > your app > Bot > Reset Token.', 'https://discord.com/developers/applications', true],
@@ -210,8 +224,6 @@ const ABOUT = {
   'play.dlWrong': 'dlbuild: round lost',
   'play.dlDone': 'dlbuild: all 4 rounds done',
   'play.dlHint': 'dlbuild: how to guess',
-  'play.resultDl': 'Public dlbuild result',
-  'play.resultLol': 'Public lolhero result',
   'play.answersTitle': "Yesterday's answers post: title",
   'play.answersFound': "Yesterday's answers post: players count",
   'lfg.pingUsers': 'LFG ping without game roles',
@@ -351,7 +363,7 @@ function colourPreview(key) {
 }
 
 function textPreview(key) {
-  const vars = { users: '@Talha @Emre @Ali', role: '@Deadlock', user: '@Jankat', mode: key === 'play.resultLol' ? 'Classic' : 'High rank', points: 52, grid: '1️⃣ 🟩⬛⬛⬛⬛\n2️⃣ 🟥🟥🟩⬛⬛', name: 'Ahri', hero: 'Haze', guesses: 'guesses', channel: '#games', names: '**Haze**, **Holliday**', game: 'Deadlock', host: key === 'lfg.host' ? '@Jankat' : 'Jankat', server: 'Friends', time: 'in 10 minutes', count: key === 'lfg.other' ? 1 : key === 'lfg.others' ? 4 : key.startsWith('play.') ? 4 : '3/6', timezone: 'Europe/Istanbul' };
+  const vars = { users: '@Talha @Emre @Ali', role: '@Deadlock', user: '@Jankat', mode: 'High rank', points: 52, grid: '1️⃣ 🟩⬛⬛⬛⬛\n2️⃣ 🟥🟥🟩⬛⬛', name: 'Ahri', hero: 'Haze', guesses: 'guesses', channel: '#games', names: '**Haze**, **Holliday**', game: 'Deadlock', host: key === 'lfg.host' ? '@Jankat' : 'Jankat', server: 'Friends', time: 'in 10 minutes', count: key === 'lfg.other' ? 1 : key === 'lfg.others' ? 4 : key.startsWith('play.') ? 4 : '3/6', timezone: 'Europe/Istanbul' };
   const value = t(key, vars);
   if (BUTTONS.includes(key)) return message('', buttons([[value, key === 'lfg.join' ? 'green' : key === 'lfg.cancel' ? 'red' : '']]));
   if (key.startsWith('lfg.') && ['host', 'other', 'others', 'footerCancelled', 'footerClosed'].includes(key.slice(4))) return lfgCard(key === 'lfg.footerCancelled' ? 'cancelled' : key === 'lfg.footerClosed' ? 'closed' : key === 'lfg.others' ? 'full' : 'open');
@@ -451,8 +463,80 @@ function renderLimits() {
     <label class="switch field"><input type="checkbox" ${state.settings.panel[key] ? 'checked' : ''} onchange="state.settings.panel['${key}'] = this.checked">${name}</label>`).join('');
 }
 
+const RESULTS = { lolhero: ['max', 'Up to', 'guesses'], dlbuild: ['min', 'From', 'points'] };
+
+function resultPreview(game, i) {
+  const row = state.settings.results[game][i];
+  const count = Math.max(1, Math.min(row.max ?? 1, 10));
+  const vars = { user: '@Jankat', mode: game === 'lolhero' ? 'Classic' : 'High rank', count, guesses: count === 1 ? 'guess' : 'guesses', points: Math.min(row.min ?? 0, 100), grid: '1️⃣ 🟩⬛⬛⬛⬛\n2️⃣ 🟥🟥🟩⬛⬛' };
+  return message(fill(row.text, vars));
+}
+
+function renderResults() {
+  for (const [game, [field, before, after]] of Object.entries(RESULTS)) {
+    $(`res-${game}`).innerHTML = state.settings.results[game].map((row, i) => `
+      <div class="item">
+        <div class="label">
+          <div class="row">${before}<input type="number" min="0" style="width:80px" value="${row[field]}" oninput="setResult('${game}', ${i}, '${field}', Number(this.value))">${after}<span style="flex:1"></span><button class="btn red small" onclick="removeResult('${game}', ${i})">Remove</button></div>
+          <textarea rows="3" style="margin-top:6px" oninput="setResult('${game}', ${i}, 'text', this.value)">${esc(row.text)}</textarea>
+        </div>
+        <div id="rp-${game}-${i}">${resultPreview(game, i)}</div>
+      </div>`).join('');
+  }
+}
+
+function setResult(game, i, field, value) {
+  state.settings.results[game][i][field] = value;
+  $(`rp-${game}-${i}`).innerHTML = resultPreview(game, i);
+}
+
+function addResult(game) {
+  state.settings.results[game].push({ [RESULTS[game][0]]: 0, text: '{user} ' });
+  renderResults();
+}
+
+function removeResult(game, i) {
+  state.settings.results[game].splice(i, 1);
+  renderResults();
+}
+
+function iconPreview(i) {
+  const game = state.settings.icons.games[i];
+  const img = esc(game.url || '');
+  const thumb = game.big && game.url ? `<img class="thumb" src="${img}" alt="">` : '';
+  const icon = game.big ? '' : game.url ? `<img src="${img}" alt="" style="width:20px;height:20px;vertical-align:-4px;object-fit:contain"> ` : '🎮 ';
+  return message('', `<div class="embed" style="border-color:${state.settings.colors.lfgOpen}">${thumb}<div class="title">${icon}${esc(game.name || 'Game')}</div>${md(t('lfg.host', { host: '@Jankat' }))}<div style="clear:both"></div></div>`);
+}
+
+function renderIcons() {
+  $('iconList').innerHTML = state.settings.icons.games.map((game, i) => `
+    <div class="item">
+      <div class="label">
+        <div class="row"><input placeholder="Game name" value="${esc(game.name)}" oninput="setIcon(${i}, 'name', this.value)"><button class="btn red small" onclick="removeIcon(${i})">Remove</button></div>
+        <input placeholder="https://… image link" style="margin-top:6px" value="${esc(game.url)}" oninput="setIcon(${i}, 'url', this.value.trim())">
+        <label class="switch" style="margin-top:6px"><input type="checkbox" ${game.big ? 'checked' : ''} onchange="setIcon(${i}, 'big', this.checked)">Big icon at the top right</label>
+      </div>
+      <div id="ip-${i}">${iconPreview(i)}</div>
+    </div>`).join('') || '<p class="hint" style="margin:0">No icons yet. LFG posts use 🎮.</p>';
+}
+
+function setIcon(i, field, value) {
+  state.settings.icons.games[i][field] = value;
+  $(`ip-${i}`).innerHTML = iconPreview(i);
+}
+
+function addIcon() {
+  state.settings.icons.games.push({ name: '', url: '', big: false });
+  renderIcons();
+}
+
+function removeIcon(i) {
+  state.settings.icons.games.splice(i, 1);
+  renderIcons();
+}
+
 function resetSection(section) {
-  state.settings[section] = { ...state.defaults[section] };
+  state.settings[section] = structuredClone(state.defaults[section]);
   renderAll();
   toast('Reset. Click Save to keep it.');
 }
@@ -462,6 +546,8 @@ function renderAll() {
   renderEnv();
   renderColours();
   renderTexts();
+  renderResults();
+  renderIcons();
   renderLimits();
 }
 
@@ -518,6 +604,10 @@ function saveSettings() {
   for (const [key, value] of Object.entries(state.settings.colors)) {
     if (!/^#[0-9A-Fa-f]{6}$/.test(value)) return toast(`${COLOURS[key]} needs a colour like #5865F2.`, true);
   }
+  state.settings.icons.games = state.settings.icons.games.filter(g => g.name.trim() || g.url);
+  const bad = state.settings.icons.games.find(g => !g.name.trim() || !/^https:\/\//.test(g.url));
+  renderIcons();
+  if (bad) return toast(`${bad.name || 'A game'} needs a name and an https:// image link.`, true);
   attempt(() => api('POST', '/api/settings', state.settings));
 }
 

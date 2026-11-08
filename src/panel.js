@@ -122,7 +122,7 @@ function onlyChanges(next) {
   for (const section of Object.keys(defaults)) {
     out[section] = {};
     for (const [key, value] of Object.entries(next[section] ?? {})) {
-      if (key in defaults[section] && value !== defaults[section][key]) out[section][key] = value;
+      if (key in defaults[section] && JSON.stringify(value) !== JSON.stringify(defaults[section][key])) out[section][key] = value;
     }
   }
   return out;

@@ -24,6 +24,22 @@ const defaults = {
     errorDeleteHours: 2,
     voiceMinPeople: 2
   },
+  results: {
+    lolhero: [
+      { max: 1, text: "🤯 {user} found today's lolhero {mode} on the **first** try!" },
+      { max: 3, text: "🔥 {user} found today's lolhero {mode} in **{count}** {guesses}" },
+      { max: 6, text: "{user} found today's lolhero {mode} in **{count}** {guesses}" },
+      { max: 99, text: "😅 {user} found today's lolhero {mode} in **{count}** {guesses}. Got there in the end!" }
+    ],
+    dlbuild: [
+      { min: 90, text: "🏆 {user} finished today's dlbuild ({mode}) with **{points}** points\n{grid}" },
+      { min: 50, text: "{user} finished today's dlbuild ({mode}) with **{points}** points\n{grid}" },
+      { min: 0, text: "😵 {user} finished today's dlbuild ({mode}) with **{points}** points\n{grid}" }
+    ]
+  },
+  icons: {
+    games: []
+  },
   panel: {
     autoStart: false,
     restartOnCrash: true
@@ -93,8 +109,6 @@ const defaults = {
     'play.dlDone': '🏁 Done! **{points}** points. The next one starts {time}.',
     'play.dlHint': 'Press ✏️ **Guess** to type a hero.',
     'play.lolHint': 'Press ✏️ **Guess** to type a champion.',
-    'play.resultDl': "{user} finished today's dlbuild ({mode}) with **{points}** points\n{grid}",
-    'play.resultLol': "{user} found today's lolhero {mode} in **{count}** {guesses}",
     'play.answersTitle': "📅 Yesterday's answers",
     'play.answersFound': '{count} found it here',
 
@@ -150,11 +164,22 @@ function color(name) {
   return parseInt(settings.colors[name].slice(1), 16);
 }
 
+function fill(template, vars) {
+  return template.replace(/\{(\w+)\}/g, (m, k) => vars[k] ?? m);
+}
+
 function text(key, vars = {}) {
-  return (settings.texts[key] ?? defaults.texts[key]).replace(/\{(\w+)\}/g, (m, k) => vars[k] ?? m);
+  return fill(settings.texts[key] ?? defaults.texts[key], vars);
+}
+
+function result(game, value, vars) {
+  const rows = settings.results[game]?.length ? settings.results[game] : defaults.results[game];
+  const sorted = game === 'lolhero' ? [...rows].sort((a, b) => a.max - b.max) : [...rows].sort((a, b) => b.min - a.min);
+  const row = sorted.find(r => (game === 'lolhero' ? value <= r.max : value >= r.min)) ?? sorted[sorted.length - 1];
+  return fill(row.text, vars);
 }
 
 load();
 fs.watchFile(FILE, { interval: 2000 }, load).unref();
 
-module.exports = { settings, defaults, save, color, text };
+module.exports = { settings, defaults, save, color, text, result };

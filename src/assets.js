@@ -1,6 +1,7 @@
 const { getJson } = require('./api');
 const log = require('./log');
 const { db } = require('./db');
+const { settings } = require('./settings');
 
 const emojis = new Map();
 let heroes;
@@ -54,6 +55,14 @@ function emoji(name) {
   return emojis.get(name) ?? '';
 }
 
+function gameEmojiName(game) {
+  return `game_${game.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')}`.slice(0, 32);
+}
+
+function gameEmoji(game) {
+  return emoji(gameEmojiName(game));
+}
+
 async function heroLabel(id) {
   const hero = (await deadlockHeroes()).get(id);
   return `${emoji(`dl_${id}`)} ${hero?.name ?? `Hero ${id}`}`.trim();
@@ -86,6 +95,9 @@ async function wantedEmojis() {
   for (const item of (await deadlockItems()).values()) {
     if (item.shop_image) list.push({ name: `di_${item.id}`, urls: [item.shop_image], fresh: true });
   }
+  for (const game of settings.icons.games) {
+    if (game.name && game.url && !game.big) list.push({ name: gameEmojiName(game.name), urls: [game.url], stamp: game.url, game: game.name });
+  }
   for (const champion of (await lolChampions()).values()) {
     const file = encodeURIComponent(`${champion.name.replace(/ /g, '_')}_OriginalCircle.png`);
     list.push({
@@ -103,13 +115,23 @@ async function syncEmojis(client) {
   const existing = await client.application.emojis.fetch();
   for (const e of existing.values()) emojis.set(e.name, e.toString());
 
-  for (const item of await wantedEmojis()) {
-    let stamp;
+  const wanted = await wantedEmojis();
+  for (const e of existing.values()) {
+    if (e.name.startsWith('game_') && !wanted.some(w => w.name === e.name)) {
+      await e.delete().catch(err => log.warn(`Emoji ${e.name}: ${err.message}`));
+      emojis.delete(e.name);
+    }
+  }
+
+  for (const item of wanted) {
+    let stamp = item.stamp;
     if (item.fresh) {
       const res = await fetch(item.urls[0], { method: 'HEAD' }).catch(() => null);
       stamp = res?.ok ? res.headers.get('etag') ?? res.headers.get('last-modified') : null;
+    }
+    if (stamp) {
       const saved = db.prepare('SELECT stamp FROM emoji_sources WHERE name = ?').get(item.name)?.stamp;
-      if (stamp && stamp !== saved && emojis.has(item.name)) {
+      if (stamp !== saved && emojis.has(item.name)) {
         const old = existing.find(e => e.name === item.name);
         if (old) await old.delete().catch(err => log.warn(`Emoji ${item.name}: ${err.message}`));
         emojis.delete(item.name);
@@ -124,8 +146,9 @@ async function syncEmojis(client) {
       if (created && stamp) db.prepare('INSERT OR REPLACE INTO emoji_sources (name, stamp) VALUES (?, ?)').run(item.name, stamp);
       break;
     }
+    if (item.game && !emojis.has(item.name)) log.warn(`Couldn't load the icon for ${item.game}. Check the link in the panel.`);
   }
   log.info(`Icons ready: ${emojis.size}`);
 }
 
-module.exports = { syncEmojis, emoji, heroLabel, championLabel, profileIconUrl, deadlockHeroes, deadlockItems, playableHeroes, lolChampions, lolChampionDetail, ddragon, fetchImage };
+module.exports = { syncEmojis, emoji, gameEmoji, heroLabel, championLabel, profileIconUrl, deadlockHeroes, deadlockItems, playableHeroes, lolChampions, lolChampionDetail, ddragon, fetchImage };

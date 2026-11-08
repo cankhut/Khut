@@ -130,9 +130,11 @@ Then open <http://localhost:3001>. From there you can:
 - Copy the invite link
 - Change each server's games, timezone and Wrapped
 - Change embed colours and everything the bot says, with a live preview
+- Change the `/play` result posts by number of guesses (lolhero) or points (dlbuild)
+- Add game icons for LFG posts, small in front of the name or big at the top right
 - Change the LFG and cleanup timings
 
-Colours, texts and timings are saved in `settings.json` and the bot picks up changes within a few seconds, no restart needed. Delete `settings.json` to go back to the defaults.
+Colours, texts, results, icons and timings are saved in `settings.json` and the bot picks up changes within a few seconds, no restart needed. Delete `settings.json` to go back to the defaults.
 
 Closing the panel also stops the bot. Turn on **Start the bot when the panel opens** under **Limits** if the panel is how you host it.
 
