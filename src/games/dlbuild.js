@@ -1,7 +1,7 @@
 const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ModalBuilder, LabelBuilder, MessageFlags } = require('discord.js');
 const { getJson } = require('../api');
 const { emoji, deadlockHeroes, deadlockItems, playableHeroes } = require('../assets');
-const { text, result } = require('../settings');
+const { text, resultText } = require('../settings');
 const colors = require('../colors');
 const core = require('./core');
 const log = require('../log');
@@ -196,7 +196,7 @@ async function guess(interaction, mode, day, p, state, done, input) {
   core.save(interaction.user.id, GAME, mode, day, state, state.done, interaction.guildId);
   log.info(`${interaction.user.tag} guessed in dlbuild ${mode} round ${state.round + 1}${after.won ? ' (correct)' : ''}`);
   if (state.done) {
-    await core.postResult(interaction, result('dlbuild', total(p, state), { user: `<@${interaction.user.id}>`, mode: MODES[mode].name, points: total(p, state), grid: gridText(p, state) }));
+    await core.postResult(interaction, resultText('dlbuild', total(p, state), { user: `<@${interaction.user.id}>`, mode: MODES[mode].name, points: total(p, state), grid: gridText(p, state) }));
   }
   return { notice };
 }

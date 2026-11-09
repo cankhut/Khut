@@ -177,7 +177,7 @@ function text(key, vars = {}) {
   return fill(settings.texts[key] ?? defaults.texts[key], vars);
 }
 
-function result(game, value, vars) {
+function resultText(game, value, vars) {
   const rows = settings.results[game]?.length ? settings.results[game] : defaults.results[game];
   const sorted = game === 'lolhero' ? [...rows].sort((a, b) => a.max - b.max) : [...rows].sort((a, b) => b.min - a.min);
   const row = sorted.find(r => (game === 'lolhero' ? value <= r.max : value >= r.min)) ?? sorted[sorted.length - 1];
@@ -187,4 +187,4 @@ function result(game, value, vars) {
 load();
 fs.watchFile(FILE, { interval: 2000 }, load).unref();
 
-module.exports = { settings, defaults, save, color, text, result };
+module.exports = { settings, defaults, save, color, text, resultText };

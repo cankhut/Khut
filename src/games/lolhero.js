@@ -1,7 +1,7 @@
 const { EmbedBuilder, AttachmentBuilder, MessageFlags } = require('discord.js');
 const DATA = require('../../data/lol-champions.json');
 const { lolChampions, lolChampionDetail, championLabel, ddragon, fetchImage } = require('../assets');
-const { text, result } = require('../settings');
+const { text, resultText } = require('../settings');
 const colors = require('../colors');
 const png = require('../png');
 const core = require('./core');
@@ -119,7 +119,7 @@ async function guess(interaction, mode, day, p, state, done, input) {
   core.save(interaction.user.id, GAME, mode, day, state, won, interaction.guildId);
   log.info(`${interaction.user.tag} guessed in lolhero ${mode}${won ? ' (correct)' : ''}`);
   if (won) {
-    await core.postResult(interaction, result('lolhero', state.guesses.length, { user: `<@${interaction.user.id}>`, mode: MODES[mode].name, count: state.guesses.length, guesses: plural(state.guesses.length) }));
+    await core.postResult(interaction, resultText('lolhero', state.guesses.length, { user: `<@${interaction.user.id}>`, mode: MODES[mode].name, count: state.guesses.length, guesses: plural(state.guesses.length) }));
   }
   return null;
 }
