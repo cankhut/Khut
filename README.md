@@ -127,6 +127,7 @@ Then open <http://localhost:3001>. From there you can:
 
 - Fill in the API keys (saved to `.env`)
 - Start, stop and restart the bot, register commands and watch the log
+- Set the bot's status (Playing, Listening to, Watching, Competing in or a custom text)
 - Copy the invite link
 - Change each server's games, timezone and Wrapped
 - Change embed colours and everything the bot says, with a live preview
@@ -134,7 +135,7 @@ Then open <http://localhost:3001>. From there you can:
 - Add game icons for LFG posts, small in front of the name or big at the top right
 - Change the LFG and cleanup timings
 
-Colours, texts, results, icons and timings are saved in `settings.json` and the bot picks up changes within a few seconds, no restart needed. Delete `settings.json` to go back to the defaults.
+Colours, texts, results, icons, status and timings are saved in `settings.json` and the bot picks up changes within a few seconds, no restart needed. Delete `settings.json` to go back to the defaults.
 
 Closing the panel also stops the bot. Turn on **Start the bot when the panel opens** under **Limits** if the panel is how you host it.
 

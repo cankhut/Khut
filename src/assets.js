@@ -21,7 +21,7 @@ async function deadlockItems() {
 }
 
 async function playableHeroes() {
-  return [...(await deadlockHeroes()).values()].filter(h => h.player_selectable && !h.disabled && !h.in_development).sort((a, b) => a.name.localeCompare(b.name));
+  return [...(await deadlockHeroes()).values()].filter(h => h.player_selectable && !h.disabled).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 async function lolChampionDetail(id) {
@@ -83,6 +83,7 @@ async function fetchImage(url) {
 async function wantedEmojis() {
   const list = [];
   for (const hero of (await deadlockHeroes()).values()) {
+    if (!hero.player_selectable || hero.disabled) continue;
     const image = hero.images?.minimap_image ?? hero.images?.icon_image_small;
     if (image) list.push({ name: `dl_${hero.id}`, urls: [image] });
   }
@@ -117,7 +118,7 @@ async function syncEmojis(client) {
 
   const wanted = await wantedEmojis();
   for (const e of existing.values()) {
-    if (e.name.startsWith('game_') && !wanted.some(w => w.name === e.name)) {
+    if (/^(dl|rank|di|lol|game)_/.test(e.name) && !wanted.some(w => w.name === e.name)) {
       await e.delete().catch(err => log.warn(`Emoji ${e.name}: ${err.message}`));
       emojis.delete(e.name);
     }

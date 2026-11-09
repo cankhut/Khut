@@ -40,6 +40,10 @@ const defaults = {
   icons: {
     games: []
   },
+  status: {
+    type: 'None',
+    text: ''
+  },
   panel: {
     autoStart: false,
     restartOnCrash: true

@@ -102,6 +102,12 @@
       <div class="row"><input id="invite" readonly><button class="btn grey" onclick="copyInvite()">Copy</button></div>
     </div>
     <div class="box">
+      <h2>Status</h2>
+      <p class="hint">What shows under the bot's name in the member list. Changes show up within a few seconds.</p>
+      <div class="row"><select id="statusType" style="width:auto" onchange="setStatus('type', this.value)"></select><input id="statusText" placeholder="Deadlock" oninput="setStatus('text', this.value)"><button class="btn" onclick="saveSettings()">Save</button></div>
+      <div id="statusPreview" style="margin-top:10px"></div>
+    </div>
+    <div class="box">
       <h2>Commands</h2>
       <p class="hint">Register the slash commands with Discord. Only needed the first time and after an update that changes commands.</p>
       <button class="btn" onclick="botAction('deploy')">Register commands</button>
@@ -463,6 +469,25 @@ function renderLimits() {
     <label class="switch field"><input type="checkbox" ${state.settings.panel[key] ? 'checked' : ''} onchange="state.settings.panel['${key}'] = this.checked">${name}</label>`).join('');
 }
 
+const STATUS = { None: 'No status', Custom: 'Custom', Playing: 'Playing', Listening: 'Listening to', Watching: 'Watching', Competing: 'Competing in' };
+
+function statusPreview() {
+  const { type, text: words } = state.settings.status;
+  $('statusText').disabled = type === 'None';
+  $('statusPreview').innerHTML = type !== 'None' && words ? `<div class="preview"><div class="msg"><div class="avatar">K</div><div class="content"><span class="name">Khut</span><span class="tag">APP</span><div style="color:#b5bac1;font-size:13px">${type === 'Custom' ? '' : STATUS[type] + ' '}<b>${esc(words)}</b></div></div></div></div>` : '';
+}
+
+function renderStatus() {
+  $('statusType').innerHTML = Object.entries(STATUS).map(([key, name]) => `<option value="${key}" ${key === state.settings.status.type ? 'selected' : ''}>${name}</option>`).join('');
+  $('statusText').value = state.settings.status.text;
+  statusPreview();
+}
+
+function setStatus(field, value) {
+  state.settings.status[field] = value;
+  statusPreview();
+}
+
 const RESULTS = { lolhero: ['max', 'Up to', 'guesses'], dlbuild: ['min', 'From', 'points'] };
 
 function resultPreview(game, i) {
@@ -548,6 +573,7 @@ function renderAll() {
   renderTexts();
   renderResults();
   renderIcons();
+  renderStatus();
   renderLimits();
 }
 

@@ -1,5 +1,5 @@
 process.loadEnvFile();
-const { Client, GatewayIntentBits, Events, MessageFlags } = require('discord.js');
+const { Client, GatewayIntentBits, Events, MessageFlags, ActivityType } = require('discord.js');
 const commands = require('./commands');
 const lfg = require('./commands/lfg');
 const tracker = require('./tracker');
@@ -8,7 +8,7 @@ const roles = require('./roles');
 const play = require('./commands/play');
 const web = require('./web');
 const log = require('./log');
-const { text } = require('./settings');
+const { text, settings } = require('./settings');
 const { syncEmojis } = require('./assets');
 
 process.on('unhandledRejection', err => log.error('Unhandled promise rejection:', err));
@@ -29,6 +29,16 @@ function every(name, ms, job) {
   setInterval(() => job().catch(err => log.error(`${name} failed:`, err)), ms);
 }
 
+let shownStatus;
+
+async function showStatus() {
+  const { type, text: words } = settings.status;
+  if (`${type}|${words}` === shownStatus) return;
+  shownStatus = `${type}|${words}`;
+  const activity = type === 'Custom' ? { type: ActivityType.Custom, name: 'Custom Status', state: words } : { type: ActivityType[type], name: words };
+  client.user.setPresence({ activities: type !== 'None' && words ? [activity] : [] });
+}
+
 client.once(Events.ClientReady, c => {
   log.info(`Logged in as ${c.user.tag} in ${c.guilds.cache.size} server(s): ${c.guilds.cache.map(g => g.name).join(', ')}`);
   log.info(`Log level: ${process.env.LOG_LEVEL || 'info'}`);
@@ -38,6 +48,8 @@ client.once(Events.ClientReady, c => {
   every('Cleanup', 60000, () => cleanup.tick(client));
   every('Game roles', 30000, () => roles.tick(client));
   every('Daily answers', 60000, () => play.tick(client));
+  every('Status', 10000, showStatus);
+  showStatus();
   syncEmojis(client).catch(err => log.error('Emoji sync failed:', err));
 });
 
