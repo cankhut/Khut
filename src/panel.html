@@ -108,6 +108,13 @@
       <div id="statusPreview" style="margin-top:10px"></div>
     </div>
     <div class="box">
+      <h2>Bio</h2>
+      <p class="hint">The "About Me" text on the bot's profile, up to 400 characters. Links work. Leave it empty to keep the one from the Developer Portal. Changes show up within a minute.</p>
+      <textarea id="bioText" rows="4" maxlength="400" placeholder="A Discord bot made for small groups." oninput="setBio(this.value)"></textarea>
+      <div class="row" style="margin-top:6px"><small id="bioCount" style="flex:1;color:#b5bac1"></small><button class="btn" onclick="saveSettings()">Save</button></div>
+      <div id="bioPreview" style="margin-top:10px"></div>
+    </div>
+    <div class="box">
       <h2>Commands</h2>
       <p class="hint">Register the slash commands with Discord. Only needed the first time and after an update that changes commands.</p>
       <button class="btn" onclick="botAction('deploy')">Register commands</button>
@@ -477,7 +484,20 @@ function statusPreview() {
   $('statusPreview').innerHTML = type !== 'None' && words ? `<div class="preview"><div class="msg"><div class="avatar">K</div><div class="content"><span class="name">Khut</span><span class="tag">APP</span><div style="color:#b5bac1;font-size:13px">${type === 'Custom' ? '' : STATUS[type] + ' '}<b>${esc(words)}</b></div></div></div></div>` : '';
 }
 
+function bioPreview() {
+  const bio = state.settings.status.bio;
+  $('bioCount').textContent = `${bio.length}/400`;
+  $('bioPreview').innerHTML = bio.trim() ? `<div class="preview">${md(bio)}</div>` : '';
+}
+
+function setBio(value) {
+  state.settings.status.bio = value;
+  bioPreview();
+}
+
 function renderStatus() {
+  $('bioText').value = state.settings.status.bio;
+  bioPreview();
   $('statusType').innerHTML = Object.entries(STATUS).map(([key, name]) => `<option value="${key}" ${key === state.settings.status.type ? 'selected' : ''}>${name}</option>`).join('');
   $('statusText').value = state.settings.status.text;
   statusPreview();

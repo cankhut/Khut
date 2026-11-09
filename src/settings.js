@@ -42,7 +42,8 @@ const defaults = {
   },
   status: {
     type: 'None',
-    text: ''
+    text: '',
+    bio: ''
   },
   panel: {
     autoStart: false,

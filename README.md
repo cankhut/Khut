@@ -127,7 +127,7 @@ Then open <http://localhost:3001>. From there you can:
 
 - Fill in the API keys (saved to `.env`)
 - Start, stop and restart the bot, register commands and watch the log
-- Set the bot's status (Playing, Listening to, Watching, Competing in or a custom text)
+- Set the bot's status (Playing, Listening to, Watching, Competing in or a custom text) and its bio
 - Copy the invite link
 - Change each server's games, timezone and Wrapped
 - Change embed colours and everything the bot says, with a live preview

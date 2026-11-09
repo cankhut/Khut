@@ -39,6 +39,19 @@ async function showStatus() {
   client.user.setPresence({ activities: type !== 'None' && words ? [activity] : [] });
 }
 
+let shownBio;
+
+async function showBio() {
+  const bio = settings.status.bio.trim();
+  if (!bio || bio === shownBio) return;
+  if (shownBio === undefined) shownBio = (await client.application.fetch()).description;
+  if (bio !== shownBio) {
+    await client.application.edit({ description: bio });
+    log.info('Bio updated');
+  }
+  shownBio = bio;
+}
+
 client.once(Events.ClientReady, c => {
   log.info(`Logged in as ${c.user.tag} in ${c.guilds.cache.size} server(s): ${c.guilds.cache.map(g => g.name).join(', ')}`);
   log.info(`Log level: ${process.env.LOG_LEVEL || 'info'}`);
@@ -49,7 +62,9 @@ client.once(Events.ClientReady, c => {
   every('Game roles', 30000, () => roles.tick(client));
   every('Daily answers', 60000, () => play.tick(client));
   every('Status', 10000, showStatus);
+  every('Bio', 30000, showBio);
   showStatus();
+  showBio().catch(err => log.error('Bio failed:', err));
   syncEmojis(client).catch(err => log.error('Emoji sync failed:', err));
 });
 
