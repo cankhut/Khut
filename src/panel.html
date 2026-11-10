@@ -547,7 +547,8 @@ function renderStreak() {
   $('res-streak').innerHTML = state.settings.results.streak.map((row, i) => `
     <div class="item">
       <div class="label">
-        <div class="row">From<input type="number" min="1" style="width:80px" value="${row.min}" oninput="setStreak(${i}, 'min', Number(this.value))">days<select style="width:auto" onchange="setStreak(${i}, 'place', this.value)"><option value="before" ${row.place !== 'after' ? 'selected' : ''}>before the message</option><option value="after" ${row.place === 'after' ? 'selected' : ''}>after the message</option></select><span style="flex:1"></span><button class="btn red small" onclick="removeStreak(${i})">Remove</button></div>
+        <div class="row">From<input type="number" min="1" style="width:80px" value="${row.min}" oninput="setStreak(${i}, 'min', Number(this.value))">days<span style="flex:1"></span><button class="btn red small" onclick="removeStreak(${i})">Remove</button></div>
+        <select style="margin-top:6px" onchange="setStreak(${i}, 'place', this.value)"><option value="before" ${row.place !== 'after' ? 'selected' : ''}>Before the message</option><option value="after" ${row.place === 'after' ? 'selected' : ''}>After the message</option></select>
         <textarea rows="2" style="margin-top:6px" oninput="setStreak(${i}, 'text', this.value)">${esc(row.text)}</textarea>
       </div>
       <div id="sp-${i}">${streakPreview(i)}</div>
