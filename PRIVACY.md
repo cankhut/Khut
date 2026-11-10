@@ -6,8 +6,7 @@
 - **Voice time**: minutes per day spent in voice with at least one other person, who you were with, and the game shown in your Discord status at that time.
 - **Voice sessions**: start and end times, used for the monthly Wrapped.
 - **LFG groups**: groups you hosted or joined, the games you subscribed to with `/games`, and whether you turned on DMs with `/dm`.
-
-- **Games**: your guesses and results in `/play` games, for the days you played.
+- **Games**: your guesses and results in `/play` games, for the days you played. Your scores show on `/leaderboard` in every server you share with Khut.
 
 The console log shows who used which command and when. It is only visible to whoever runs the bot.
 

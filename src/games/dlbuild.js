@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ModalBuilder, LabelBuilder, MessageFlags } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ModalBuilder, LabelBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 const { getJson } = require('../api');
 const { emoji, deadlockHeroes, deadlockItems, playableHeroes } = require('../assets');
 const { text, resultText } = require('../settings');
@@ -10,10 +10,11 @@ const GAME = 'dlbuild';
 const STAGES = [360, 720, 1200, 1500];
 const GUESSES = 5;
 const ROUNDS = 4;
+const MAX_ROUNDS = 10;
 const SCORE = [25, 18, 15, 12, 10];
 const MODES = { high: { name: 'High rank', badge: 101 }, all: { name: 'All ranks', badge: 1 } };
 const TEAMS = ['🟠 Hidden King', '🔵 Archmother'];
-const NUMBERS = ['1️⃣', '2️⃣', '3️⃣', '4️⃣'];
+const NUMBERS = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
 
 let ranks;
 
@@ -77,6 +78,11 @@ async function build(mode, day) {
   throw new Error(`No usable Deadlock match for ${mode} ${day}`);
 }
 
+function order(p) {
+  const rest = p.players.map((_, i) => i).filter(i => !p.targets.includes(i));
+  return [...p.targets, ...core.shuffle(rest, GAME, 'bonus', p.matchId)].slice(0, MAX_ROUNDS);
+}
+
 function clock(seconds) {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }
@@ -87,7 +93,7 @@ function souls(n) {
 
 function roundInfo(p, state, i) {
   const r = state.rounds[i];
-  const hero = p.players[p.targets[i]].hero;
+  const hero = p.players[order(p)[i]].hero;
   const won = r.guesses.includes(hero);
   return { r, hero, won, over: won || r.guesses.length >= GUESSES, points: won ? SCORE[r.guesses.length - 1] : 0 };
 }
@@ -104,6 +110,19 @@ function total(p, state) {
   return state.rounds.reduce((sum, _, i) => sum + roundInfo(p, state, i).points, 0);
 }
 
+function points(mode, day, state) {
+  const p = core.storedPuzzle(GAME, mode, day);
+  return p ? total(p, state) : 0;
+}
+
+function waiting(p, state) {
+  return state.done && !state.ended && roundInfo(p, state, state.round).over;
+}
+
+function resultPost(userId, mode, day, p, state) {
+  return core.streak(userId, GAME, mode, day) + resultText('dlbuild', total(p, state), { user: `<@${userId}>`, mode: MODES[mode].name, points: total(p, state), grid: gridText(p, state) });
+}
+
 async function render(p, state, mode, day, guildId, view, notice) {
   const heroes = await deadlockHeroes();
   const items = await deadlockItems();
@@ -112,8 +131,8 @@ async function render(p, state, mode, day, guildId, view, notice) {
   const stage = over ? 4 : Math.min(r.guesses.length, 4);
   const shown = view == null ? stage : Math.min(view, stage);
   const time = shown === 4 ? p.duration : STAGES[shown];
-  const target = p.targets[state.round];
-  const revealed = new Set(p.targets.slice(0, state.round + (over ? 1 : 0)));
+  const target = order(p)[state.round];
+  const revealed = new Set(order(p).slice(0, state.round + (over ? 1 : 0)));
   const owned = p.players[target].items.filter(([, buy, sold]) => buy <= time && (!sold || sold > time));
 
   const teamField = async team => {
@@ -134,11 +153,12 @@ async function render(p, state, mode, day, guildId, view, notice) {
   const description = [];
   if (notice) description.push(notice, '');
   if (!over) description.push(text('play.dlHint'));
-  if (state.done) description.push(text('play.dlDone', { points: total(p, state), time: `<t:${core.nextReset(guildId)}:R>` }), gridText(p, state));
+  if (state.ended) description.push(text('play.dlDone', { points: total(p, state), time: `<t:${core.nextReset(guildId)}:R>` }), gridText(p, state));
+  else if (waiting(p, state)) description.push(text('play.dlMore', { points: total(p, state) }), gridText(p, state));
 
   const embed = new EmbedBuilder()
     .setColor(colors.play)
-    .setTitle(`dlbuild · ${MODES[mode].name} · Round ${state.round + 1}/${ROUNDS}`)
+    .setTitle(`dlbuild · ${MODES[mode].name} · ${state.round < ROUNDS ? `Round ${state.round + 1}/${ROUNDS}` : `Bonus round ${state.round + 1 - ROUNDS}`}`)
     .addFields(
       await teamField(0),
       { name: '​', value: `🟠 **${teamSouls(0)}**\n🕘 **${clock(time)}**\n🔵 **${teamSouls(1)}**`, inline: true },
@@ -158,7 +178,15 @@ async function render(p, state, mode, day, guildId, view, notice) {
       .setPlaceholder('Look at an earlier time')
       .addOptions(Array.from({ length: stage + 1 }, (_, i) => ({ label: clock(i === 4 ? p.duration : STAGES[i]), value: String(i), default: i === shown })))));
   }
-  if (!state.done) rows.push(core.guessRow(`play:dl:${mode}:${day}:g`));
+  if (!over) rows.push(core.guessRow(`play:dl:${mode}:${day}:g`));
+  else if (waiting(p, state)) {
+    rows.push(new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(`play:dl:${mode}:${day}:c`).setLabel(text('play.keepGoing')).setEmoji('➕').setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId(`play:dl:${mode}:${day}:s`).setLabel(text('play.stop')).setStyle(ButtonStyle.Secondary)
+    ));
+  } else if (state.ended) {
+    rows.push(new ActionRowBuilder().addComponents(new ButtonBuilder().setURL(`https://statlocker.gg/match/${p.matchId}`).setLabel(text('play.statlocker')).setStyle(ButtonStyle.Link)));
+  }
   return { embeds: [embed], components: rows, files: [], attachments: [] };
 }
 
@@ -171,11 +199,12 @@ async function load(mode, day) {
 }
 
 function usedHeroes(p, state) {
-  return new Set([...state.rounds[state.round].guesses, ...p.targets.slice(0, state.round).map(i => p.players[i].hero)]);
+  return new Set([...state.rounds[state.round].guesses, ...order(p).slice(0, state.round).map(i => p.players[i].hero)]);
 }
 
-async function guess(interaction, mode, day, p, state, done, input) {
-  if (done) return { content: text('play.finished', { time: `<t:${core.nextReset(interaction.guildId)}:R>` }) };
+async function guess(interaction, mode, day, p, state, input) {
+  if (state.ended) return { content: text('play.finished', { time: `<t:${core.nextReset(interaction.guildId)}:R>` }) };
+  if (waiting(p, state)) return { content: text('play.dlChoose') };
   const result = core.match(input, await playableHeroes(), h => h.name, h => h.id);
   if (!result.item) return { content: core.matchMessage(result) };
   const hero = result.item;
@@ -187,16 +216,23 @@ async function guess(interaction, mode, day, p, state, done, input) {
   if (after.over) {
     const name = `${emoji(`dl_${after.hero}`)} ${(await deadlockHeroes()).get(after.hero)?.name ?? 'Hero'}`.trim();
     notice = text(after.won ? 'play.dlCorrect' : 'play.dlWrong', { hero: name, points: after.points });
-    if (state.round === ROUNDS - 1) state.done = true;
-    else {
+    if (state.round < ROUNDS - 1) {
       state.round++;
       state.rounds.push({ guesses: [] });
+    } else {
+      state.done = true;
+      if (state.round === order(p).length - 1) state.ended = true;
     }
   }
   core.save(interaction.user.id, GAME, mode, day, state, state.done, interaction.guildId);
   log.info(`${interaction.user.tag} guessed in dlbuild ${mode} round ${state.round + 1}${after.won ? ' (correct)' : ''}`);
-  if (state.done) {
-    await core.postResult(interaction, core.streak(interaction.user.id, GAME, mode, day) + resultText('dlbuild', total(p, state), { user: `<@${interaction.user.id}>`, mode: MODES[mode].name, points: total(p, state), grid: gridText(p, state) }));
+  if (after.over && state.done) {
+    const content = resultPost(interaction.user.id, mode, day, p, state);
+    if (state.post) await core.editResult(interaction.client, state.post, content);
+    else {
+      state.post = await core.postResult(interaction, content);
+      core.save(interaction.user.id, GAME, mode, day, state, state.done, interaction.guildId);
+    }
   }
   return { notice };
 }
@@ -230,7 +266,7 @@ async function play(interaction, mode, input) {
   if (!p) return interaction.editReply(text('play.unavailable'));
   const saved = core.progress(interaction.user.id, GAME, mode, day);
   const state = saved?.state ?? newState();
-  const result = input ? await guess(interaction, mode, day, p, state, saved?.done, input) : {};
+  const result = input ? await guess(interaction, mode, day, p, state, input) : {};
   await interaction.editReply({ content: result.content ?? null, ...(await render(p, state, mode, day, interaction.guildId, null, result.notice)) });
   await core.replaceBoard(interaction, GAME, mode);
 }
@@ -244,6 +280,18 @@ async function component(interaction, parts) {
   const saved = core.progress(interaction.user.id, GAME, mode, day);
   const state = saved?.state ?? newState();
   if (action === 'g') return interaction.showModal(await heroModal(`play:dl:${mode}:${day}:m`, usedHeroes(p, state)));
+  if (action === 'c' || action === 's') {
+    if (waiting(p, state)) {
+      if (action === 's' || state.round >= order(p).length - 1) state.ended = true;
+      else {
+        state.round++;
+        state.rounds.push({ guesses: [] });
+      }
+      core.save(interaction.user.id, GAME, mode, day, state, state.done, interaction.guildId);
+      log.info(`${interaction.user.tag} ${action === 's' ? 'stopped' : 'started a bonus round'} in dlbuild ${mode}`);
+    }
+    return interaction.update({ content: null, ...(await render(p, state, mode, day, interaction.guildId)) });
+  }
   if (action === 'm') {
     const picked = [0, 1, 2, 3, 4].flatMap(n => {
       try {
@@ -253,7 +301,7 @@ async function component(interaction, parts) {
       }
     });
     if (picked.length !== 1) return interaction.update({ content: text('play.pickOne'), ...(await render(p, state, mode, day, interaction.guildId)) });
-    const result = await guess(interaction, mode, day, p, state, saved?.done, picked[0]);
+    const result = await guess(interaction, mode, day, p, state, picked[0]);
     return interaction.update({ content: result.content ?? null, ...(await render(p, state, mode, day, interaction.guildId, null, result.notice)) });
   }
 
@@ -280,4 +328,4 @@ async function answer(mode, day) {
   return p.targets.map((i, n) => `${NUMBERS[n]} ${emoji(`dl_${p.players[i].hero}`)} ${heroes.get(p.players[i].hero)?.name ?? 'Hero'}`).join('\n');
 }
 
-module.exports = { GAME, MODES, play, component, autocomplete, answer, build };
+module.exports = { GAME, MODES, play, component, autocomplete, answer, build, points };

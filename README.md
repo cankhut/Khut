@@ -13,6 +13,7 @@ All commands work in any channel. `/help` shows this list in Discord.
 | `/stats game:Discord player with` | Someone's voice time, or with `with:` the voice time between two people. |
 | `/play dlbuild mode guess` | Daily Deadlock game: guess heroes from their items in a real match. |
 | `/play lolhero mode guess` | Daily League game: Classic (champion properties) or Ability (a rotated, greyed ability icon). |
+| `/leaderboard game period` | The best `/play` players in this server: dlbuild by points, lolhero by days solved (fewer guesses wins ties). This week, this month or all time. Counts games played in any server you share with Khut. |
 | `/lfg game time players note` | Look for players. Time: `now`, `30m`, `2h`, `21:00`, `9pm`. Players: `3/6` if 3 of you are already together, or just `6`. Quietly pings everyone subscribed to that game, pings the group when full and reminds them 10 minutes before. Closes 2 hours after the start time and is deleted 12 hours after it closes or is cancelled. |
 | `/games` | Subscribe to games so you get pinged when someone uses `/lfg` for them. Only you see it. |
 | `/dm on` / `/dm off` | Also get those pings as a DM. |
@@ -27,9 +28,9 @@ At the start of each month, Wrapped is posted automatically in the server's **Sy
 
 ### Games
 
-Everyone gets the same puzzle each day and plays it privately on one board that updates in place: press ✏️ **Guess** and pick a hero from the list (dlbuild) or type a champion (lolhero, small typos are fine). You can also use `guess:` in the command. Using the command again replaces your previous board. When someone finishes, Khut posts a spoiler-free result in that channel. A new day starts at midnight in the server's timezone. With `/setup answers channel:#games` (or in the control panel), Khut posts yesterday's answers there after midnight.
+Everyone gets the same puzzle each day and plays it privately on one board that updates in place: press ✏️ **Guess** and pick a hero from the list (dlbuild) or type a champion (lolhero, small typos are fine). You can also use `guess:` in the command. Using the command again replaces your previous board. When someone finishes, Khut posts a spoiler-free result in that channel, with their streak if they finished the day before too. A new day starts at midnight in the server's timezone. With `/setup answers channel:#games` (or in the control panel), Khut posts yesterday's answers there after midnight.
 
-- **dlbuild**: a real ranked match from two days earlier, picked from high rank (Ascendant+) or all ranks. 4 rounds, each with a different player. The board is laid out like Lockle: every player's souls, the Hidden King and Archmother totals and average ranks, and the player's items. Every wrong guess moves the match forward: 6:00, 12:00, 20:00, 25:00, then the end. 5 guesses per round, 25/18/15/12/10 points.
+- **dlbuild**: a real ranked match from two days earlier, picked from high rank (Ascendant+) or all ranks. 4 rounds, each with a different player. The board is laid out like Lockle: every player's souls, the Hidden King and Archmother totals and average ranks, and the player's items. Every wrong guess moves the match forward: 6:00, 12:00, 20:00, 25:00, then the end. 5 guesses per round, 25/18/15/12/10 points. After round 4 you can keep going with bonus rounds (up to 10 rounds) or stop; the result post updates with each bonus round. When the game is over, a button opens the match on Statlocker.
 - **lolhero classic**: guess the champion. Each guess shows gender, positions, species, resource, range, regions and release year: 🟩 match, 🟧 partly, 🟥 no. After 6 wrong guesses one of their ability icons shows up as a clue.
 - **lolhero ability**: guess the champion from one ability icon. It starts greyed out and rotated, gets its colour back after 3 wrong guesses and turns upright after 6.
 

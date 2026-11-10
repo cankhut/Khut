@@ -151,7 +151,7 @@
   <section id="results">
     <p class="hint">What the bot posts in the channel when someone finishes a /play game. It uses the first row that fits, and the last row covers everything after it. Words in {curly brackets} are filled in by the bot.</p>
     <div class="box"><h2>lolhero</h2><p class="hint">By number of guesses. You can use {user} {mode} {count} {guesses}</p><div id="res-lolhero"></div><button class="btn grey small" onclick="addResult('lolhero')">Add row</button></div>
-    <div class="box"><h2>dlbuild</h2><p class="hint">By total points, out of 100. You can use {user} {mode} {points} {grid}</p><div id="res-dlbuild"></div><button class="btn grey small" onclick="addResult('dlbuild')">Add row</button></div>
+    <div class="box"><h2>dlbuild</h2><p class="hint">By total points: 100 for the 4 rounds, more with bonus rounds. You can use {user} {mode} {points} {grid}</p><div id="res-dlbuild"></div><button class="btn grey small" onclick="addResult('dlbuild')">Add row</button></div>
     <div class="savebar"><button class="btn grey" onclick="resetSection('results')">Reset all</button><button class="btn" onclick="saveSettings()">Save results</button></div>
   </section>
 
@@ -188,7 +188,7 @@ const ENV = [
 
 const COLOURS = {
   deadlock: 'Deadlock card', cs2: 'CS2 card', lol: 'League card', discord: 'Discord voice card', wrapped: 'Wrapped', help: '/help',
-  play: '/play games',
+  play: '/play games', leaderboard: '/leaderboard',
   lfgOpen: 'LFG open', lfgFull: 'LFG full', lfgClosed: 'LFG closed', lfgCancelled: 'LFG cancelled'
 };
 
@@ -235,7 +235,18 @@ const ABOUT = {
   'play.solved': 'lolhero solved',
   'play.dlCorrect': 'dlbuild: round won',
   'play.dlWrong': 'dlbuild: round lost',
-  'play.dlDone': 'dlbuild: all 4 rounds done',
+  'play.dlDone': 'dlbuild: game over',
+  'play.dlMore': 'dlbuild: offer a bonus round',
+  'play.dlChoose': 'dlbuild: guessing while a bonus round is offered',
+  'play.keepGoing': 'dlbuild: bonus round button',
+  'play.stop': 'dlbuild: stop button',
+  'play.statlocker': 'dlbuild: Statlocker link button',
+  'leaderboard.title': '/leaderboard title',
+  'leaderboard.dlRow': '/leaderboard: dlbuild row',
+  'leaderboard.lolRow': '/leaderboard: lolhero row',
+  'leaderboard.you': '/leaderboard: your place below the top 10',
+  'leaderboard.empty': '/leaderboard: nobody played yet',
+  'leaderboard.footer': '/leaderboard footer',
   'play.dlHint': 'dlbuild: how to guess',
   'play.answersTitle': "Yesterday's answers post: title",
   'play.answersFound': "Yesterday's answers post: players count",
@@ -377,7 +388,7 @@ function colourPreview(key) {
 }
 
 function textPreview(key) {
-  const vars = { users: '@Talha @Emre @Ali', role: '@Deadlock', user: '@Jankat', mode: 'High rank', points: 52, grid: '1️⃣ 🟩⬛⬛⬛⬛\n2️⃣ 🟥🟥🟩⬛⬛', name: 'Ahri', hero: 'Haze', guesses: 'guesses', channel: '#games', names: '**Haze**, **Holliday**', game: 'Deadlock', host: key === 'lfg.host' ? '@Jankat' : 'Jankat', server: 'Friends', time: 'in 10 minutes', count: key === 'lfg.other' ? 1 : key === 'lfg.others' ? 4 : key.startsWith('play.') ? 4 : '3/6', timezone: 'Europe/Istanbul', days: 3 };
+  const vars = { users: '@Talha @Emre @Ali', role: '@Deadlock', user: '@Jankat', mode: 'High rank', points: 52, grid: '1️⃣ 🟩⬛⬛⬛⬛\n2️⃣ 🟥🟥🟩⬛⬛', name: 'Ahri', hero: 'Haze', guesses: 'guesses', channel: '#games', names: '**Haze**, **Holliday**', game: 'Deadlock', host: key === 'lfg.host' ? '@Jankat' : 'Jankat', server: 'Friends', time: 'in 10 minutes', count: key === 'lfg.other' ? 1 : key === 'lfg.others' ? 4 : key.startsWith('play.') ? 4 : '3/6', timezone: 'Europe/Istanbul', days: 3, place: '🥇', solved: 5, average: '2.4', games: 3, period: 'This week', line: '**14.** @Jankat · **52** points · 2 played' };
   const value = t(key, vars);
   if (BUTTONS.includes(key)) return message('', buttons([[value, key === 'lfg.join' ? 'green' : key === 'lfg.cancel' ? 'red' : '']]));
   if (key.startsWith('lfg.') && ['host', 'other', 'others', 'footerCancelled', 'footerClosed'].includes(key.slice(4))) return lfgCard(key === 'lfg.footerCancelled' ? 'cancelled' : key === 'lfg.footerClosed' ? 'closed' : key === 'lfg.others' ? 'full' : 'open');

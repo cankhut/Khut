@@ -78,7 +78,14 @@ function streak(userId, game, mode, day) {
 }
 
 async function postResult(interaction, content) {
-  await interaction.channel?.send({ content, allowedMentions: { parse: [] } }).catch(err => log.debug(`Couldn't post a game result: ${err.message}`));
+  const message = await interaction.channel?.send({ content, allowedMentions: { parse: [] } }).catch(err => log.debug(`Couldn't post a game result: ${err.message}`));
+  return message ? { channel: message.channelId, id: message.id } : null;
+}
+
+async function editResult(client, post, content) {
+  if (!post) return;
+  const channel = await client.channels.fetch(post.channel).catch(() => null);
+  await channel?.messages.edit(post.id, { content, allowedMentions: { parse: [] } }).catch(err => log.debug(`Couldn't update a game result: ${err.message}`));
 }
 
 function normalize(value) {
@@ -142,4 +149,4 @@ function parseEmoji(value) {
   return m ? { name: m[1], id: m[2] } : undefined;
 }
 
-module.exports = { today, previousDay, nextReset, seed, shuffle, storedPuzzle, puzzle, progress, save, finishedCount, streak, postResult, parseEmoji, normalize, match, matchMessage, guessRow, guessModal, replaceBoard };
+module.exports = { today, previousDay, nextReset, seed, shuffle, storedPuzzle, puzzle, progress, save, finishedCount, streak, postResult, editResult, parseEmoji, normalize, match, matchMessage, guessRow, guessModal, replaceBoard };

@@ -80,74 +80,101 @@ async function fetchImage(url) {
   return buffer.length <= 256000 ? buffer : null;
 }
 
+function slug(name) {
+  return name.normalize('NFD').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
 async function wantedEmojis() {
   const list = [];
+  const taken = new Set();
+  const add = (key, base, tag, urls, extra = {}) => {
+    let name = slug(base).padEnd(2, '0').slice(0, 26);
+    if (taken.has(name)) name = `${name}_${tag}`;
+    for (let n = 2; taken.has(name); n++) name = `${name.replace(/\d+$/, '')}${n}`;
+    taken.add(name);
+    list.push({ key, name, urls, ...extra });
+  };
   for (const hero of (await deadlockHeroes()).values()) {
     if (!hero.player_selectable || hero.disabled) continue;
     const image = hero.images?.minimap_image ?? hero.images?.icon_image_small;
-    if (image) list.push({ name: `dl_${hero.id}`, urls: [image] });
+    if (image) add(`dl_${hero.id}`, hero.name, 'dl', [image]);
   }
   for (const rank of await getJson('https://api.deadlock-api.com/v1/assets/ranks')) {
     for (let sub = 1; sub <= 6; sub++) {
       const url = rank.images?.[`small_subrank${sub}`];
-      if (url) list.push({ name: `rank_${rank.tier}_${sub}`, urls: [url] });
+      if (url) add(`rank_${rank.tier}_${sub}`, `${rank.name}${sub}`, 'rank', [url]);
     }
   }
-  for (const item of (await deadlockItems()).values()) {
-    if (item.shop_image) list.push({ name: `di_${item.id}`, urls: [item.shop_image], fresh: true });
-  }
-  for (const game of settings.icons.games) {
-    if (game.name && game.url && !game.big) list.push({ name: gameEmojiName(game.name), urls: [game.url], stamp: game.url, game: game.name });
+  for (const item of [...(await deadlockItems()).values()].sort((a, b) => Number(!!b.shopable) - Number(!!a.shopable))) {
+    if (item.shop_image) add(`di_${item.id}`, item.name, 'item', [item.shop_image], { fresh: true });
   }
   for (const champion of (await lolChampions()).values()) {
     const file = encodeURIComponent(`${champion.name.replace(/ /g, '_')}_OriginalCircle.png`);
-    list.push({
-      name: `lol_${champion.key}`,
-      urls: [
-        `https://wiki.leagueoflegends.com/en-us/images/thumb/${file}/96px-${file}`,
-        `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${champion.image.full}`
-      ]
-    });
+    add(`lol_${champion.key}`, champion.name, 'lol', [
+      `https://wiki.leagueoflegends.com/en-us/images/thumb/${file}/96px-${file}`,
+      `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${champion.image.full}`
+    ]);
+  }
+  for (const game of settings.icons.games) {
+    if (game.name && game.url && !game.big) list.push({ key: gameEmojiName(game.name), name: gameEmojiName(game.name), urls: [game.url], stamp: game.url, game: game.name });
   }
   return list;
 }
 
+const OLD_NAME = /^(dl|rank|di|lol|game)_/;
+
 async function syncEmojis(client) {
   const existing = await client.application.emojis.fetch();
-  for (const e of existing.values()) emojis.set(e.name, e.toString());
-
-  const wanted = await wantedEmojis();
+  const byName = new Map([...existing.values()].map(e => [e.name, e]));
+  const owner = new Map(db.prepare('SELECT name, key FROM emoji_names').all().map(r => [r.name, r.key]));
   for (const e of existing.values()) {
-    if (/^(dl|rank|di|lol|game)_/.test(e.name) && !wanted.some(w => w.name === e.name)) {
-      await e.delete().catch(err => log.warn(`Emoji ${e.name}: ${err.message}`));
-      emojis.delete(e.name);
-    }
+    const key = owner.get(e.name) ?? (OLD_NAME.test(e.name) ? e.name : null);
+    if (key) emojis.set(key, e.toString());
   }
 
+  const wanted = await wantedEmojis();
   for (const item of wanted) {
+    let found = byName.get(item.name);
+    if (found && owner.get(item.name) !== item.key && item.name !== item.key) {
+      await found.delete().catch(err => log.warn(`Emoji ${item.name}: ${err.message}`));
+      byName.delete(item.name);
+      found = null;
+    }
     let stamp = item.stamp;
     if (item.fresh) {
       const res = await fetch(item.urls[0], { method: 'HEAD' }).catch(() => null);
       stamp = res?.ok ? res.headers.get('etag') ?? res.headers.get('last-modified') : null;
     }
-    if (stamp) {
-      const saved = db.prepare('SELECT stamp FROM emoji_sources WHERE name = ?').get(item.name)?.stamp;
-      if (stamp !== saved && emojis.has(item.name)) {
-        const old = existing.find(e => e.name === item.name);
-        if (old) await old.delete().catch(err => log.warn(`Emoji ${item.name}: ${err.message}`));
-        emojis.delete(item.name);
-      }
+    if (stamp && found && stamp !== db.prepare('SELECT stamp FROM emoji_sources WHERE name = ?').get(item.name)?.stamp) {
+      await found.delete().catch(err => log.warn(`Emoji ${item.name}: ${err.message}`));
+      byName.delete(item.name);
+      found = null;
     }
-    if (emojis.has(item.name)) continue;
+    if (found) {
+      emojis.set(item.key, found.toString());
+      continue;
+    }
     for (const url of item.urls) {
       const image = await fetchImage(url).catch(() => null);
       if (!image) continue;
       const created = await client.application.emojis.create({ attachment: image, name: item.name }).catch(err => log.warn(`Emoji ${item.name}: ${err.message}`));
-      if (created) emojis.set(created.name, created.toString());
-      if (created && stamp) db.prepare('INSERT OR REPLACE INTO emoji_sources (name, stamp) VALUES (?, ?)').run(item.name, stamp);
+      if (created) {
+        emojis.set(item.key, created.toString());
+        byName.set(created.name, created);
+        db.prepare('INSERT OR REPLACE INTO emoji_names (name, key) VALUES (?, ?)').run(created.name, item.key);
+        if (stamp) db.prepare('INSERT OR REPLACE INTO emoji_sources (name, stamp) VALUES (?, ?)').run(created.name, stamp);
+      }
       break;
     }
-    if (item.game && !emojis.has(item.name)) log.warn(`Couldn't load the icon for ${item.game}. Check the link in the panel.`);
+    if (item.game && !byName.has(item.name)) log.warn(`Couldn't load the icon for ${item.game}. Check the link in the panel.`);
+  }
+
+  const names = new Set(wanted.map(w => w.name));
+  for (const e of byName.values()) {
+    if ((owner.has(e.name) || OLD_NAME.test(e.name)) && !names.has(e.name)) {
+      await e.delete().catch(err => log.warn(`Emoji ${e.name}: ${err.message}`));
+      if (emojis.get(owner.get(e.name) ?? e.name) === e.toString()) emojis.delete(owner.get(e.name) ?? e.name);
+    }
   }
   log.info(`Icons ready: ${emojis.size}`);
 }

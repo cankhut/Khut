@@ -2,6 +2,7 @@ const list = [
   require('./help'),
   require('./stats'),
   require('./play'),
+  require('./leaderboard'),
   require('./lfg'),
   require('./lfg').games,
   require('./dm'),

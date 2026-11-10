@@ -15,7 +15,8 @@ const defaults = {
     lfgFull: '#EF6C00',
     lfgClosed: '#4F545C',
     lfgCancelled: '#ED4245',
-    play: '#1238E0'
+    play: '#1238E0',
+    leaderboard: '#F1C40F'
   },
   limits: {
     lfgReminderMinutes: 10,
@@ -112,6 +113,17 @@ const defaults = {
     'play.dlCorrect': '✅ It was **{hero}**! +{points} points',
     'play.dlWrong': '❌ It was **{hero}**.',
     'play.dlDone': '🏁 Done! **{points}** points. The next one starts {time}.',
+    'play.dlMore': '**{points}** points so far. Keep going with a bonus round? Each one is another hero from the same match, for the same points.',
+    'play.dlChoose': 'Press **Keep going** for a bonus round, or **Stop** to end the game.',
+    'play.keepGoing': 'Keep going',
+    'play.stop': 'Stop',
+    'play.statlocker': 'Match on Statlocker',
+    'leaderboard.title': '🏆 {game} · {period}',
+    'leaderboard.dlRow': '{place} {user} · **{points}** points · {games} played',
+    'leaderboard.lolRow': '{place} {user} · **{solved}** solved · {average} guesses on average',
+    'leaderboard.you': 'You: {line}',
+    'leaderboard.empty': 'Nobody in this server has played {game} in this time yet.',
+    'leaderboard.footer': 'Scores from every server you share with Khut',
     'play.dlHint': 'Press ✏️ **Guess** to type a hero.',
     'play.lolHint': 'Press ✏️ **Guess** to type a champion.',
     'play.answersTitle': "📅 Yesterday's answers",
