@@ -119,7 +119,7 @@ async function guess(interaction, mode, day, p, state, done, input) {
   core.save(interaction.user.id, GAME, mode, day, state, won, interaction.guildId);
   log.info(`${interaction.user.tag} guessed in lolhero ${mode}${won ? ' (correct)' : ''}`);
   if (won) {
-    await core.postResult(interaction, resultText('lolhero', state.guesses.length, { user: `<@${interaction.user.id}>`, mode: MODES[mode].name, count: state.guesses.length, guesses: plural(state.guesses.length) }));
+    await core.postResult(interaction, core.streak(interaction.user.id, GAME, mode, day) + resultText('lolhero', state.guesses.length, { user: `<@${interaction.user.id}>`, mode: MODES[mode].name, count: state.guesses.length, guesses: plural(state.guesses.length) }));
   }
   return null;
 }

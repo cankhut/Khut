@@ -67,6 +67,16 @@ function finishedCount(guildId, game, mode, day) {
   return db.prepare('SELECT COUNT(*) AS n FROM play_progress WHERE guild_id = ? AND game = ? AND mode = ? AND day = ? AND done = 1').get(guildId, game, mode, day).n;
 }
 
+function streak(userId, game, mode, day) {
+  const done = db.prepare('SELECT done FROM play_progress WHERE user_id = ? AND game = ? AND mode = ? AND day = ?');
+  let days = 0;
+  while (done.get(userId, game, mode, day)?.done) {
+    days++;
+    day = previousDay(day);
+  }
+  return days >= 2 ? `${text('play.streak', { days })} ` : '';
+}
+
 async function postResult(interaction, content) {
   await interaction.channel?.send({ content, allowedMentions: { parse: [] } }).catch(err => log.debug(`Couldn't post a game result: ${err.message}`));
 }
@@ -132,4 +142,4 @@ function parseEmoji(value) {
   return m ? { name: m[1], id: m[2] } : undefined;
 }
 
-module.exports = { today, previousDay, nextReset, seed, shuffle, storedPuzzle, puzzle, progress, save, finishedCount, postResult, parseEmoji, normalize, match, matchMessage, guessRow, guessModal, replaceBoard };
+module.exports = { today, previousDay, nextReset, seed, shuffle, storedPuzzle, puzzle, progress, save, finishedCount, streak, postResult, parseEmoji, normalize, match, matchMessage, guessRow, guessModal, replaceBoard };

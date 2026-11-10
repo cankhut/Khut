@@ -27,7 +27,7 @@ const defaults = {
   results: {
     lolhero: [
       { max: 1, text: "🤯 {user} found today's lolhero {mode} on the **first** try!" },
-      { max: 3, text: "🔥 {user} found today's lolhero {mode} in **{count}** {guesses}" },
+      { max: 3, text: "⚡ {user} found today's lolhero {mode} in **{count}** {guesses}" },
       { max: 6, text: "{user} found today's lolhero {mode} in **{count}** {guesses}" },
       { max: 99, text: "😅 {user} found today's lolhero {mode} in **{count}** {guesses}. Got there in the end!" }
     ],
@@ -116,6 +116,7 @@ const defaults = {
     'play.lolHint': 'Press ✏️ **Guess** to type a champion.',
     'play.answersTitle': "📅 Yesterday's answers",
     'play.answersFound': '{count} found it here',
+    'play.streak': '{days}x streak 🔥',
 
     'link.usage': 'Use `/link steam:<profile link or friend code> riot:<Name#Tag>`',
     'link.connect': 'This reads the Steam and Riot accounts already connected to your Discord profile. Or use `/link steam:... riot:...` to add them yourself.',
