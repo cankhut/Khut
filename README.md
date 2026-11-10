@@ -1,6 +1,6 @@
 # Khut
 
-A Discord bot made for small groups. LFG pings, voice time tracking with Wrapped and player stats for Deadlock, Counter-Strike 2 and League of Legends.
+A Discord bot made for small groups. LFG pings, voice time tracking with Wrapped and player stats for Deadlock, Counter-Strike 2, League of Legends and Brawlhalla.
 
 ## Commands
 
@@ -9,7 +9,7 @@ All commands work in any channel. `/help` shows this list in Discord.
 | Command | What it does |
 |---|---|
 | `/help` | Every command, with examples. |
-| `/stats game player` | Deadlock, CS2 or League stats. `player` = @user, Steam link / friend code, or Riot ID (`Name#Tag`). Empty = you. |
+| `/stats game player` | Deadlock, CS2, League or Brawlhalla stats. `player` = @user, Steam link / friend code, Riot ID (`Name#Tag`) or numeric Brawlhalla ID. Empty = you. |
 | `/stats game:Discord player with` | Someone's voice time, or with `with:` the voice time between two people. |
 | `/play dlbuild mode guess` | Daily Deadlock game: guess heroes from their items in a real match. |
 | `/play lolhero mode guess` | Daily League game: Classic (champion properties) or Ability (a rotated, greyed ability icon). |
@@ -18,7 +18,7 @@ All commands work in any channel. `/help` shows this list in Discord.
 | `/games` | Subscribe to games so you get pinged when someone uses `/lfg` for them. Only you see it. |
 | `/dm on` / `/dm off` | Also get those pings as a DM. |
 | `/wrapped period` | Server voice Wrapped: this month, last month, this year or all time. |
-| `/link` | Link your Steam and Riot accounts so people can use `player:@you`. |
+| `/link` | Link your Steam, Riot and Brawlhalla accounts so people can use `player:@you`. |
 | `/mydata` | See, pause or delete what Khut stores about you. |
 | `/setup` | Admins: `games`, `roles`, `answers`, `addgame`, `removegame`, `wrapped`, `timezone`. |
 
@@ -39,6 +39,8 @@ Champion properties live in `data/lol-champions.json`. Gender follows each champ
 Failed `/stats` replies (player not found, private profile and so on) delete themselves after 2 hours.
 
 League stats only count Summoner's Rift games (no ARAM, Arena or other game modes). Ranked KDA covers the current season.
+
+Brawlhalla stats include lifetime account and legend performance plus ranked 1v1/3v3 data and ranked 2v2 team/partner stats. Use the numeric Brawlhalla ID shown at the top-right of the game's Inventory tab; Steam linking alone cannot identify a Brawlhalla account.
 
 Hero and champion icons gets added to the bot as app emojis the first time it starts, this can take some time, the console prints `Icons ready` when done.
 
@@ -73,6 +75,8 @@ Hero and champion icons gets added to the bot as app emojis the first time it st
 | `LEETIFY_KEY` | <https://leetify.com/app/developer> | Optional. Gives higher rate limits for Leetify. |
 
 Deadlock stats come from deadlock-api.com and need no key.
+
+Brawlhalla stats use the official [Brawlhalla Developer API v1](https://dev.brawlhalla.com/) and need no key. The API documents a limit of 2,000 requests per five minutes. The legend catalogue is cached in memory for six hours.
 
 CS2 cards combine three sources, so they work for almost everyone:
 
@@ -166,7 +170,7 @@ npm start
 1. Developer Portal > **OAuth2**: copy **Client Secret** > `CLIENT_SECRET`, and add the redirect `https://your-address/callback`.
 2. Set `PUBLIC_URL=https://your-address` in `.env`.
 
-Without this, `/link steam:... riot:...` works the same way.
+Without this, `/link steam:... riot:...` works the same way. Brawlhalla IDs are always linked manually with `/link brawlhalla:<ID>`; Discord OAuth does not expose them.
 
 ## 6. Keep the keys private
 
@@ -180,6 +184,7 @@ Without this, `/link steam:... riot:...` works the same way.
 - CS2 data from the Steam Web API, [FACEIT](https://www.faceit.com) and [Leetify](https://leetify.com/) (Data Provided by Leetify). Not affiliated with Valve, FACEIT or Leetify.
 - League champion properties in `data/lol-champions.json` are compiled from the [League of Legends Wiki](https://wiki.leagueoflegends.com) (CC BY-SA). Ability icons come from Riot's Data Dragon.
 - Deadlock data from [deadlock-api.com](https://deadlock-api.com), with links to [Statlocker](https://statlocker.gg) profiles. Not affiliated with Valve.
+- Brawlhalla statistics from the [official Brawlhalla Developer API](https://dev.brawlhalla.com/). The bot is not affiliated with Blue Mammoth Games or Ubisoft. Character artwork and game logos remain the property of their respective owners; legend icon files are loaded from NexHalla.
 - A Personal Riot API key is for your own server. Before opening the bot to the public, apply for a Production key.
 - See [PRIVACY.md](PRIVACY.md) for what the bot stores.
 
@@ -189,4 +194,4 @@ Khut is licensed under the [GNU Affero General Public License v3.0](LICENSE) (AG
 
 You can use, change and share it, but if you share a changed version, or run a changed version as a bot other people use, you have to publish your source code under the same license.
 
-Game icons, hero and champion images and rank badges belong to their owners (Valve, Riot Games) and are not covered by this license.
+Game icons, hero, champion and legend images and rank badges belong to their owners (Valve, Riot Games, Blue Mammoth Games / Ubisoft) or their respective asset hosts and are not covered by this license.
