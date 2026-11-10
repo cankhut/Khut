@@ -36,6 +36,9 @@ const defaults = {
       { min: 90, text: "🏆 {user} finished today's dlbuild ({mode}) with **{points}** points\n{grid}" },
       { min: 50, text: "{user} finished today's dlbuild ({mode}) with **{points}** points\n{grid}" },
       { min: 0, text: "😵 {user} finished today's dlbuild ({mode}) with **{points}** points\n{grid}" }
+    ],
+    streak: [
+      { min: 2, place: 'before', text: '{days}x streak 🔥' }
     ]
   },
   icons: {
@@ -128,7 +131,6 @@ const defaults = {
     'play.lolHint': 'Press ✏️ **Guess** to type a champion.',
     'play.answersTitle': "📅 Yesterday's answers",
     'play.answersFound': '{count} found it here',
-    'play.streak': '{days}x streak 🔥',
 
     'link.usage': 'Use `/link steam:<profile link or friend code> riot:<Name#Tag>`',
     'link.connect': 'This reads the Steam and Riot accounts already connected to your Discord profile. Or use `/link steam:... riot:...` to add them yourself.',
@@ -190,6 +192,15 @@ function text(key, vars = {}) {
   return fill(settings.texts[key] ?? defaults.texts[key], vars);
 }
 
+function streakText(days, message) {
+  const row = [...settings.results.streak].sort((a, b) => b.min - a.min).find(r => days >= r.min);
+  if (!row) return message;
+  const tag = fill(row.text, { days });
+  if (row.place !== 'after') return `${tag} ${message}`;
+  const [first, ...rest] = message.split('\n');
+  return [`${first} ${tag}`, ...rest].join('\n');
+}
+
 function resultText(game, value, vars) {
   const rows = settings.results[game]?.length ? settings.results[game] : defaults.results[game];
   const sorted = game === 'lolhero' ? [...rows].sort((a, b) => a.max - b.max) : [...rows].sort((a, b) => b.min - a.min);
@@ -200,4 +211,4 @@ function resultText(game, value, vars) {
 load();
 fs.watchFile(FILE, { interval: 2000 }, load).unref();
 
-module.exports = { settings, defaults, save, color, text, resultText };
+module.exports = { settings, defaults, save, color, text, resultText, streakText };

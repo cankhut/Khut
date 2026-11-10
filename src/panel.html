@@ -152,6 +152,7 @@
     <p class="hint">What the bot posts in the channel when someone finishes a /play game. It uses the first row that fits, and the last row covers everything after it. Words in {curly brackets} are filled in by the bot.</p>
     <div class="box"><h2>lolhero</h2><p class="hint">By number of guesses. You can use {user} {mode} {count} {guesses}</p><div id="res-lolhero"></div><button class="btn grey small" onclick="addResult('lolhero')">Add row</button></div>
     <div class="box"><h2>dlbuild</h2><p class="hint">By total points: 100 for the 4 rounds, more with bonus rounds. You can use {user} {mode} {points} {grid}</p><div id="res-dlbuild"></div><button class="btn grey small" onclick="addResult('dlbuild')">Add row</button></div>
+    <div class="box"><h2>Streak</h2><p class="hint">Added to the result post when someone finished the same game on the days before too. It uses the row with the highest number they reached, and adds nothing below the lowest one. You can use {days}</p><div id="res-streak"></div><button class="btn grey small" onclick="addStreak()">Add row</button></div>
     <div class="savebar"><button class="btn grey" onclick="resetSection('results')">Reset all</button><button class="btn" onclick="saveSettings()">Save results</button></div>
   </section>
 
@@ -250,7 +251,6 @@ const ABOUT = {
   'play.dlHint': 'dlbuild: how to guess',
   'play.answersTitle': "Yesterday's answers post: title",
   'play.answersFound': "Yesterday's answers post: players count",
-  'play.streak': 'Streak in front of result posts (2 days or more)',
   'lfg.pingUsers': 'LFG ping without game roles',
   'lfg.pingRole': 'LFG ping with game roles on',
   'lfg.host': 'Card: host line',
@@ -526,7 +526,48 @@ function resultPreview(game, i) {
   const row = state.settings.results[game][i];
   const count = Math.max(1, Math.min(row.max ?? 1, 10));
   const vars = { user: '@Jankat', mode: game === 'lolhero' ? 'Classic' : 'High rank', count, guesses: count === 1 ? 'guess' : 'guesses', points: Math.min(row.min ?? 0, 100), grid: '1️⃣ 🟩⬛⬛⬛⬛\n2️⃣ 🟥🟥🟩⬛⬛' };
-  return message(`${t('play.streak', { days: 3 })} ${fill(row.text, vars)}`);
+  return message(streakApply(3, fill(row.text, vars)));
+}
+
+function streakApply(days, text) {
+  const row = [...state.settings.results.streak].sort((a, b) => b.min - a.min).find(r => days >= r.min);
+  if (!row) return text;
+  const tag = fill(row.text, { days });
+  if (row.place !== 'after') return `${tag} ${text}`;
+  const [first, ...rest] = text.split('\n');
+  return [`${first} ${tag}`, ...rest].join('\n');
+}
+
+function streakPreview(i) {
+  const days = Math.max(1, state.settings.results.streak[i].min);
+  return message(streakApply(days, "@Jankat found today's lolhero Classic in **3** guesses"));
+}
+
+function renderStreak() {
+  $('res-streak').innerHTML = state.settings.results.streak.map((row, i) => `
+    <div class="item">
+      <div class="label">
+        <div class="row">From<input type="number" min="1" style="width:80px" value="${row.min}" oninput="setStreak(${i}, 'min', Number(this.value))">days<select style="width:auto" onchange="setStreak(${i}, 'place', this.value)"><option value="before" ${row.place !== 'after' ? 'selected' : ''}>before the message</option><option value="after" ${row.place === 'after' ? 'selected' : ''}>after the message</option></select><span style="flex:1"></span><button class="btn red small" onclick="removeStreak(${i})">Remove</button></div>
+        <textarea rows="2" style="margin-top:6px" oninput="setStreak(${i}, 'text', this.value)">${esc(row.text)}</textarea>
+      </div>
+      <div id="sp-${i}">${streakPreview(i)}</div>
+    </div>`).join('') || '<p class="hint" style="margin:0">No rows: streaks are not shown.</p>';
+}
+
+function setStreak(i, field, value) {
+  state.settings.results.streak[i][field] = value;
+  state.settings.results.streak.forEach((_, n) => { $(`sp-${n}`).innerHTML = streakPreview(n); });
+  for (const [game] of Object.entries(RESULTS)) state.settings.results[game].forEach((_, n) => { $(`rp-${game}-${n}`).innerHTML = resultPreview(game, n); });
+}
+
+function addStreak() {
+  state.settings.results.streak.push({ min: 7, place: 'before', text: '{days} days in a row 🔥🔥' });
+  renderResults();
+}
+
+function removeStreak(i) {
+  state.settings.results.streak.splice(i, 1);
+  renderResults();
 }
 
 function renderResults() {
@@ -540,6 +581,7 @@ function renderResults() {
         <div id="rp-${game}-${i}">${resultPreview(game, i)}</div>
       </div>`).join('');
   }
+  renderStreak();
 }
 
 function setResult(game, i, field, value) {

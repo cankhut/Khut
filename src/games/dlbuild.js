@@ -1,7 +1,7 @@
 const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ModalBuilder, LabelBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 const { getJson } = require('../api');
 const { emoji, deadlockHeroes, deadlockItems, playableHeroes } = require('../assets');
-const { text, resultText } = require('../settings');
+const { text, resultText, streakText } = require('../settings');
 const colors = require('../colors');
 const core = require('./core');
 const log = require('../log');
@@ -120,7 +120,7 @@ function waiting(p, state) {
 }
 
 function resultPost(userId, mode, day, p, state) {
-  return core.streak(userId, GAME, mode, day) + resultText('dlbuild', total(p, state), { user: `<@${userId}>`, mode: MODES[mode].name, points: total(p, state), grid: gridText(p, state) });
+  return streakText(core.streak(userId, GAME, mode, day), resultText('dlbuild', total(p, state), { user: `<@${userId}>`, mode: MODES[mode].name, points: total(p, state), grid: gridText(p, state) }));
 }
 
 async function render(p, state, mode, day, guildId, view, notice) {

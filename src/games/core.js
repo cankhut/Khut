@@ -74,7 +74,7 @@ function streak(userId, game, mode, day) {
     days++;
     day = previousDay(day);
   }
-  return days >= 2 ? `${text('play.streak', { days })} ` : '';
+  return days;
 }
 
 async function postResult(interaction, content) {
