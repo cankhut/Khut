@@ -2,6 +2,7 @@ const { getJson } = require('./api');
 const log = require('./log');
 const { db } = require('./db');
 const { settings } = require('./settings');
+const { loadLegendCatalog, legendIconUrl } = require('./brawlhalla');
 
 const emojis = new Map();
 let heroes;
@@ -9,6 +10,7 @@ let items;
 let champions;
 let ddragonVersion;
 const championDetails = new Map();
+let brawlhallaCatalogueAvailable = false;
 
 async function deadlockHeroes() {
   if (!heroes) heroes = new Map((await getJson('https://api.deadlock-api.com/v1/assets/heroes')).map(h => [h.id, h]));
@@ -118,10 +120,24 @@ async function wantedEmojis() {
   for (const game of settings.icons.games) {
     if (game.name && game.url && !game.big) list.push({ key: gameEmojiName(game.name), name: gameEmojiName(game.name), urls: [game.url], stamp: game.url, game: game.name });
   }
+  let legends;
+  try {
+    legends = await loadLegendCatalog();
+    brawlhallaCatalogueAvailable = true;
+  } catch (err) {
+    brawlhallaCatalogueAvailable = false;
+    log.warn(`Brawlhalla legend icons unavailable: ${err.message}`);
+    legends = new Map();
+  }
+  for (const legend of legends.values()) {
+    if (!legend.bio_name) continue;
+    const key = `bh_${legend.legend_id}`;
+    list.push({ key, name: key, urls: [legendIconUrl(legend.bio_name)] });
+  }
   return list;
 }
 
-const OLD_NAME = /^(dl|rank|di|lol|game)_/;
+const OLD_NAME = /^(dl|rank|di|lol|game|bh)_/;
 
 async function syncEmojis(client) {
   const existing = await client.application.emojis.fetch();
@@ -171,7 +187,8 @@ async function syncEmojis(client) {
 
   const names = new Set(wanted.map(w => w.name));
   for (const e of byName.values()) {
-    if ((owner.has(e.name) || OLD_NAME.test(e.name)) && !names.has(e.name)) {
+    const keepUnverifiedBrawlhallaIcon = e.name.startsWith('bh_') && !brawlhallaCatalogueAvailable;
+    if (!keepUnverifiedBrawlhallaIcon && (owner.has(e.name) || OLD_NAME.test(e.name)) && !names.has(e.name)) {
       await e.delete().catch(err => log.warn(`Emoji ${e.name}: ${err.message}`));
       if (emojis.get(owner.get(e.name) ?? e.name) === e.toString()) emojis.delete(owner.get(e.name) ?? e.name);
     }

@@ -2,20 +2,23 @@ const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Messa
 const { saveLinks } = require('../db');
 const { resolveSteamId, riotAccount } = require('../api');
 const { oauthUrl } = require('../web');
+const { parsePlayerId } = require('../brawlhalla');
 const { text } = require('../settings');
 
 const data = new SlashCommandBuilder()
   .setName('link')
-  .setDescription('Link your Steam and Riot accounts')
+  .setDescription('Link your Steam, Riot and Brawlhalla accounts')
   .addStringOption(o => o.setName('steam').setDescription('Steam profile link or friend code'))
-  .addStringOption(o => o.setName('riot').setDescription('Name#Tag'));
+  .addStringOption(o => o.setName('riot').setDescription('Name#Tag'))
+  .addStringOption(o => o.setName('brawlhalla').setDescription('Brawlhalla ID (top-right of Inventory tab)'));
 
 async function execute(interaction) {
   const steamInput = interaction.options.getString('steam');
   const riotInput = interaction.options.getString('riot');
+  const brawlhallaInput = interaction.options.getString('brawlhalla');
   const ephemeral = { flags: MessageFlags.Ephemeral };
 
-  if (!steamInput && !riotInput) {
+  if (!steamInput && !riotInput && !brawlhallaInput) {
     if (!process.env.PUBLIC_URL) {
       return interaction.reply({ content: text('link.usage'), ...ephemeral });
     }
@@ -45,7 +48,11 @@ async function execute(interaction) {
     done.push(`Riot: ${riotId}`);
   }
 
-  saveLinks(interaction.user.id, steamId, riotId);
+  const brawlhallaId = brawlhallaInput ? parsePlayerId(brawlhallaInput) : null;
+  if (brawlhallaInput && !brawlhallaId) return interaction.editReply(text('link.badBrawlhalla'));
+  if (brawlhallaId) done.push(`Brawlhalla ID: ${brawlhallaId}`);
+
+  saveLinks(interaction.user.id, steamId, riotId, brawlhallaId);
   await interaction.editReply(`${text('link.done')}\n${done.join('\n')}`);
 }
 

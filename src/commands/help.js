@@ -9,6 +9,7 @@ const sections = [
     '`/stats game:Deadlock` — your Deadlock stats',
     '`/stats game:League player:Name#Tag` — someone\'s League stats',
     '`/stats game:CS2 player:@Talha` — works with @mentions, Steam links and friend codes',
+    '`/stats game:Brawlhalla player:1234567` — lifetime, ranked 1v1/2v2/3v3, combat and legend stats',
     '`/stats game:Discord player:@Talha` — their voice time',
     '`/stats game:Discord player:@Talha with:@Jankat` — voice time between two people'
   ]],
@@ -26,7 +27,7 @@ const sections = [
     '`/wrapped` — server voice Wrapped for this month, last month, this year or all time'
   ]],
   ['🔗 Accounts', [
-    '`/link steam:<profile link> riot:<Name#Tag>` — so people can look you up with @you',
+    '`/link steam:<profile link> riot:<Name#Tag> brawlhalla:<ID>` — link accounts for @mentions',
     '`/mydata` — see, pause or delete what Khut stores about you'
   ]],
   ['⚙️ Admins', [

@@ -27,6 +27,7 @@ async function execute(interaction) {
     return reply([
       `Steam: ${links?.steam_id ?? '-'}`,
       `Riot: ${links?.riot_id ?? '-'}`,
+      `Brawlhalla ID: ${links?.brawlhalla_id ?? '-'}`,
       `Voice minutes stored: ${minutes}`,
       `Voice tracking: ${paused ? 'paused' : 'on'}`,
       `LFG pings here: ${subs.join(', ') || '-'}`,

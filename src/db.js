@@ -4,7 +4,7 @@ const db = new DatabaseSync(process.env.DB_PATH || 'data.db');
 
 db.exec(`
   PRAGMA journal_mode = WAL;
-  CREATE TABLE IF NOT EXISTS links (discord_id TEXT PRIMARY KEY, steam_id TEXT, riot_id TEXT);
+  CREATE TABLE IF NOT EXISTS links (discord_id TEXT PRIMARY KEY, steam_id TEXT, riot_id TEXT, brawlhalla_id TEXT);
   CREATE TABLE IF NOT EXISTS opt_out (discord_id TEXT PRIMARY KEY);
   CREATE TABLE IF NOT EXISTS dm_on (discord_id TEXT PRIMARY KEY);
   CREATE TABLE IF NOT EXISTS guilds (guild_id TEXT PRIMARY KEY, timezone TEXT NOT NULL DEFAULT 'Europe/Istanbul', wrapped_auto INTEGER NOT NULL DEFAULT 1, last_wrapped TEXT);
@@ -26,6 +26,7 @@ db.exec(`
 `);
 
 for (const sql of [
+  'ALTER TABLE links ADD COLUMN brawlhalla_id TEXT',
   'ALTER TABLE lfg ADD COLUMN extra INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE lfg ADD COLUMN ended_at INTEGER',
   "ALTER TABLE guilds ADD COLUMN timezone TEXT NOT NULL DEFAULT 'Europe/Istanbul'",
@@ -56,11 +57,14 @@ function getLinks(discordId) {
   return db.prepare('SELECT * FROM links WHERE discord_id = ?').get(discordId);
 }
 
-function saveLinks(discordId, steamId, riotId) {
+function saveLinks(discordId, steamId, riotId, brawlhallaId) {
   db.prepare(`
-    INSERT INTO links (discord_id, steam_id, riot_id) VALUES (?, ?, ?)
-    ON CONFLICT(discord_id) DO UPDATE SET steam_id = COALESCE(excluded.steam_id, steam_id), riot_id = COALESCE(excluded.riot_id, riot_id)
-  `).run(discordId, steamId ?? null, riotId ?? null);
+    INSERT INTO links (discord_id, steam_id, riot_id, brawlhalla_id) VALUES (?, ?, ?, ?)
+    ON CONFLICT(discord_id) DO UPDATE SET
+      steam_id = COALESCE(excluded.steam_id, steam_id),
+      riot_id = COALESCE(excluded.riot_id, riot_id),
+      brawlhalla_id = COALESCE(excluded.brawlhalla_id, brawlhalla_id)
+  `).run(discordId, steamId ?? null, riotId ?? null, brawlhallaId ?? null);
 }
 
 module.exports = { db, guildSettings, setGuild, getLinks, saveLinks };

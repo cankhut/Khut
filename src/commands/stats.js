@@ -1,7 +1,8 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { db, getLinks, guildSettings } = require('../db');
 const { getJson, resolveSteamId, steamToAccountId, steamProfile } = require('../api');
-const { heroLabel } = require('../assets');
+const { heroLabel, emoji } = require('../assets');
+const { getPlayer: getBrawlhallaPlayer, parsePlayerId, legendIconUrl, profileUrl: brawlhallaProfileUrl } = require('../brawlhalla');
 const { lolStats } = require('../lol');
 const colors = require('../colors');
 const icons = require('../icons');
@@ -17,9 +18,10 @@ const data = new SlashCommandBuilder()
     { name: 'Deadlock', value: 'deadlock' },
     { name: 'CS2', value: 'cs2' },
     { name: 'League', value: 'lol' },
+    { name: 'Brawlhalla', value: 'brawlhalla' },
     { name: 'Discord', value: 'discord' }
   ))
-  .addStringOption(o => o.setName('player').setDescription('@user, Steam link / friend code or Riot ID'))
+  .addStringOption(o => o.setName('player').setDescription('@user, Brawlhalla ID, Steam link / friend code or Riot ID'))
   .addUserOption(o => o.setName('with').setDescription('DISCORD ONLY: show voice time between player and this person'));
 
 function pct(wins, total) {
@@ -51,6 +53,12 @@ async function steamIdFor(input, selfId) {
   const userId = input ? mentionedUser(input) : selfId;
   if (userId) return getLinks(userId)?.steam_id ?? null;
   return resolveSteamId(input);
+}
+
+function brawlhallaIdFor(input, selfId) {
+  const userId = input ? mentionedUser(input) : selfId;
+  if (userId) return getLinks(userId)?.brawlhalla_id ?? null;
+  return parsePlayerId(input);
 }
 
 function riotIdFor(input, selfId) {
@@ -199,6 +207,137 @@ async function csEmbed(steamId) {
   return embed;
 }
 
+
+function numberValue(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function numberText(value) {
+  return Math.round(numberValue(value)).toLocaleString('en-US');
+}
+
+function xpProgress(value) {
+  if (value == null || !Number.isFinite(Number(value))) return null;
+  const raw = Number(value);
+  const percent = Math.max(0, Math.min(100, raw <= 1 ? raw * 100 : raw));
+  const filled = Math.round(percent / 10);
+  return `${'▰'.repeat(filled)}${'▱'.repeat(10 - filled)} ${percent.toFixed(0)}%`;
+}
+
+function rankedSummary(data, mode) {
+  const games = numberValue(data?.games);
+  const wins = numberValue(data?.wins);
+  if (data?.unavailable) return `Ranked ${mode} stats are temporarily unavailable.`;
+  if (!data || games < 1) return `No ranked ${mode} matches recorded this season.`;
+
+  const losses = Math.max(0, games - wins);
+  const lines = [
+    `**${data.tier || 'Ranked'}** · **${numberText(data.rating)} Elo**`,
+    `${numberText(wins)}W – ${numberText(losses)}L · **${pct(wins, games)}% WR** (${numberText(games)} games)`
+  ];
+  if (numberValue(data.peak_rating) > 0 && numberValue(data.peak_rating) !== numberValue(data.rating)) {
+    lines.push(`Peak: ${numberText(data.peak_rating)} Elo`);
+  }
+  if (data.region) lines.push(`Region: **${data.region}**`);
+  if (numberValue(data.global_rank) > 0) lines.push(`Global rank: **#${numberText(data.global_rank)}**`);
+  const regionalRanks = (data.region_ranks ?? [])
+    .filter(rank => numberValue(rank.rank) > 0)
+    .slice(0, 3)
+    .map(rank => `${rank.region} #${numberText(rank.rank)}`);
+  if (regionalRanks.length) lines.push(`Regional: ${regionalRanks.join(' · ')}`);
+  return lines.join('\n');
+}
+
+async function brawlhallaEmbed(brawlhallaId) {
+  const { all, ranked1v1, ranked3v3, teams, legends } = await getBrawlhallaPlayer(brawlhallaId);
+  const legendStats = Array.isArray(all.legends) ? all.legends : [];
+  const legendInfo = id => legends.get(Number(id));
+  const legendLabel = id => `${emoji(`bh_${id}`)} ${legendInfo(id)?.bio_name ?? `Legend ${id}`}`.trim();
+
+  const totalGames = numberValue(all.games);
+  const totalWins = numberValue(all.wins);
+  const totalLosses = Math.max(0, totalGames - totalWins);
+  const sum = key => legendStats.reduce((total, legend) => total + numberValue(legend[key]), 0);
+  const knockouts = sum('kos');
+  const falls = sum('falls');
+  const damageDealt = sum('damage_dealt');
+  const damageTaken = sum('damage_taken');
+  const suicides = sum('suicides');
+
+  const mostPlayed = [...legendStats]
+    .filter(legend => numberValue(legend.games) > 0)
+    .sort((a, b) => numberValue(b.games) - numberValue(a.games))
+    .slice(0, 3);
+  const mostPlayedLines = mostPlayed.map(legend => {
+    const games = numberValue(legend.games);
+    const wins = numberValue(legend.wins);
+    return `▪️ **${legendLabel(legend.legend_id)}** (${numberText(games)}g, ${pct(wins, games)}% WR)`;
+  });
+
+  const rankedLegends = [...(ranked1v1?.legends ?? [])]
+    .filter(legend => numberValue(legend.games) > 0)
+    .sort((a, b) => numberValue(b.rating) - numberValue(a.rating))
+    .slice(0, 3);
+  const rankedLegendLines = rankedLegends.map(legend => {
+    const games = numberValue(legend.games);
+    const wins = numberValue(legend.wins);
+    return `▪️ **${legendLabel(legend.legend_id)}** · ${numberText(legend.rating)} Elo (${pct(wins, games)}% WR)`;
+  });
+
+  const teamList = Array.isArray(teams?.teams?.ranked_2v2) ? teams.teams.ranked_2v2 : [];
+  const teamLines = [...teamList]
+    .filter(team => numberValue(team.games) > 0)
+    .sort((a, b) => numberValue(b.games) - numberValue(a.games))
+    .slice(0, 2)
+    .map((team, index) => {
+      const firstIsPlayer = String(team.brawlhalla_id_one) === String(brawlhallaId);
+      const partner = firstIsPlayer ? team.username_two : team.username_one;
+      const games = numberValue(team.games);
+      const wins = numberValue(team.wins);
+      const losses = Math.max(0, games - wins);
+      return `**${index + 1}. ${partner || 'Partner'}** · ${numberText(team.rating)} Elo · ${numberText(wins)}W/${numberText(losses)}L`;
+    });
+  const teamSummary = teams?.unavailable
+    ? 'Ranked 2v2 stats are temporarily unavailable.'
+    : teamLines.join('\n') || 'No ranked 2v2 teams found.';
+
+  const lifetimeLines = [
+    `**${pct(totalWins, totalGames)}% WR** · ${numberText(totalWins)}W / ${numberText(totalLosses)}L`,
+    `${numberText(totalGames)} games played`
+  ];
+  if (all.level != null) lifetimeLines.push(`Level **${numberText(all.level)}**${xpProgress(all.xp_percentage) ? ` · ${xpProgress(all.xp_percentage)}` : ''}`);
+
+  const combatLines = [
+    `KOs **${numberText(knockouts)}** · Falls **${numberText(falls)}** · K/F **${falls ? (knockouts / falls).toFixed(2) : '—'}**`,
+    `Damage dealt **${numberText(damageDealt)}** · taken **${numberText(damageTaken)}**`
+  ];
+  if (suicides > 0) combatLines.push(`Suicides **${numberText(suicides)}**`);
+
+  const embed = new EmbedBuilder()
+    .setColor(colors.brawlhalla)
+    .setAuthor({ name: `${all.name || 'Brawlhalla player'} · Brawlhalla`, url: brawlhallaProfileUrl() })
+    .setTitle('Player Statistics')
+    .setURL(brawlhallaProfileUrl())
+    .setDescription(`Brawlhalla ID: \`${brawlhallaId}\` · [Search on NexHalla](https://nexhalla.com/)`)
+    .addFields(
+      { name: '🏆 Ranked 1v1', value: rankedSummary(ranked1v1, '1v1'), inline: true },
+      { name: '🏆 Ranked 3v3', value: rankedSummary(ranked3v3, '3v3'), inline: true },
+      { name: '🛡️ Ranked 2v2 Teams', value: teamSummary, inline: true },
+      { name: '📊 Lifetime', value: lifetimeLines.join('\n'), inline: true },
+      { name: '⚔️ Combat', value: combatLines.join('\n'), inline: true },
+      { name: '⭐ Most Played Legends', value: mostPlayedLines.join('\n') || 'No legend playtime data.', inline: true },
+      { name: '🎖️ Top 1v1 Legends', value: rankedLegendLines.join('\n') || 'No ranked legend data.', inline: true }
+    )
+    .setFooter({ text: 'Brawlhalla · Official Developer API v1', iconURL: icons.brawlhalla });
+
+  const featuredLegend = mostPlayed[0] ?? rankedLegends[0];
+  const featuredInfo = featuredLegend ? legendInfo(featuredLegend.legend_id) : null;
+  if (featuredInfo?.bio_name) embed.setThumbnail(legendIconUrl(featuredInfo.bio_name));
+  else if (icons.brawlhalla) embed.setThumbnail(icons.brawlhalla);
+  return embed;
+}
+
 function voiceMinutes(guildId, sql, args, tz) {
   return ['week', 'month', 'all'].map(period => db.prepare(sql).get(guildId, ...args, periodStart(period, tz)).m);
 }
@@ -262,6 +401,12 @@ async function execute(interaction) {
       if (!riotId) return fail(interaction, text(input ? 'stats.noRiot' : 'stats.noRiotLinked'));
       log.info(`/stats League lookup: ${riotId}`);
       embed = await lolStats(riotId, update => interaction.editReply({ embeds: [update] }));
+    } else if (game === 'brawlhalla') {
+      const userId = input ? mentionedUser(input) : interaction.user.id;
+      const brawlhallaId = brawlhallaIdFor(input, interaction.user.id);
+      if (!brawlhallaId) return fail(interaction, text(userId ? 'stats.noBrawlhallaLinked' : 'stats.noBrawlhalla'));
+      log.info(`/stats Brawlhalla lookup: ${brawlhallaId}`);
+      embed = await brawlhallaEmbed(brawlhallaId);
     } else {
       const steamId = await steamIdFor(input, interaction.user.id);
       if (!steamId) return fail(interaction, text(input ? 'stats.noSteam' : 'stats.noSteamLinked'));

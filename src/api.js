@@ -6,7 +6,13 @@ async function getJson(url, headers = {}) {
   const started = Date.now();
   let res;
   try {
-    res = await fetch(url, { headers, signal: AbortSignal.timeout(15000) });
+    res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        ...headers
+      },
+      signal: AbortSignal.timeout(15000)
+    });
   } catch (err) {
     log.warn(`API failed: ${url} (${err.cause?.code ?? err.name})`);
     throw err;
