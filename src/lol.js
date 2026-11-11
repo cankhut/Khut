@@ -5,6 +5,7 @@ const { championLabel, profileIconUrl } = require('./assets');
 const log = require('./log');
 const colors = require('./colors');
 const icons = require('./icons');
+const { text } = require('./settings');
 
 const PLATFORMS = {
   br1: ['americas', 'br'],
@@ -109,7 +110,7 @@ async function buildEmbed(data) {
     const games = rows(ids);
     const lines = entry
       ? [`**${entry.tier[0]}${entry.tier.slice(1).toLowerCase()} ${entry.rank}** ${entry.leaguePoints} LP`, `${pct(entry.wins, entry.wins + entry.losses)}% WR (${entry.wins + entry.losses} games)`]
-      : ['Unranked'];
+      : [text('card.unranked')];
     if (games.length) lines.push(kda(games));
     return { name, value: lines.join('\n'), inline: true };
   };
@@ -129,18 +130,18 @@ async function buildEmbed(data) {
   const embed = new EmbedBuilder()
     .setAuthor({ name: `${account.gameName}#${account.tagLine}`, iconURL: icon })
     .setColor(colors.lol)
-    .setTitle(`League of Legends · ${opgg.toUpperCase()}`)
+    .setTitle(text('card.lolTitle', { region: opgg.toUpperCase() }))
     .setURL(`https://op.gg/lol/summoners/${opgg}/${encodeURIComponent(account.gameName)}-${encodeURIComponent(account.tagLine)}`)
     .setThumbnail(crestUrl(solo, flex))
     .addFields(
-      { name: `Last ${recent.length} Summoner's Rift games`, value: recent.length ? `${pct(recent.filter(r => r.win).length, recent.length)}% WR\n${kda(recent)}` : 'No games yet' },
-      queueField('Ranked Solo/Duo · season', solo, soloIds),
-      queueField('Ranked Flex · season', flex, flexIds),
-      { name: ranked.length ? 'Top champions (ranked, this season)' : `Top champions (last ${recent.length})`, value: top.join('\n') || '-' }
+      { name: text('card.lolRecent', { count: recent.length }), value: recent.length ? `${pct(recent.filter(r => r.win).length, recent.length)}% WR\n${kda(recent)}` : text('card.lolNoGames') },
+      queueField(text('card.lolSolo'), solo, soloIds),
+      queueField(text('card.lolFlex'), flex, flexIds),
+      { name: ranked.length ? text('card.lolTopRanked') : text('card.lolTopRecent', { count: recent.length }), value: top.join('\n') || '-' }
     )
     .setFooter({ text: `League of Legends · ${NOTICE}`, iconURL: icons.lol });
 
-  if (loaded < all.length) embed.setDescription(`⏳ Loading season games: ${loaded}/${all.length}. Card will get updated.`);
+  if (loaded < all.length) embed.setDescription(text('card.lolLoading', { loaded, total: all.length }));
   return embed;
 }
 

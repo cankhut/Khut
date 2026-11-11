@@ -20,6 +20,7 @@ const sections = [
   ]],
   ['👥 Group', [
     '`/lfg game:Deadlock time:9pm players:3/6` — look for players (time: now, 30m, 2h, 21:00, 9pm · players: how many you have / team size)',
+    '`/lfg game:Deadlock note:<GIF link>` or `image:` — show a GIF or picture on the post',
     '`/games` — subscribe to games so you get pinged when someone looks for players',
     '`/dm on` · `/dm off` — also get those pings as a DM'
   ]],

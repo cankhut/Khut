@@ -96,7 +96,7 @@ async function deadlockEmbed(steamId) {
   const badge = rank?.badge || ranked.find(m => m.ranked_display_badge)?.ranked_display_badge;
   const info = badge ? await rankInfo(badge) : null;
   const progress = rank?.badge ? rank.last_match?.player_rank_final_flat_progress : null;
-  const rankLines = [info ? `**${info.name}**` : 'Unranked'];
+  const rankLines = [info ? `**${info.name}**` : text('card.unranked')];
   if (progress != null && badge < 110) rankLines.push(progressBar(progress));
 
   const top = await Promise.all(topBy(history, m => m.hero_id, won)
@@ -105,12 +105,12 @@ async function deadlockEmbed(steamId) {
   const embed = new EmbedBuilder()
     .setAuthor({ name: profile.personaname, iconURL: profile.avatarfull, url: profile.profileurl })
     .setColor(colors.deadlock)
-    .setTitle('Deadlock')
+    .setTitle(text('card.dlTitle'))
     .setURL(`https://statlocker.gg/profile/${accountId}`)
     .addFields(
-      { name: 'Overall', value: `${pct(history.filter(won).length, history.length)}% WR (${history.length} games)\n${kda(history.map(toKda))} KDA`, inline: true },
-      { name: 'Ranked', value: `${rankLines.join('\n')}\n${pct(ranked.filter(won).length, ranked.length)}% WR (${ranked.length} games)\n${kda(ranked.map(toKda))} KDA`, inline: true },
-      { name: 'Top heroes', value: top.join('\n') },
+      { name: text('card.dlOverall'), value: `${pct(history.filter(won).length, history.length)}% WR (${history.length} games)\n${kda(history.map(toKda))} KDA`, inline: true },
+      { name: text('card.dlRanked'), value: `${rankLines.join('\n')}\n${pct(ranked.filter(won).length, ranked.length)}% WR (${ranked.length} games)\n${kda(ranked.map(toKda))} KDA`, inline: true },
+      { name: text('card.dlTopHeroes'), value: top.join('\n') },
       { name: '\u200b', value: `[Statlocker profile](https://statlocker.gg/profile/${accountId}) · [Steam profile](${profile.profileurl})` }
     )
     .setFooter({ text: 'Deadlock · Data from deadlock-api.com', iconURL: icons.deadlock });
@@ -152,7 +152,7 @@ async function csEmbed(steamId) {
   const embed = new EmbedBuilder()
     .setAuthor({ name: profile.personaname, iconURL: profile.avatarfull, url: profile.profileurl })
     .setColor(colors.cs2)
-    .setTitle('Counter-Strike 2')
+    .setTitle(text('card.csTitle'))
     .setURL(lt ? `https://leetify.com/app/profile/${steamId}` : `https://csstats.gg/player/${steamId}`);
 
   const ranks = [];
@@ -162,22 +162,22 @@ async function csEmbed(steamId) {
     const premierBest = Math.max(premier ?? 0, ...premierGames.map(m => m.rank));
     const maps = (lt.ranks?.competitive ?? []).filter(m => m.rank > 0).sort((a, b) => b.rank - a.rank);
     const name = map => map.replace(/^(de|cs)_/, '').replace(/^./, c => c.toUpperCase());
-    ranks.push(`Premier: ${premier ? `**${premier.toLocaleString('en-US')}**${premierBest > premier ? ` (best ${premierBest.toLocaleString('en-US')})` : ''}` : 'Unranked'}`);
+    ranks.push(`Premier: ${premier ? `**${premier.toLocaleString('en-US')}**${premierBest > premier ? ` (best ${premierBest.toLocaleString('en-US')})` : ''}` : text('card.unranked')}`);
     if (maps.length) ranks.push(`Competitive: **${CS_RANKS[maps[0].rank]}** (${name(maps[0].map_name)})`);
     if (lt.ranks?.wingman) ranks.push(`Wingman: **${CS_RANKS[lt.ranks.wingman]}**`);
   }
   if (fc) ranks.push(`FACEIT: **Level ${fc.game.skill_level}** (${fc.game.faceit_elo} Elo)`);
   else if (lt?.ranks?.faceit) ranks.push(`FACEIT: **Level ${lt.ranks.faceit}** (${lt.ranks.faceit_elo} Elo)`);
-  if (ranks.length) embed.addFields({ name: 'Ranks', value: ranks.join('\n') });
+  if (ranks.length) embed.addFields({ name: text('card.csRanks'), value: ranks.join('\n') });
 
   const hours = owned ? Math.round(owned.playtime_forever / 60) : Math.round((steamStats.total_time_played ?? 0) / 3600);
   if (hasSteam) {
     const lines = [`${(steamStats.total_kills / Math.max(1, steamStats.total_deaths)).toFixed(2)} K/D · ${pct(steamStats.total_kills_headshot ?? 0, steamStats.total_kills)}% HS`];
     if (steamStats.total_matches_played) lines.push(`${pct(steamStats.total_matches_won ?? 0, steamStats.total_matches_played)}% WR (${steamStats.total_matches_played.toLocaleString('en-US')} matches)`);
     if (hours) lines.push(`${hours.toLocaleString('en-US')} hours played`);
-    embed.addFields({ name: 'Lifetime (Steam)', value: lines.join('\n'), inline: true });
+    embed.addFields({ name: text('card.csLifetime'), value: lines.join('\n'), inline: true });
   } else if (hours) {
-    embed.addFields({ name: 'Playtime', value: `${hours.toLocaleString('en-US')} hours played`, inline: true });
+    embed.addFields({ name: text('card.csPlaytime'), value: `${hours.toLocaleString('en-US')} hours played`, inline: true });
   }
 
   if (fc && fc.lifetime.Matches) {
@@ -188,14 +188,14 @@ async function csEmbed(steamId) {
   if (lt) {
     embed.addFields(
       { name: 'Leetify', value: `${Math.round(lt.winrate * 100)}% WR (${lt.total_matches} games)\nRating ${lt.ranks?.leetify > 0 ? '+' : ''}${lt.ranks?.leetify ?? '-'}`, inline: true },
-      { name: 'Ratings', value: `Aim ${Math.round(lt.rating.aim)} · Positioning ${Math.round(lt.rating.positioning)} · Utility ${Math.round(lt.rating.utility)}` }
+      { name: text('card.csRatings'), value: `Aim ${Math.round(lt.rating.aim)} · Positioning ${Math.round(lt.rating.positioning)} · Utility ${Math.round(lt.rating.utility)}` }
     );
   }
 
   if (bans?.NumberOfVACBans || bans?.NumberOfGameBans) {
     const list = [bans.NumberOfVACBans && `${bans.NumberOfVACBans} VAC`, bans.NumberOfGameBans && `${bans.NumberOfGameBans} game`].filter(Boolean).join(', ');
     const total = bans.NumberOfVACBans + bans.NumberOfGameBans;
-    embed.addFields({ name: '⚠️ Bans', value: `${list} ban${total === 1 ? '' : 's'} (last one ${bans.DaysSinceLastBan} days ago)` });
+    embed.addFields({ name: text('card.csBans'), value: `${list} ban${total === 1 ? '' : 's'} (last one ${bans.DaysSinceLastBan} days ago)` });
   }
 
   const links = [];
@@ -228,8 +228,8 @@ function xpProgress(value) {
 function rankedSummary(data, mode) {
   const games = numberValue(data?.games);
   const wins = numberValue(data?.wins);
-  if (data?.unavailable) return `Ranked ${mode} stats are temporarily unavailable.`;
-  if (!data || games < 1) return `No ranked ${mode} matches recorded this season.`;
+  if (data?.unavailable) return text('card.bhRankedDown', { queue: mode });
+  if (!data || games < 1) return text('card.bhNoRanked', { queue: mode });
 
   const losses = Math.max(0, games - wins);
   const lines = [
@@ -299,8 +299,8 @@ async function brawlhallaEmbed(brawlhallaId) {
       return `**${index + 1}. ${partner || 'Partner'}** · ${numberText(team.rating)} Elo · ${numberText(wins)}W/${numberText(losses)}L`;
     });
   const teamSummary = teams?.unavailable
-    ? 'Ranked 2v2 stats are temporarily unavailable.'
-    : teamLines.join('\n') || 'No ranked 2v2 teams found.';
+    ? text('card.bhTeamsDown')
+    : teamLines.join('\n') || text('card.bhNoTeams');
 
   const lifetimeLines = [
     `**${pct(totalWins, totalGames)}% WR** · ${numberText(totalWins)}W / ${numberText(totalLosses)}L`,
@@ -317,16 +317,16 @@ async function brawlhallaEmbed(brawlhallaId) {
   const embed = new EmbedBuilder()
     .setColor(colors.brawlhalla)
     .setAuthor({ name: `${all.name || 'Brawlhalla player'} · Brawlhalla` })
-    .setTitle('Player Statistics')
+    .setTitle(text('card.bhTitle'))
     .setDescription(`Brawlhalla ID: \`${brawlhallaId}\``)
     .addFields(
-      { name: '🏆 Ranked 1v1', value: rankedSummary(ranked1v1, '1v1'), inline: true },
-      { name: '🏆 Ranked 3v3', value: rankedSummary(ranked3v3, '3v3'), inline: true },
-      { name: '🛡️ Ranked 2v2 Teams', value: teamSummary, inline: true },
-      { name: '📊 Lifetime', value: lifetimeLines.join('\n'), inline: true },
-      { name: '⚔️ Combat', value: combatLines.join('\n'), inline: true },
-      { name: '⭐ Most Played Legends', value: mostPlayedLines.join('\n') || 'No legend playtime data.', inline: true },
-      { name: '🎖️ Top 1v1 Legends', value: rankedLegendLines.join('\n') || 'No ranked legend data.', inline: true }
+      { name: text('card.bhRanked', { queue: '1v1' }), value: rankedSummary(ranked1v1, '1v1'), inline: true },
+      { name: text('card.bhRanked', { queue: '3v3' }), value: rankedSummary(ranked3v3, '3v3'), inline: true },
+      { name: text('card.bhTeams'), value: teamSummary, inline: true },
+      { name: text('card.bhLifetime'), value: lifetimeLines.join('\n'), inline: true },
+      { name: text('card.bhCombat'), value: combatLines.join('\n'), inline: true },
+      { name: text('card.bhMostPlayed'), value: mostPlayedLines.join('\n') || text('card.bhNoLegends'), inline: true },
+      { name: text('card.bhTopRanked'), value: rankedLegendLines.join('\n') || text('card.bhNoRankedLegends'), inline: true }
     )
     .setFooter({ text: 'Brawlhalla · Official Developer API v1', iconURL: icons.brawlhalla });
 

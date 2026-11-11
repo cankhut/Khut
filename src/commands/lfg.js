@@ -14,7 +14,8 @@ const data = new SlashCommandBuilder()
   .addStringOption(o => o.setName('game').setDescription('Game').setRequired(true).setAutocomplete(true).setMaxLength(50))
   .addStringOption(o => o.setName('time').setDescription('now, 30m, 2h, 21:00 or 9pm'))
   .addStringOption(o => o.setName('players').setDescription('current player amount / team size, like 3/6 or just 6 (default: 1/5)').setMaxLength(5))
-  .addStringOption(o => o.setName('note').setDescription('Extra info').setMaxLength(200));
+  .addStringOption(o => o.setName('note').setDescription('Extra info, a GIF link works too').setMaxLength(200))
+  .addAttachmentOption(o => o.setName('image').setDescription('A picture or GIF to show on the post'));
 
 function getGroup(id) {
   return db.prepare('SELECT * FROM lfg WHERE id = ?').get(id);
@@ -46,6 +47,7 @@ function card(id) {
     .setDescription(`${text('lfg.host', { host: `<@${group.host_id}>` })}\n🕘 <t:${ts}:F> (<t:${ts}:R>)${group.note ? `\n\n${group.note}` : ''}`)
     .addFields({ name: `👥 ${players.length + group.extra}/${group.slots}`, value: list.join('\n') || '-' })
     .setThumbnail(icon?.url ?? null)
+    .setImage(group.image ?? null)
     .setColor(group.status === 'cancelled' ? colors.lfgCancelled : group.status !== 'open' ? colors.lfgClosed : players.length + group.extra >= group.slots ? colors.lfgFull : colors.lfgOpen);
 
   if (group.status !== 'open') {
@@ -69,6 +71,45 @@ function ping(users, text) {
   return { content: `${users.map(u => `<@${u}>`).join(' ')} ${text}`.trim(), allowedMentions: { users } };
 }
 
+function noteLink(note) {
+  const link = note?.match(/https?:\/\/\S+/)?.[0];
+  if (!link || !URL.canParse(link)) return null;
+  return { link, url: new URL(link), rest: note.replace(link, '').trim() || null };
+}
+
+function isTenorPage(url) {
+  return /^(www\.)?tenor\.com$/.test(url.hostname);
+}
+
+function directMedia(url) {
+  if (isTenorPage(url)) return null;
+  if (/\.(png|jpe?g|gif|webp)$/i.test(url.pathname)) return url.href;
+  if (url.hostname.endsWith('giphy.com')) {
+    const id = url.pathname.split('/').filter(Boolean).pop()?.split('-').pop();
+    return id ? `https://media.giphy.com/media/${id}/giphy.gif` : null;
+  }
+  return null;
+}
+
+async function tenorMedia(link) {
+  const res = await fetch(link, { headers: { 'User-Agent': 'Khut Discord bot (https://github.com/cankhut/Khut)' }, signal: AbortSignal.timeout(10000) });
+  if (res.headers.get('content-type')?.startsWith('image/')) return res.url;
+  return (await res.text()).match(/property="og:image" content="([^"]+)"/)?.[1] ?? null;
+}
+
+async function addMedia(interaction, id, upload, found) {
+  if (upload?.contentType?.startsWith('image/')) {
+    const name = `lfg.${upload.name.split('.').pop().toLowerCase()}`;
+    db.prepare('UPDATE lfg SET image = ? WHERE id = ?').run(`attachment://${name}`, id);
+    return interaction.editReply({ ...card(id), files: [{ attachment: upload.url, name }] });
+  }
+  if (!found || !isTenorPage(found.url)) return;
+  const image = await tenorMedia(found.link).catch(err => log.warn(`Tenor link failed: ${err.message}`));
+  if (!image) return;
+  db.prepare('UPDATE lfg SET image = ?, note = ? WHERE id = ?').run(image, found.rest, id);
+  await interaction.editReply(card(id));
+}
+
 async function autocomplete(interaction) {
   const typed = interaction.options.getFocused().toLowerCase();
   const games = db.prepare('SELECT name FROM games WHERE guild_id = ? ORDER BY name').all(interaction.guildId);
@@ -83,8 +124,13 @@ async function execute(interaction) {
   const players = parsePlayers(interaction.options.getString('players'));
   if (!players) return interaction.reply({ content: text('lfg.badPlayers'), flags: MessageFlags.Ephemeral });
 
-  const { lastInsertRowid } = db.prepare('INSERT INTO lfg (guild_id, channel_id, host_id, game, created_at, start_at, slots, extra, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .run(interaction.guildId, interaction.channelId, interaction.user.id, game, Date.now(), start, players.size, players.extra, interaction.options.getString('note'));
+  const upload = interaction.options.getAttachment('image');
+  const found = noteLink(interaction.options.getString('note'));
+  const image = upload || !found ? null : directMedia(found.url);
+  const note = image ? found.rest : interaction.options.getString('note');
+
+  const { lastInsertRowid } = db.prepare('INSERT INTO lfg (guild_id, channel_id, host_id, game, created_at, start_at, slots, extra, note, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .run(interaction.guildId, interaction.channelId, interaction.user.id, game, Date.now(), start, players.size, players.extra, note, image);
   const id = Number(lastInsertRowid);
   db.prepare('INSERT INTO lfg_members VALUES (?, ?, ?, ?)').run(id, interaction.user.id, 'in', Date.now());
 
@@ -97,6 +143,7 @@ async function execute(interaction) {
   await interaction.reply({ ...notify, ...card(id) });
   const message = await interaction.fetchReply();
   db.prepare('UPDATE lfg SET message_id = ? WHERE id = ?').run(message.id, id);
+  await addMedia(interaction, id, upload, found).catch(err => log.warn(`LFG #${id} image failed: ${err.message}`));
   log.info(`LFG #${id} ${game} by ${interaction.user.tag} in ${interaction.guild.name}, ${role ? 'role' : `${subscribers.length} subscriber(s)`} pinged`);
   await dmSubscribers(interaction, subscribers, game, start, message.url);
 }

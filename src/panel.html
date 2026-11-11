@@ -206,7 +206,7 @@ const PANEL_OPTIONS = {
   restartOnCrash: 'Restart the bot if it crashes'
 };
 
-const GROUPS = { error: 'General', stats: '/stats', play: '/play games', lfg: 'LFG', games: '/games and the game picker', dm: '/dm', link: '/link', mydata: '/mydata', wrapped: '/wrapped', setup: '/setup' };
+const GROUPS = { error: 'General', stats: '/stats', play: '/play games', lfg: 'LFG', games: '/games and the game picker', dm: '/dm', link: '/link', mydata: '/mydata', wrapped: '/wrapped', setup: '/setup', leaderboard: '/leaderboard', card: 'Stat cards' };
 
 const ABOUT = {
   'error': 'Any unexpected error',
@@ -222,6 +222,38 @@ const ABOUT = {
   'stats.noCs': 'No CS2 data anywhere',
   'stats.discordServerOnly': 'Discord stats used in DMs',
   'stats.discordMention': 'Discord stats without a mention',
+  'card.unranked': 'Any card: no rank',
+  'card.dlTitle': 'Deadlock card title',
+  'card.dlOverall': 'Deadlock card: overall stats heading',
+  'card.dlRanked': 'Deadlock card: ranked stats heading',
+  'card.dlTopHeroes': 'Deadlock card: top heroes heading',
+  'card.csTitle': 'CS2 card title',
+  'card.csRanks': 'CS2 card: ranks heading',
+  'card.csLifetime': 'CS2 card: Steam stats heading',
+  'card.csPlaytime': 'CS2 card: playtime heading (no Steam stats)',
+  'card.csRatings': 'CS2 card: Leetify ratings heading',
+  'card.csBans': 'CS2 card: bans heading',
+  'card.lolTitle': 'League card title',
+  'card.lolRecent': 'League card: recent games heading',
+  'card.lolNoGames': 'League card: no recent games',
+  'card.lolSolo': 'League card: Solo/Duo heading',
+  'card.lolFlex': 'League card: Flex heading',
+  'card.lolTopRanked': 'League card: top champions from ranked',
+  'card.lolTopRecent': 'League card: top champions from recent games',
+  'card.lolLoading': 'League card: still loading games',
+  'card.bhTitle': 'Brawlhalla card title',
+  'card.bhRanked': 'Brawlhalla card: 1v1 and 3v3 headings',
+  'card.bhTeams': 'Brawlhalla card: 2v2 heading',
+  'card.bhLifetime': 'Brawlhalla card: lifetime heading',
+  'card.bhCombat': 'Brawlhalla card: combat heading',
+  'card.bhMostPlayed': 'Brawlhalla card: most played heading',
+  'card.bhTopRanked': 'Brawlhalla card: best 1v1 legends heading',
+  'card.bhNoRanked': 'Brawlhalla card: no ranked games',
+  'card.bhRankedDown': 'Brawlhalla card: ranked stats down',
+  'card.bhNoTeams': 'Brawlhalla card: no 2v2 teams',
+  'card.bhTeamsDown': 'Brawlhalla card: 2v2 stats down',
+  'card.bhNoLegends': 'Brawlhalla card: no legend data',
+  'card.bhNoRankedLegends': 'Brawlhalla card: no ranked legend data',
   'play.unavailable': "Today's puzzle couldn't load",
   'play.newDay': 'Board from an earlier day',
   'play.finished': 'Guessing after finishing',
@@ -378,21 +410,22 @@ function lfgCard(status) {
 function colourPreview(key) {
   const c = state.settings.colors[key];
   const cards = {
-    deadlock: { author: 'Talha', title: 'Deadlock', fields: [{ name: 'Overall', value: '54% WR (120 games)\n6.2 / 4.1 / 9.8 KDA', inline: true }, { name: 'Ranked', value: '**Archon 4**\n52% WR (40 games)', inline: true }], footer: 'Deadlock · Data from deadlock-api.com' },
-    cs2: { author: 'Talha', title: 'Counter-Strike 2', fields: [{ name: 'Ranks', value: 'Premier: **14,250**\nFACEIT: **Level 7** (1650 Elo)' }, { name: 'Lifetime (Steam)', value: '1.12 K/D · 46% HS', inline: true }], footer: 'Counter-Strike 2' },
-    lol: { author: 'shark#bard', title: 'League of Legends · EUW', fields: [{ name: 'Ranked Solo/Duo · season', value: '**Silver III** 91 LP\n30% WR (20 games)', inline: true }, { name: 'Ranked Flex · season', value: '**Gold II** 26 LP\n43% WR (30 games)', inline: true }], footer: 'League of Legends' },
-    brawlhalla: { author: 'Octavius · Brawlhalla', title: 'Player Statistics', desc: 'Brawlhalla ID: `4697805`', fields: [{ name: '🏆 Ranked 1v1', value: '**Platinum** · **1,650 Elo**\n42W – 30L · **58% WR** (72 games)', inline: true }, { name: '🏆 Ranked 3v3', value: 'No ranked 3v3 matches recorded this season.', inline: true }, { name: '🛡️ Ranked 2v2 Teams', value: '**1. Partner** · 1,540 Elo · 24W/18L', inline: true }, { name: '📊 Lifetime', value: '**56% WR** · 320W / 251L\n571 games played\nLevel **42**', inline: true }, { name: '⚔️ Combat', value: 'KOs **4,120** · Falls **1,930** · K/F **2.13**\nDamage dealt **1.2m** · taken **980k**', inline: true }, { name: '⭐ Most Played Legends', value: 'Bödvar · 124g, 58% WR\nHattori · 89g, 55% WR', inline: true }], footer: 'Brawlhalla · Official Developer API v1' },
+    deadlock: { author: 'Talha', title: t('card.dlTitle'), fields: [{ name: t('card.dlOverall'), value: '54% WR (120 games)\n6.2 / 4.1 / 9.8 KDA', inline: true }, { name: t('card.dlRanked'), value: '**Archon 4**\n52% WR (40 games)', inline: true }], footer: 'Deadlock · Data from deadlock-api.com' },
+    cs2: { author: 'Talha', title: t('card.csTitle'), fields: [{ name: t('card.csRanks'), value: 'Premier: **14,250**\nFACEIT: **Level 7** (1650 Elo)' }, { name: t('card.csLifetime'), value: '1.12 K/D · 46% HS', inline: true }], footer: 'Counter-Strike 2' },
+    lol: { author: 'shark#bard', title: t('card.lolTitle', { region: 'EUW' }), fields: [{ name: t('card.lolSolo'), value: '**Silver III** 91 LP\n30% WR (20 games)', inline: true }, { name: t('card.lolFlex'), value: '**Gold II** 26 LP\n43% WR (30 games)', inline: true }], footer: 'League of Legends' },
+    brawlhalla: { author: 'Octavius · Brawlhalla', title: t('card.bhTitle'), desc: 'Brawlhalla ID: `1234567`', fields: [{ name: t('card.bhRanked', { queue: '1v1' }), value: '**Platinum** · **1,650 Elo**\n42W – 30L · **58% WR** (72 games)', inline: true }, { name: t('card.bhRanked', { queue: '3v3' }), value: t('card.bhNoRanked', { queue: '3v3' }), inline: true }, { name: t('card.bhTeams'), value: '**1. Partner** · 1,540 Elo · 24W/18L', inline: true }, { name: t('card.bhLifetime'), value: '**56% WR** · 320W / 251L\n571 games played\nLevel **42**', inline: true }, { name: t('card.bhCombat'), value: 'KOs **4,120** · Falls **1,930** · K/F **2.13**\nDamage dealt **1.2m** · taken **980k**', inline: true }, { name: t('card.bhMostPlayed'), value: 'Bödvar · 124g, 58% WR\nHattori · 89g, 55% WR', inline: true }], footer: 'Brawlhalla · Official Developer API v1' },
     discord: { author: 'Talha', title: '🎙️ Voice time', fields: [{ name: 'This week', value: '12h 30m', inline: true }, { name: 'This month', value: '48h', inline: true }, { name: 'All time', value: '310h', inline: true }], footer: 'Discord' },
     wrapped: { title: '📊 November 2026 Wrapped', desc: '⏱️ 120h in voice together\n🤝 Top duo: @Jankat + @Talha (40h)', fields: [{ name: '🏆 Most time in voice', value: '🥇 @Jankat — 60h\n🥈 @Talha — 52h' }] },
     play: { title: 'dlbuild · High rank · Round 1/4', desc: 'Type your guess with `/play dlbuild mode:High rank guess:`', fields: [{ name: '🟠 Hidden King', value: 'Oracle 3\n👤 3.5k\n➡️ 👤 **2.8k**\n👤 3.1k', inline: true }, { name: '⠀', value: '🟠 **21.5k**\n🕘 **6:00**\n🔵 **22.8k**', inline: true }, { name: '🔵 Archmother', value: 'Oracle 5\n👤 3.9k\n👤 3.4k\n👤 3.6k', inline: true }, { name: '🛒 Items at 6:00', value: '🟫 🟫 ⬛ ⬛ ⬛ ⬛\nHigh-Velocity Rounds · Mystic Burst' }], footer: 'Match played 2026-11-04 · Data from deadlock-api.com' },
-    help: { title: 'Khut commands', fields: [{ name: '📊 Stats', value: '`/stats game:Deadlock` — your Deadlock stats' }], footer: 'Khut · Open source (AGPL-3.0)' }
+    help: { title: 'Khut commands', fields: [{ name: '📊 Stats', value: '`/stats game:Deadlock` — your Deadlock stats' }], footer: 'Khut · Open source (AGPL-3.0)' },
+    leaderboard: { title: t('leaderboard.title', { game: 'dlbuild', period: 'This week' }), desc: [t('leaderboard.dlRow', { place: '🥇', user: '@Jankat', points: 250, games: 3 }), t('leaderboard.dlRow', { place: '🥈', user: '@Talha', points: 180, games: 3 })].join('\n'), footer: t('leaderboard.footer') }
   };
   if (key.startsWith('lfg')) return lfgCard(key.slice(3).toLowerCase());
   return message('', embed({ color: c, ...cards[key] }));
 }
 
 function textPreview(key) {
-  const vars = { users: '@Talha @Emre @Ali', role: '@Deadlock', user: '@Jankat', mode: 'High rank', points: 52, grid: '1️⃣ 🟩⬛⬛⬛⬛\n2️⃣ 🟥🟥🟩⬛⬛', name: 'Ahri', hero: 'Haze', guesses: 'guesses', channel: '#games', names: '**Haze**, **Holliday**', game: 'Deadlock', host: key === 'lfg.host' ? '@Jankat' : 'Jankat', server: 'Friends', time: 'in 10 minutes', count: key === 'lfg.other' ? 1 : key === 'lfg.others' ? 4 : key.startsWith('play.') ? 4 : '3/6', timezone: 'Europe/Istanbul', days: 3, place: '🥇', solved: 5, average: '2.4', games: 3, period: 'This week', line: '**14.** @Jankat · **52** points · 2 played' };
+  const vars = { users: '@Talha @Emre @Ali', role: '@Deadlock', user: '@Jankat', mode: 'High rank', points: 52, grid: '1️⃣ 🟩⬛⬛⬛⬛\n2️⃣ 🟥🟥🟩⬛⬛', name: 'Ahri', hero: 'Haze', guesses: 'guesses', channel: '#games', names: '**Haze**, **Holliday**', game: 'Deadlock', host: key === 'lfg.host' ? '@Jankat' : 'Jankat', server: 'Friends', time: 'in 10 minutes', count: key === 'lfg.other' ? 1 : key === 'lfg.others' ? 4 : key.startsWith('play.') ? 4 : key.startsWith('card.') ? 20 : '3/6', region: 'EUW', queue: '1v1', loaded: 12, total: 40, timezone: 'Europe/Istanbul', days: 3, place: '🥇', solved: 5, average: '2.4', games: 3, period: 'This week', line: '**14.** @Jankat · **52** points · 2 played' };
   const value = t(key, vars);
   if (BUTTONS.includes(key)) return message('', buttons([[value, key === 'lfg.join' ? 'green' : key === 'lfg.cancel' ? 'red' : '']]));
   if (key.startsWith('lfg.') && ['host', 'other', 'others', 'footerCancelled', 'footerClosed'].includes(key.slice(4))) return lfgCard(key === 'lfg.footerCancelled' ? 'cancelled' : key === 'lfg.footerClosed' ? 'closed' : key === 'lfg.others' ? 'full' : 'open');
@@ -401,7 +434,7 @@ function textPreview(key) {
   if (key === 'lfg.pingUsers' || key === 'lfg.pingRole') return message(value, embed({ color: state.settings.colors.lfgOpen, title: '🎮 Deadlock', desc: t('lfg.host', { host: '@Jankat' }) }));
   if (key === 'games.subscribed' || key === 'games.unsubscribed') return message(`${value}\n${t('games.picker')}`);
   if (key === 'games.panel') return message(value, buttons([['CS2'], ['Deadlock'], ['League']]));
-  if (key === 'link.done') return message(`${value}\nSteam: https://steamcommunity.com/profiles/7656…\nRiot: shark#bard\nBrawlhalla ID: 4697805`);
+  if (key === 'link.done') return message(`${value}\nSteam: https://steamcommunity.com/profiles/7656…\nRiot: shark#bard\nBrawlhalla ID: 1234567`);
   return message(value);
 }
 

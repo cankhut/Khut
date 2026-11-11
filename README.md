@@ -14,7 +14,7 @@ All commands work in any channel. `/help` shows this list in Discord.
 | `/play dlbuild mode guess` | Daily Deadlock game: guess heroes from their items in a real match. |
 | `/play lolhero mode guess` | Daily League game: Classic (champion properties) or Ability (a rotated, greyed ability icon). |
 | `/leaderboard game period` | The best `/play` players in this server: dlbuild by points, lolhero by days solved (fewer guesses wins ties). This week, this month or all time. Counts games played in any server you share with Khut. |
-| `/lfg game time players note` | Look for players. Time: `now`, `30m`, `2h`, `21:00`, `9pm`. Players: `3/6` if 3 of you are already together, or just `6`. Quietly pings everyone subscribed to that game, pings the group when full and reminds them 10 minutes before. Closes 2 hours after the start time and is deleted 12 hours after it closes or is cancelled. |
+| `/lfg game time players note image` | Look for players. Time: `now`, `30m`, `2h`, `21:00`, `9pm`. Players: `3/6` if 3 of you are already together, or just `6`. A picture attached as `image`, or a GIF or image link in `note` (Tenor, Giphy, Discord), shows on the post. Quietly pings everyone subscribed to that game, pings the group when full and reminds them 10 minutes before. Closes 2 hours after the start time and is deleted 12 hours after it closes or is cancelled. |
 | `/games` | Subscribe to games so you get pinged when someone uses `/lfg` for them. Only you see it. |
 | `/dm on` / `/dm off` | Also get those pings as a DM. |
 | `/wrapped period` | Server voice Wrapped: this month, last month, this year or all time. |

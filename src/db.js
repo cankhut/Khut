@@ -28,6 +28,7 @@ db.exec(`
 for (const sql of [
   'ALTER TABLE links ADD COLUMN brawlhalla_id TEXT',
   'ALTER TABLE lfg ADD COLUMN extra INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE lfg ADD COLUMN image TEXT',
   'ALTER TABLE lfg ADD COLUMN ended_at INTEGER',
   "ALTER TABLE guilds ADD COLUMN timezone TEXT NOT NULL DEFAULT 'Europe/Istanbul'",
   'ALTER TABLE guilds ADD COLUMN wrapped_auto INTEGER NOT NULL DEFAULT 1',
