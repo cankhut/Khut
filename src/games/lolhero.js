@@ -70,7 +70,8 @@ async function renderClassic(p, state, mode, day) {
   const wrong = state.guesses.filter(k => k !== p.key).length;
   const rows = [];
   for (const key of [...state.guesses].reverse().slice(0, SHOWN)) {
-    rows.push(`${await championLabel(key)}\n${ATTRS.map(a => cell(DATA[key][a], answer[a], a)).join(' · ')}`);
+    const c = ATTRS.map(a => cell(DATA[key][a], answer[a], a));
+    rows.push(`**${await championLabel(key)}**\n${c[0]} · ${c[1]}\n${c[2]} · ${c[3]}\n${c[4]} · ${c[5]} · ${c[6]}`);
   }
   const intro = won ? text('play.solved', { name: await championLabel(p.key), count: state.guesses.length, guesses: plural(state.guesses.length) }) : `${text('play.classicIntro')}\n${text('play.lolHint', { mode: MODES[mode].name })}`;
   const embed = new EmbedBuilder()

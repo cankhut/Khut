@@ -68,7 +68,10 @@ function renderClassic(p, state, mode, day) {
   const answer = DATA[p.name];
   const won = state.guesses.includes(p.name);
   const wrong = state.guesses.filter(n => n !== p.name).length;
-  const rows = [...state.guesses].reverse().slice(0, SHOWN).map(n => `${warframeLabel(n)}\n${ATTRS.map(a => cell(DATA[n][a], answer[a], a)).join(' · ')}`);
+  const rows = [...state.guesses].reverse().slice(0, SHOWN).map(n => {
+    const cells = ATTRS.map(a => cell(DATA[n][a], answer[a], a));
+    return `**${warframeLabel(n)}**\n${cells[0]} · ${cells[1]}\n${cells[2]} · ${cells[3]}\n${cells[4]} · ${cells[5]}`;
+  });
   const intro = won ? solved(p, state) : `${text('play.wfClassicIntro')}\n${text('play.wfHint')}`;
   const embed = new EmbedBuilder()
     .setColor(colors.play)
