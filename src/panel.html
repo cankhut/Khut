@@ -151,7 +151,7 @@
   <section id="results">
     <p class="hint">What the bot posts in the channel when someone finishes a /play game. It uses the first row that fits, and the last row covers everything after it. Words in {curly brackets} are filled in by the bot.</p>
     <div class="box"><h2>lolhero</h2><p class="hint">By number of guesses. You can use {user} {mode} {count} {guesses}</p><div id="res-lolhero"></div><button class="btn grey small" onclick="addResult('lolhero')">Add row</button></div>
-    <div class="box"><h2>wftenno</h2><p class="hint">By number of guesses. You can use {user} {mode} {count} {guesses}</p><div id="res-wftenno"></div><button class="btn grey small" onclick="addResult('wftenno')">Add row</button></div>
+    <div class="box"><h2>framedle</h2><p class="hint">By number of guesses. You can use {user} {mode} {count} {guesses}</p><div id="res-framedle"></div><button class="btn grey small" onclick="addResult('framedle')">Add row</button></div>
     <div class="box"><h2>dlbuild</h2><p class="hint">By total points: 100 for the 4 rounds, more with bonus rounds. You can use {user} {mode} {points} {grid}</p><div id="res-dlbuild"></div><button class="btn grey small" onclick="addResult('dlbuild')">Add row</button></div>
     <div class="box"><h2>Streak</h2><p class="hint">Added to the result post when someone finished the same game on the days before too. It uses the row with the highest number they reached, and adds nothing below the lowest one. You can use {days}</p><div id="res-streak"></div><button class="btn grey small" onclick="addStreak()">Add row</button></div>
     <div class="savebar"><button class="btn grey" onclick="resetSection('results')">Reset all</button><button class="btn" onclick="saveSettings()">Save results</button></div>
@@ -265,15 +265,15 @@ const ABOUT = {
   'play.pickHero': 'dlbuild: hero list placeholder',
   'play.pickOne': 'dlbuild: nothing or two heroes picked',
   'play.lolHint': 'lolhero: how to guess',
-  'play.wfHint': 'wftenno: how to guess',
-  'play.wfClassicIntro': 'wftenno Classic: top of the board',
-  'play.wfAbilityIntro': 'wftenno Ability: top of the board',
-  'play.wfClue': 'wftenno Classic: clue after 6 wrong guesses',
+  'play.wfHint': 'framedle: how to guess',
+  'play.wfClassicIntro': 'framedle Classic: top of the board',
+  'play.wfAbilityIntro': 'framedle Ability: top of the board',
+  'play.wfClue': 'framedle Classic: clue after 6 wrong guesses',
   'play.repeat': 'Same name guessed twice',
   'play.classicIntro': 'lolhero Classic: top of the board',
   'play.abilityIntro': 'lolhero Ability: top of the board',
   'play.clue': 'lolhero Classic: clue after 6 wrong guesses',
-  'play.solved': 'lolhero and wftenno solved',
+  'play.solved': 'lolhero and framedle solved',
   'play.dlCorrect': 'dlbuild: round won',
   'play.dlWrong': 'dlbuild: round lost',
   'play.dlDone': 'dlbuild: game over',
@@ -284,7 +284,7 @@ const ABOUT = {
   'play.statlocker': 'dlbuild: Statlocker link button',
   'leaderboard.title': '/leaderboard title',
   'leaderboard.dlRow': '/leaderboard: dlbuild row',
-  'leaderboard.lolRow': '/leaderboard: lolhero and wftenno row',
+  'leaderboard.lolRow': '/leaderboard: lolhero and framedle row',
   'leaderboard.you': '/leaderboard: your place below the top 10',
   'leaderboard.empty': '/leaderboard: nobody played yet',
   'leaderboard.footer': '/leaderboard footer',
@@ -584,7 +584,7 @@ function setStatus(field, value) {
   statusPreview();
 }
 
-const RESULTS = { lolhero: ['max', 'Up to', 'guesses'], wftenno: ['max', 'Up to', 'guesses'], dlbuild: ['min', 'From', 'points'] };
+const RESULTS = { lolhero: ['max', 'Up to', 'guesses'], framedle: ['max', 'Up to', 'guesses'], dlbuild: ['min', 'From', 'points'] };
 
 function resultPreview(game, i) {
   const row = state.settings.results[game][i];

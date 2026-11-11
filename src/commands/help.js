@@ -16,7 +16,7 @@ const sections = [
   ['🎲 Games', [
     '`/play dlbuild mode:High rank guess:Haze` — guess Deadlock heroes from their items in a real match',
     '`/play lolhero mode:Classic guess:Ahri` — guess today\'s League champion (also Ability mode)',
-    '`/play wftenno mode:Classic guess:Excalibur` — guess today\'s Warframe (also Ability mode)',
+    '`/play framedle mode:Classic guess:Excalibur` — guess today\'s Warframe (also Ability mode)',
     '`/leaderboard game:dlbuild` — the best players in this server this week, this month or all time'
   ]],
   ['🌍 Warframe', [

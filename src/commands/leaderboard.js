@@ -15,7 +15,7 @@ const data = new SlashCommandBuilder()
   .addStringOption(o => o.setName('game').setDescription('Which game').setRequired(true).addChoices(
     { name: 'dlbuild', value: 'dlbuild' },
     { name: 'lolhero', value: 'lolhero' },
-    { name: 'wftenno', value: 'wftenno' }
+    { name: 'framedle', value: 'framedle' }
   ))
   .addStringOption(o => o.setName('period').setDescription('Time range (this week if empty)').addChoices(
     { name: 'This week', value: 'week' },

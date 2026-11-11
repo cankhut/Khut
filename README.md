@@ -13,8 +13,8 @@ All commands work in any channel. `/help` shows this list in Discord.
 | `/stats game:Discord player with` | Someone's voice time, or with `with:` the voice time between two people. |
 | `/play dlbuild mode guess` | Daily Deadlock game: guess heroes from their items in a real match. |
 | `/play lolhero mode guess` | Daily League game: Classic (champion properties) or Ability (a rotated, greyed ability icon). |
-| `/play wftenno mode guess` | Daily Warframe game: Classic (Warframe properties) or Ability (a rotated, greyed ability card). |
-| `/leaderboard game period` | The best `/play` players in this server: dlbuild by points, lolhero and wftenno by days solved (fewer guesses wins ties). This week, this month or all time. Counts games played in any server you share with Khut. |
+| `/play framedle mode guess` | Daily Warframe game: Classic (Warframe properties) or Ability (a rotated, greyed ability card). |
+| `/leaderboard game period` | The best `/play` players in this server: dlbuild by points, lolhero and framedle by days solved (fewer guesses wins ties). This week, this month or all time. Counts games played in any server you share with Khut. |
 | `/warframe cycle` | Warframe (PC) right now: Cetus, Orb Vallis, Cambion Drift, Zariman and Duviri cycles, Steel Path reward, Archon Hunt, Sortie, Baro Ki'Teer, Arbitration (with its tier), Darvo's deal and the 5 latest news posts. Countdowns update live in Discord. |
 | `/lfg game time players note image` | Look for players. Time: `now`, `30m`, `2h`, `21:00`, `9pm`. Players: `3/6` if 3 of you are already together, or just `6`. A picture attached as `image`, or a GIF or image link in `note` (Tenor, Giphy, Discord), shows on the post. Quietly pings everyone subscribed to that game, pings the group when full and reminds them 10 minutes before. Closes 2 hours after the start time and is deleted 12 hours after it closes or is cancelled. |
 | `/games` | Subscribe to games so you get pinged when someone uses `/lfg` for them. Only you see it. |
@@ -30,13 +30,13 @@ At the start of each month, Wrapped is posted automatically in the server's **Sy
 
 ### Games
 
-Everyone gets the same puzzle each day and plays it privately on one board that updates in place: press ✏️ **Guess** and pick a hero from the list (dlbuild) or type a champion or Warframe (lolhero and wftenno, small typos are fine). You can also use `guess:` in the command. Using the command again replaces your previous board. When someone finishes, Khut posts a spoiler-free result in that channel, with their streak if they finished the day before too. A new day starts at midnight in the server's timezone. With `/setup answers channel:#games` (or in the control panel), Khut posts yesterday's answers there after midnight.
+Everyone gets the same puzzle each day and plays it privately on one board that updates in place: press ✏️ **Guess** and pick a hero from the list (dlbuild) or type a champion or Warframe (lolhero and framedle, small typos are fine). You can also use `guess:` in the command. Using the command again replaces your previous board. When someone finishes, Khut posts a spoiler-free result in that channel, with their streak if they finished the day before too. A new day starts at midnight in the server's timezone. With `/setup answers channel:#games` (or in the control panel), Khut posts yesterday's answers there after midnight.
 
 - **dlbuild**: a real ranked match from two days earlier, picked from high rank (Ascendant+) or all ranks. 4 rounds, each with a different player. The board is laid out like Lockle: every player's souls, the Hidden King and Archmother totals and average ranks, and the player's items. Every wrong guess moves the match forward: 6:00, 12:00, 20:00, 25:00, then the end. 5 guesses per round, 25/18/15/12/10 points. After round 4 you can keep going with bonus rounds (up to 10 rounds) or stop; the result post updates with each bonus round. When the game is over, a button opens the match on Statlocker.
 - **lolhero classic**: guess the champion. Each guess shows gender, positions, species, resource, range, regions and release year: 🟩 match, 🟧 partly, 🟥 no. After 6 wrong guesses one of their ability icons shows up as a clue.
 - **lolhero ability**: guess the champion from one ability icon. It starts greyed out and rotated, gets its colour back after 3 wrong guesses and turns upright after 6.
-- **wftenno classic**: guess the Warframe. Each guess shows sex, playstyle, progenitor element, aura polarity, release year and armor: 🟩 match, 🟧 partly, 🟥 no, ⬆️⬇️ higher or lower. After 6 wrong guesses one of their ability cards shows up as a clue.
-- **wftenno ability**: guess the Warframe from one ability card, greyed and rotated like lolhero ability.
+- **framedle classic**: guess the Warframe. Each guess shows sex, playstyle, progenitor element, aura polarity, release year and armor: 🟩 match, 🟧 partly, 🟥 no, ⬆️⬇️ higher or lower. After 6 wrong guesses one of their ability cards shows up as a clue.
+- **framedle ability**: guess the Warframe from one ability card, greyed and rotated like lolhero ability.
 
 Champion properties live in `data/lol-champions.json`. Gender follows each champion's official pronouns. When a new champion comes out, add them there; until then they can't be the Classic answer.
 
@@ -142,7 +142,7 @@ Then open <http://localhost:3001>. From there you can:
 - Copy the invite link
 - Change each server's games, timezone and Wrapped
 - Change embed colours and everything the bot says, with a live preview
-- Change the `/play` result posts by number of guesses (lolhero, wftenno) or points (dlbuild)
+- Change the `/play` result posts by number of guesses (lolhero, framedle) or points (dlbuild)
 - Add game icons for LFG posts, small in front of the name or big at the top right
 - Change the LFG and cleanup timings
 
@@ -190,7 +190,7 @@ Without this, `/link steam:... riot:...` works the same way. Brawlhalla IDs are 
 - CS2 data from the Steam Web API, [FACEIT](https://www.faceit.com) and [Leetify](https://leetify.com/) (Data Provided by Leetify). Not affiliated with Valve, FACEIT or Leetify.
 - League champion properties in `data/lol-champions.json` are compiled from the [League of Legends Wiki](https://wiki.leagueoflegends.com) (CC BY-SA). Ability icons come from Riot's Data Dragon.
 - Warframe world state from Digital Extremes' public world state, translated with [warframe-worldstate-data](https://github.com/WFCD/warframe-worldstate-data) by WFCD (MIT). The Zariman faction and the Arbitration schedule come from [browse.wf](https://browse.wf/live), Arbitration tiers from the [Arbitration Goons](https://arbi.guide/).
-- Warframe properties in `data/warframes.json` are compiled from the [Warframe Wiki](https://wiki.warframe.com) (CC BY-SA). Portraits and ability images are loaded from the wiki. The bot is not affiliated with Digital Extremes.
+- Warframe properties in `data/warframes.json` are compiled from the [Warframe Wiki](https://wiki.warframe.com) (CC BY-SA). Portraits, ability images and the Warframe icon emojis (damage types, factions and more, listed in `data/warframe-icons.json`) are loaded from the wiki. The bot is not affiliated with Digital Extremes.
 - Deadlock data from [deadlock-api.com](https://deadlock-api.com), with links to [Statlocker](https://statlocker.gg) profiles. Not affiliated with Valve.
 - Brawlhalla statistics from the [official Brawlhalla Developer API](https://dev.brawlhalla.com/). The bot is not affiliated with Blue Mammoth Games or Ubisoft. Character artwork and game logos remain the property of their respective owners; legend portraits come from the [Brawlhalla Wiki](https://brawlhalla.wiki.gg).
 - A Personal Riot API key is for your own server. Before opening the bot to the public, apply for a Production key.

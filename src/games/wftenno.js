@@ -1,6 +1,6 @@
 const { EmbedBuilder, AttachmentBuilder, MessageFlags } = require('discord.js');
 const DATA = require('../../data/warframes.json');
-const { warframeLabel, warframeImage, fetchImage } = require('../assets');
+const { warframeLabel, warframeIcon, warframeImage, fetchImage } = require('../assets');
 const { text, resultText, streakText } = require('../settings');
 const colors = require('../colors');
 const png = require('../png');
@@ -53,7 +53,7 @@ function cell(guess, answer, attr) {
   const g = [].concat(guess);
   const a = [].concat(answer);
   const square = g.length === a.length && g.every(v => a.includes(v)) ? '🟩' : g.some(v => a.includes(v)) ? '🟧' : '🟥';
-  return `${square} ${g.join(', ')}`;
+  return `${square} ${g.map(v => (attr === 'progenitor' ? `${warframeIcon(v)} ${v}`.trim() : v)).join(', ')}`;
 }
 
 function plural(count) {

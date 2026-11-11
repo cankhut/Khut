@@ -5,7 +5,7 @@ const colors = require('../colors');
 const core = require('../games/core');
 const dlbuild = require('../games/dlbuild');
 const lolhero = require('../games/lolhero');
-const wftenno = require('../games/wftenno');
+const framedle = require('../games/framedle');
 const log = require('../log');
 
 const data = new SlashCommandBuilder()
@@ -24,14 +24,14 @@ const data = new SlashCommandBuilder()
       { name: 'Ability', value: 'ability' }
     ))
     .addStringOption(o => o.setName('guess').setDescription('Champion name').setAutocomplete(true)))
-  .addSubcommand(s => s.setName('wftenno').setDescription('Guess today\'s Warframe')
+  .addSubcommand(s => s.setName('framedle').setDescription('Guess today\'s Warframe')
     .addStringOption(o => o.setName('mode').setDescription('Game mode').setRequired(true).addChoices(
       { name: 'Classic', value: 'classic' },
       { name: 'Ability', value: 'ability' }
     ))
     .addStringOption(o => o.setName('guess').setDescription('Warframe name').setAutocomplete(true)));
 
-const GAMES = { dlbuild, lolhero, wftenno };
+const GAMES = { dlbuild, lolhero, framedle };
 
 async function execute(interaction) {
   const mode = interaction.options.getString('mode');
@@ -47,14 +47,14 @@ async function component(interaction) {
   const [, game, ...parts] = interaction.customId.split(':');
   if (game === 'dl') return dlbuild.component(interaction, parts);
   if (game === 'lol') return lolhero.component(interaction, parts);
-  if (game === 'wf') return wftenno.component(interaction, parts);
+  if (game === 'wf') return framedle.component(interaction, parts);
 }
 
 const ANSWERS = [
   ['LoL classic', lolhero, 'classic'],
   ['LoL ability', lolhero, 'ability'],
-  ['Warframe classic', wftenno, 'classic'],
-  ['Warframe ability', wftenno, 'ability'],
+  ['Warframe classic', framedle, 'classic'],
+  ['Warframe ability', framedle, 'ability'],
   ['dlbuild high rank', dlbuild, 'high'],
   ['dlbuild all ranks', dlbuild, 'all']
 ];

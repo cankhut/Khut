@@ -37,7 +37,9 @@ for (const sql of [
   'ALTER TABLE guilds ADD COLUMN panel_message TEXT',
   'ALTER TABLE guilds ADD COLUMN use_roles INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE guilds ADD COLUMN play_channel TEXT',
-  'ALTER TABLE guilds ADD COLUMN play_posted TEXT'
+  'ALTER TABLE guilds ADD COLUMN play_posted TEXT',
+  "UPDATE play_puzzles SET game = 'framedle' WHERE game = 'wftenno'",
+  "UPDATE play_progress SET game = 'framedle' WHERE game = 'wftenno'"
 ]) {
   try {
     db.exec(sql);

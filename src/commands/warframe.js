@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { getJson } = require('../api');
+const { warframeIcon } = require('../assets');
 const { text } = require('../settings');
 const colors = require('../colors');
 const log = require('../log');
@@ -10,7 +11,9 @@ const ARBITRATIONS = 'https://browse.wf/arbys.txt';
 const ARBITRATION_TIERS = 'https://browse.wf/supplemental-data/arbyTiers.js';
 const DATA = 'https://cdn.jsdelivr.net/npm/warframe-worldstate-data@3/data/';
 const FILES = { nodes: 'solNodes.json', sortie: 'sortieData.json', missions: 'missionTypes.json', steelPath: 'steelPath.json', languages: 'languages.json' };
-const ICONS = { day: '☀️', night: '🌙', warm: '🔥', cold: '❄️' };
+const ICONS = { day: '☀️', night: '🌙', warm: ['heat', '🔥'], cold: ['cold', '❄️'], fass: ['fass'], vome: ['vome'], corpus: ['corpus'], grineer: ['grineer'] };
+const TITLES = { cetus: ['ostron', '🌄'], vallis: ['corpus', '🏔️'], cambion: ['infested', '🪱'], zariman: ['voidplume', '🚀'], duviri: ['duviri', '🌀'], steelPath: ['steel_essence', '⚔️'], archon: ['narmer', '👹'], sortie: ['sortie', '🎯'], baro: ['ducats', '🛒'], darvo: ['platinum', '💰'], arbitration: ['arbitration', '⚖️'] };
+const FACTIONS = { corrupted: 'orokin', infestation: 'infested', 'the murmur': 'murmur' };
 const DUVIRI = ['sorrow', 'fear', 'joy', 'anger', 'envy'];
 const MINUTE = 60000;
 
@@ -66,8 +69,23 @@ function title(value) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+function icon(entry) {
+  if (!entry) return '';
+  if (typeof entry === 'string') return entry;
+  return warframeIcon(entry[0]) || entry[1] || '';
+}
+
+function faction(name) {
+  if (!name) return '';
+  return `${warframeIcon(FACTIONS[name.toLowerCase()] ?? name)} ${name}`.trim();
+}
+
+function heading(key) {
+  return `${icon(TITLES[key])} ${text(`warframe.${key}`)}`.trim();
+}
+
 function cycle(state, expiry) {
-  return `${ICONS[state] ?? ''} **${title(state)}**\n${ends(expiry)}`.trim();
+  return `${icon(ICONS[state])} **${title(state)}**\n${ends(expiry)}`.trim();
 }
 
 function bounty(w, tag) {
@@ -101,7 +119,7 @@ function steelPath(t, now) {
   const monday = new Date(now);
   monday.setUTCHours(0, 0, 0, 0);
   monday.setUTCDate(monday.getUTCDate() + 7 - ((monday.getUTCDay() + 6) % 7));
-  return `**${reward.name}**\n${reward.cost} Steel Essence\n${ends(monday.getTime())}`;
+  return `**${reward.name}**\n${reward.cost} ${icon(['steel_essence'])} Steel Essence\n${ends(monday.getTime())}`.replace('  ', ' ');
 }
 
 function node(t, id) {
@@ -113,17 +131,18 @@ function mission(t, type) {
 }
 
 function boss(t, id) {
-  return t.sortie.bosses[id]?.name ?? id;
+  const b = t.sortie.bosses[id];
+  return b ? `${warframeIcon(FACTIONS[b.faction?.toLowerCase()] ?? b.faction ?? '')} **${b.name}**`.trim() : `**${id}**`;
 }
 
 function archon(t, a) {
   if (!a) return '-';
-  return [`**${boss(t, a.Boss)}**`, ...a.Missions.map(m => `${mission(t, m.missionType)} · ${node(t, m.node)}`), ends(date(a.Expiry))].join('\n');
+  return [`**${t.sortie.bosses[a.Boss]?.name ?? a.Boss}**`, ...a.Missions.map(m => `${mission(t, m.missionType)} · ${node(t, m.node)}`), ends(date(a.Expiry))].join('\n');
 }
 
 function sortie(t, s) {
   if (!s) return '-';
-  return [`**${boss(t, s.Boss)}**`, ...s.Variants.map(v => `${mission(t, v.missionType)} · ${node(t, v.node)}\n-# ${t.sortie.modifierTypes[v.modifierType] ?? v.modifierType}`), ends(date(s.Expiry))].join('\n');
+  return [boss(t, s.Boss), ...s.Variants.map(v => `${mission(t, v.missionType)} · ${node(t, v.node)}\n-# ${t.sortie.modifierTypes[v.modifierType] ?? v.modifierType}`), ends(date(s.Expiry))].join('\n');
 }
 
 function baro(t, b, now) {
@@ -138,7 +157,7 @@ function arbitration(t, now) {
   const id = t.arbitrations.get(hour);
   const n = t.nodes[id];
   if (!n) return '-';
-  return `**${n.type}**${n.enemy ? ` · ${n.enemy}` : ''}\n${n.value}${t.tiers[id] ? ` · ${text('warframe.tier', { tier: t.tiers[id] })}` : ''}\n${ends((hour + 3600) * 1000)}`;
+  return `**${n.type}**${n.enemy ? ` · ${faction(n.enemy)}` : ''}\n${n.value}${t.tiers[id] ? ` · ${text('warframe.tier', { tier: t.tiers[id] })}` : ''}\n${ends((hour + 3600) * 1000)}`;
 }
 
 function language(t, key) {
@@ -147,7 +166,7 @@ function language(t, key) {
 
 function darvo(t, d) {
   if (!d) return '-';
-  return `**${language(t, d.StoreItem)}**\n~~${d.OriginalPrice}~~ **${d.SalePrice}** platinum (-${d.Discount}%)\n${d.AmountSold}/${d.AmountTotal} sold\n${ends(date(d.Expiry))}`;
+  return `**${language(t, d.StoreItem)}**\n~~${d.OriginalPrice}~~ **${d.SalePrice}** ${icon(['platinum', '']) || 'platinum'} (-${d.Discount}%)\n${d.AmountSold}/${d.AmountTotal} sold\n${ends(date(d.Expiry))}`;
 }
 
 function news(t, events) {
@@ -174,17 +193,17 @@ async function execute(interaction) {
     .setColor(colors.warframe)
     .setTitle(text('warframe.title'))
     .addFields(
-      { name: text('warframe.cetus'), value: cetus(w, now, 'day', 'night'), inline: true },
-      { name: text('warframe.vallis'), value: vallis(now), inline: true },
-      { name: text('warframe.cambion'), value: cetus(w, now, 'fass', 'vome'), inline: true },
-      { name: text('warframe.zariman'), value: zariman(w), inline: true },
-      { name: text('warframe.duviri'), value: duviri(now), inline: true },
-      { name: text('warframe.steelPath'), value: steelPath(t, now), inline: true },
-      { name: text('warframe.archon'), value: archon(t, w.LiteSorties?.[0]), inline: true },
-      { name: text('warframe.sortie'), value: sortie(t, w.Sorties?.[0]), inline: true },
-      { name: text('warframe.baro'), value: baro(t, w.VoidTraders?.[0], now), inline: true },
-      { name: text('warframe.arbitration'), value: arbitration(t, now), inline: true },
-      { name: text('warframe.darvo'), value: darvo(t, w.DailyDeals?.[0]), inline: true },
+      { name: heading('cetus'), value: cetus(w, now, 'day', 'night'), inline: true },
+      { name: heading('vallis'), value: vallis(now), inline: true },
+      { name: heading('cambion'), value: cetus(w, now, 'fass', 'vome'), inline: true },
+      { name: heading('zariman'), value: zariman(w), inline: true },
+      { name: heading('duviri'), value: duviri(now), inline: true },
+      { name: heading('steelPath'), value: steelPath(t, now), inline: true },
+      { name: heading('archon'), value: archon(t, w.LiteSorties?.[0]), inline: true },
+      { name: heading('sortie'), value: sortie(t, w.Sorties?.[0]), inline: true },
+      { name: heading('baro'), value: baro(t, w.VoidTraders?.[0], now), inline: true },
+      { name: heading('arbitration'), value: arbitration(t, now), inline: true },
+      { name: heading('darvo'), value: darvo(t, w.DailyDeals?.[0]), inline: true },
       { name: text('warframe.news'), value: news(t, w.Events) }
     )
     .setFooter({ text: text('warframe.footer') });

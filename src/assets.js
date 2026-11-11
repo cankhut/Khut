@@ -4,6 +4,7 @@ const { db } = require('./db');
 const { settings } = require('./settings');
 const { loadLegendCatalog, legendIconUrl } = require('./brawlhalla');
 const WARFRAMES = require('../data/warframes.json');
+const WARFRAME_ICONS = require('../data/warframe-icons.json');
 
 const emojis = new Map();
 let heroes;
@@ -84,6 +85,10 @@ function warframeLabel(name) {
   return `${emoji(warframeKey(name))} ${name}`.trim();
 }
 
+function warframeIcon(name) {
+  return emoji(`wfi_${String(name).toLowerCase().replace(/ /g, '_')}`);
+}
+
 function warframeImage(file) {
   const name = encodeURIComponent(file.replace(/ /g, '_'));
   return `https://wiki.warframe.com/images/thumb/${name}/128px-${name}`;
@@ -132,6 +137,7 @@ async function wantedEmojis() {
     ]);
   }
   for (const [name, frame] of Object.entries(WARFRAMES)) add(warframeKey(name), name, 'wf', [warframeImage(frame.portrait)]);
+  for (const [key, [name, file]] of Object.entries(WARFRAME_ICONS)) add(`wfi_${key}`, name, 'wf', [warframeImage(file)]);
   for (const game of settings.icons.games) {
     if (game.name && game.url) list.push({ key: gameEmojiName(game.name), name: gameEmojiName(game.name), urls: [game.url], stamp: game.url, game: game.name });
   }
@@ -209,4 +215,4 @@ async function syncEmojis(client) {
   log.info(`Icons ready: ${emojis.size}`);
 }
 
-module.exports = { syncEmojis, emoji, gameEmoji, heroLabel, championLabel, warframeLabel, warframeImage, profileIconUrl, deadlockHeroes, deadlockItems, playableHeroes, lolChampions, lolChampionDetail, ddragon, fetchImage };
+module.exports = { syncEmojis, emoji, gameEmoji, heroLabel, championLabel, warframeLabel, warframeIcon, warframeImage, profileIconUrl, deadlockHeroes, deadlockItems, playableHeroes, lolChampions, lolChampionDetail, ddragon, fetchImage };
