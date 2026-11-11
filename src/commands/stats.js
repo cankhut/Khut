@@ -350,8 +350,10 @@ async function discordEmbed(interaction, userId, withUser) {
   if (withUser) {
     const [a, b] = [userId, withUser.id].sort();
     const totals = voiceMinutes(guildId, 'SELECT COALESCE(SUM(minutes), 0) AS m FROM pair_minutes WHERE guild_id = ? AND user_a = ? AND user_b = ? AND day >= ?', [a, b], tz);
+    const other = await interaction.guild.members.fetch(withUser.id).catch(() => withUser);
     return new EmbedBuilder()
-      .setAuthor({ name: `${member.displayName} & ${withUser.displayName}`, iconURL: member.displayAvatarURL() })
+      .setAuthor({ name: `${member.displayName} & ${other.displayName}`, iconURL: member.displayAvatarURL() })
+      .setThumbnail(other.displayAvatarURL())
       .setColor(colors.discord)
       .setTitle('🎙️ Voice time together')
       .setFooter({ text: 'Discord', iconURL: icons.discord })
