@@ -100,28 +100,8 @@ async function getPlayer(brawlhallaId) {
 }
 
 function legendIconUrl(name) {
-  if (!name || typeof name !== 'string') {
-    return 'https://nexhalla.com/';
-  }
-
-  const ICON_ALIASES = {
-    'bödvar': 'bodvar',
-    'rayman': 'Rayman'
-  };
-
-  let slug = name.trim().toLowerCase();
-
-  if (ICON_ALIASES[slug]) {
-    slug = ICON_ALIASES[slug];
-  }
-
-  slug = slug.replace(/\s+/g, '');
-
-  return `https://nexhalla.com/assets/legends/${slug}.png`;
+  const file = `Portrait_${name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9&]/g, '')}.png`;
+  return `https://brawlhalla.wiki.gg/images/${encodeURIComponent(file)}`;
 }
 
-function profileUrl() {
-  return 'https://nexhalla.com/';
-}
-
-module.exports = { parsePlayerId, getPlayer, loadLegendCatalog, legendIconUrl, profileUrl };
+module.exports = { parsePlayerId, getPlayer, loadLegendCatalog, legendIconUrl };

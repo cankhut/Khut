@@ -2,7 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { db, getLinks, guildSettings } = require('../db');
 const { getJson, resolveSteamId, steamToAccountId, steamProfile } = require('../api');
 const { heroLabel, emoji } = require('../assets');
-const { getPlayer: getBrawlhallaPlayer, parsePlayerId, legendIconUrl, profileUrl: brawlhallaProfileUrl } = require('../brawlhalla');
+const { getPlayer: getBrawlhallaPlayer, parsePlayerId, legendIconUrl } = require('../brawlhalla');
 const { lolStats } = require('../lol');
 const colors = require('../colors');
 const icons = require('../icons');
@@ -316,10 +316,9 @@ async function brawlhallaEmbed(brawlhallaId) {
 
   const embed = new EmbedBuilder()
     .setColor(colors.brawlhalla)
-    .setAuthor({ name: `${all.name || 'Brawlhalla player'} · Brawlhalla`, url: brawlhallaProfileUrl() })
+    .setAuthor({ name: `${all.name || 'Brawlhalla player'} · Brawlhalla` })
     .setTitle('Player Statistics')
-    .setURL(brawlhallaProfileUrl())
-    .setDescription(`Brawlhalla ID: \`${brawlhallaId}\` · [Search on NexHalla](https://nexhalla.com/)`)
+    .setDescription(`Brawlhalla ID: \`${brawlhallaId}\``)
     .addFields(
       { name: '🏆 Ranked 1v1', value: rankedSummary(ranked1v1, '1v1'), inline: true },
       { name: '🏆 Ranked 3v3', value: rankedSummary(ranked3v3, '3v3'), inline: true },

@@ -184,7 +184,7 @@ Without this, `/link steam:... riot:...` works the same way. Brawlhalla IDs are 
 - CS2 data from the Steam Web API, [FACEIT](https://www.faceit.com) and [Leetify](https://leetify.com/) (Data Provided by Leetify). Not affiliated with Valve, FACEIT or Leetify.
 - League champion properties in `data/lol-champions.json` are compiled from the [League of Legends Wiki](https://wiki.leagueoflegends.com) (CC BY-SA). Ability icons come from Riot's Data Dragon.
 - Deadlock data from [deadlock-api.com](https://deadlock-api.com), with links to [Statlocker](https://statlocker.gg) profiles. Not affiliated with Valve.
-- Brawlhalla statistics from the [official Brawlhalla Developer API](https://dev.brawlhalla.com/). The bot is not affiliated with Blue Mammoth Games or Ubisoft. Character artwork and game logos remain the property of their respective owners; legend icon files are loaded from NexHalla.
+- Brawlhalla statistics from the [official Brawlhalla Developer API](https://dev.brawlhalla.com/). The bot is not affiliated with Blue Mammoth Games or Ubisoft. Character artwork and game logos remain the property of their respective owners; legend portraits come from the [Brawlhalla Wiki](https://brawlhalla.wiki.gg).
 - A Personal Riot API key is for your own server. Before opening the bot to the public, apply for a Production key.
 - See [PRIVACY.md](PRIVACY.md) for what the bot stores.
 

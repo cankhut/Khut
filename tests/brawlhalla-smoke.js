@@ -11,7 +11,7 @@ async function testIdParsingAndApi() {
   assert.equal(brawlhalla.parsePlayerId('0'), null);
   assert.equal(brawlhalla.parsePlayerId('nope'), null);
   assert.equal(brawlhalla.parsePlayerId('9007199254740992'), null);
-  assert.match(brawlhalla.legendIconUrl('Bödvar'), /bodvar\.png$/);
+  assert.match(brawlhalla.legendIconUrl('Bödvar'), /Portrait_Bodvar\.png$/);
 
   const urls = [];
   const oldFetch = global.fetch;

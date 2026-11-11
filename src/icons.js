@@ -3,6 +3,5 @@ module.exports = {
   cs2: 'https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/apps/730/8dbc71957312bbd3baea65848b545be9eae2a355.jpg',
   lol: 'https://wiki.leagueoflegends.com/en-us/images/thumb/League_of_Legends_nav_icon%40Colorized.png/40px-League_of_Legends_nav_icon%40Colorized.png?b3310',
   brawlhalla: 'https://brawlhalla.wiki.gg/images/thumb/Brawlhalla_Logo_100M_Full.png/1280px-Brawlhalla_Logo_100M_Full.png?5d3204',
-  brawlhallaBanner: 'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/291550/f6dd1b0a6a2b6e161604b36788276b18d36909cf/header.jpg?t=1789564454',
   discord: 'https://cdn.discordapp.com/embed/avatars/0.png'
 };

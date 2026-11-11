@@ -130,9 +130,7 @@ async function wantedEmojis() {
     legends = new Map();
   }
   for (const legend of legends.values()) {
-    if (!legend.bio_name) continue;
-    const key = `bh_${legend.legend_id}`;
-    list.push({ key, name: key, urls: [legendIconUrl(legend.bio_name)] });
+    if (legend.bio_name) add(`bh_${legend.legend_id}`, legend.bio_name, 'bh', [legendIconUrl(legend.bio_name)]);
   }
   return list;
 }
@@ -187,7 +185,7 @@ async function syncEmojis(client) {
 
   const names = new Set(wanted.map(w => w.name));
   for (const e of byName.values()) {
-    const keepUnverifiedBrawlhallaIcon = e.name.startsWith('bh_') && !brawlhallaCatalogueAvailable;
+    const keepUnverifiedBrawlhallaIcon = (owner.get(e.name) ?? e.name).startsWith('bh_') && !brawlhallaCatalogueAvailable;
     if (!keepUnverifiedBrawlhallaIcon && (owner.has(e.name) || OLD_NAME.test(e.name)) && !names.has(e.name)) {
       await e.delete().catch(err => log.warn(`Emoji ${e.name}: ${err.message}`));
       if (emojis.get(owner.get(e.name) ?? e.name) === e.toString()) emojis.delete(owner.get(e.name) ?? e.name);
