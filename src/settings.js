@@ -71,6 +71,7 @@ const defaults = {
     'stats.discordMention': 'For Discord, mention someone in player, like @Emre.',
 
     'card.unranked': 'Unranked',
+    'card.discordWith': 'with {name}',
     'card.dlTitle': 'Deadlock',
     'card.dlOverall': 'Overall',
     'card.dlRanked': 'Ranked',

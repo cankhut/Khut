@@ -352,11 +352,11 @@ async function discordEmbed(interaction, userId, withUser) {
     const totals = voiceMinutes(guildId, 'SELECT COALESCE(SUM(minutes), 0) AS m FROM pair_minutes WHERE guild_id = ? AND user_a = ? AND user_b = ? AND day >= ?', [a, b], tz);
     const other = await interaction.guild.members.fetch(withUser.id).catch(() => withUser);
     return new EmbedBuilder()
-      .setAuthor({ name: `${member.displayName} & ${other.displayName}`, iconURL: member.displayAvatarURL() })
-      .setThumbnail(other.displayAvatarURL())
+      .setAuthor({ name: member.user.username, iconURL: member.displayAvatarURL() })
+      .setThumbnail(icons.discord)
       .setColor(colors.discord)
       .setTitle('🎙️ Voice time together')
-      .setFooter({ text: 'Discord', iconURL: icons.discord })
+      .setFooter({ text: text('card.discordWith', { name: other.user?.username ?? other.username }), iconURL: other.displayAvatarURL() })
       .addFields(periods.map((name, i) => ({ name, value: formatMinutes(totals[i]), inline: true })));
   }
 
@@ -369,10 +369,10 @@ async function discordEmbed(interaction, userId, withUser) {
   `).all(userId, guildId, userId, userId);
 
   return new EmbedBuilder()
-    .setAuthor({ name: member.displayName, iconURL: member.displayAvatarURL() })
+    .setAuthor({ name: member.user.username, iconURL: member.displayAvatarURL() })
     .setColor(colors.discord)
     .setTitle('🎙️ Voice time')
-    .setFooter({ text: 'Discord', iconURL: icons.discord })
+    .setThumbnail(icons.discord)
     .addFields(
       ...periods.map((name, i) => ({ name, value: formatMinutes(totals[i]), inline: true })),
       { name: 'Most played in voice', value: games.map((g, i) => `${i + 1}. ${g.game} — ${formatMinutes(g.m)}`).join('\n') || 'Nothing yet', inline: true },
