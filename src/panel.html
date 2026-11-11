@@ -304,6 +304,8 @@ const ABOUT = {
   'warframe.baroComing': 'Baro: on the way',
   'warframe.baroHere': 'Baro: here now',
   'warframe.baroItems': 'Baro: item count',
+  'warframe.arbitration': 'Arbitration',
+  'warframe.tier': 'Arbitration tier',
   'warframe.darvo': 'Darvo deal',
   'warframe.news': 'News',
   'play.dlHint': 'dlbuild: how to guess',
@@ -450,7 +452,7 @@ function colourPreview(key) {
 }
 
 function textPreview(key) {
-  const vars = { users: '@Talha @Emre @Ali', role: '@Deadlock', user: '@Jankat', mode: 'High rank', points: 52, grid: '1️⃣ 🟩⬛⬛⬛⬛\n2️⃣ 🟥🟥🟩⬛⬛', hero: 'Haze', guesses: 'guesses', channel: '#games', names: '**Haze**, **Holliday**', game: 'Deadlock', host: key === 'lfg.host' ? '@Jankat' : 'Jankat', server: 'Friends', time: 'in 10 minutes', count: key === 'warframe.baroItems' ? 24 : key === 'lfg.other' ? 1 : key === 'lfg.others' ? 4 : key.startsWith('play.') ? 4 : key.startsWith('card.') ? 20 : '3/6', region: 'EUW', queue: '1v1', loaded: 12, total: 40, timezone: 'Europe/Istanbul', name: key === 'card.discordWith' ? 'Jankat' : 'Ahri', days: 3, place: '🥇', solved: 5, average: '2.4', games: 3, period: 'This week', line: '**14.** @Jankat · **52** points · 2 played' };
+  const vars = { users: '@Talha @Emre @Ali', role: '@Deadlock', user: '@Jankat', mode: 'High rank', points: 52, grid: '1️⃣ 🟩⬛⬛⬛⬛\n2️⃣ 🟥🟥🟩⬛⬛', hero: 'Haze', guesses: 'guesses', channel: '#games', names: '**Haze**, **Holliday**', game: 'Deadlock', host: key === 'lfg.host' ? '@Jankat' : 'Jankat', server: 'Friends', time: 'in 10 minutes', tier: 'S', count: key === 'warframe.baroItems' ? 24 : key === 'lfg.other' ? 1 : key === 'lfg.others' ? 4 : key.startsWith('play.') ? 4 : key.startsWith('card.') ? 20 : '3/6', region: 'EUW', queue: '1v1', loaded: 12, total: 40, timezone: 'Europe/Istanbul', name: key === 'card.discordWith' ? 'Jankat' : 'Ahri', days: 3, place: '🥇', solved: 5, average: '2.4', games: 3, period: 'This week', line: '**14.** @Jankat · **52** points · 2 played' };
   const value = t(key, vars);
   if (BUTTONS.includes(key)) return message('', buttons([[value, key === 'lfg.join' ? 'green' : key === 'lfg.cancel' ? 'red' : '']]));
   if (key.startsWith('lfg.') && ['host', 'other', 'others', 'footerCancelled', 'footerClosed'].includes(key.slice(4))) return lfgCard(key === 'lfg.footerCancelled' ? 'cancelled' : key === 'lfg.footerClosed' ? 'closed' : key === 'lfg.others' ? 'full' : 'open');
