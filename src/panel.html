@@ -151,6 +151,7 @@
   <section id="results">
     <p class="hint">What the bot posts in the channel when someone finishes a /play game. It uses the first row that fits, and the last row covers everything after it. Words in {curly brackets} are filled in by the bot.</p>
     <div class="box"><h2>lolhero</h2><p class="hint">By number of guesses. You can use {user} {mode} {count} {guesses}</p><div id="res-lolhero"></div><button class="btn grey small" onclick="addResult('lolhero')">Add row</button></div>
+    <div class="box"><h2>wftenno</h2><p class="hint">By number of guesses. You can use {user} {mode} {count} {guesses}</p><div id="res-wftenno"></div><button class="btn grey small" onclick="addResult('wftenno')">Add row</button></div>
     <div class="box"><h2>dlbuild</h2><p class="hint">By total points: 100 for the 4 rounds, more with bonus rounds. You can use {user} {mode} {points} {grid}</p><div id="res-dlbuild"></div><button class="btn grey small" onclick="addResult('dlbuild')">Add row</button></div>
     <div class="box"><h2>Streak</h2><p class="hint">Added to the result post when someone finished the same game on the days before too. It uses the row with the highest number they reached, and adds nothing below the lowest one. You can use {days}</p><div id="res-streak"></div><button class="btn grey small" onclick="addStreak()">Add row</button></div>
     <div class="savebar"><button class="btn grey" onclick="resetSection('results')">Reset all</button><button class="btn" onclick="saveSettings()">Save results</button></div>
@@ -189,7 +190,7 @@ const ENV = [
 
 const COLOURS = {
   deadlock: 'Deadlock card', cs2: 'CS2 card', lol: 'League card', brawlhalla: 'Brawlhalla card', discord: 'Discord voice card', wrapped: 'Wrapped', help: '/help',
-  play: '/play games', leaderboard: '/leaderboard',
+  play: '/play games', leaderboard: '/leaderboard', warframe: '/warframe cycle',
   lfgOpen: 'LFG open', lfgFull: 'LFG full', lfgClosed: 'LFG closed', lfgCancelled: 'LFG cancelled'
 };
 
@@ -206,7 +207,7 @@ const PANEL_OPTIONS = {
   restartOnCrash: 'Restart the bot if it crashes'
 };
 
-const GROUPS = { error: 'General', stats: '/stats', play: '/play games', lfg: 'LFG', games: '/games and the game picker', dm: '/dm', link: '/link', mydata: '/mydata', wrapped: '/wrapped', setup: '/setup', leaderboard: '/leaderboard', card: 'Stat cards' };
+const GROUPS = { error: 'General', stats: '/stats', play: '/play games', lfg: 'LFG', games: '/games and the game picker', dm: '/dm', link: '/link', mydata: '/mydata', wrapped: '/wrapped', setup: '/setup', leaderboard: '/leaderboard', warframe: '/warframe cycle', card: 'Stat cards' };
 
 const ABOUT = {
   'error': 'Any unexpected error',
@@ -264,11 +265,15 @@ const ABOUT = {
   'play.pickHero': 'dlbuild: hero list placeholder',
   'play.pickOne': 'dlbuild: nothing or two heroes picked',
   'play.lolHint': 'lolhero: how to guess',
-  'play.repeat': 'Same champion guessed twice',
-  'play.classicIntro': 'Classic: top of the board',
-  'play.abilityIntro': 'Ability: top of the board',
-  'play.clue': 'Classic: clue after 6 wrong guesses',
-  'play.solved': 'lolhero solved',
+  'play.wfHint': 'wftenno: how to guess',
+  'play.wfClassicIntro': 'wftenno Classic: top of the board',
+  'play.wfAbilityIntro': 'wftenno Ability: top of the board',
+  'play.wfClue': 'wftenno Classic: clue after 6 wrong guesses',
+  'play.repeat': 'Same name guessed twice',
+  'play.classicIntro': 'lolhero Classic: top of the board',
+  'play.abilityIntro': 'lolhero Ability: top of the board',
+  'play.clue': 'lolhero Classic: clue after 6 wrong guesses',
+  'play.solved': 'lolhero and wftenno solved',
   'play.dlCorrect': 'dlbuild: round won',
   'play.dlWrong': 'dlbuild: round lost',
   'play.dlDone': 'dlbuild: game over',
@@ -279,10 +284,28 @@ const ABOUT = {
   'play.statlocker': 'dlbuild: Statlocker link button',
   'leaderboard.title': '/leaderboard title',
   'leaderboard.dlRow': '/leaderboard: dlbuild row',
-  'leaderboard.lolRow': '/leaderboard: lolhero row',
+  'leaderboard.lolRow': '/leaderboard: lolhero and wftenno row',
   'leaderboard.you': '/leaderboard: your place below the top 10',
   'leaderboard.empty': '/leaderboard: nobody played yet',
   'leaderboard.footer': '/leaderboard footer',
+  'warframe.title': 'Title',
+  'warframe.unavailable': "Couldn't load",
+  'warframe.footer': 'Footer',
+  'warframe.ends': 'Ends in',
+  'warframe.cetus': 'Cetus',
+  'warframe.vallis': 'Orb Vallis',
+  'warframe.cambion': 'Cambion Drift',
+  'warframe.zariman': 'Zariman',
+  'warframe.duviri': 'Duviri',
+  'warframe.steelPath': 'Steel Path reward',
+  'warframe.archon': 'Archon Hunt',
+  'warframe.sortie': 'Sortie',
+  'warframe.baro': 'Baro',
+  'warframe.baroComing': 'Baro: on the way',
+  'warframe.baroHere': 'Baro: here now',
+  'warframe.baroItems': 'Baro: item count',
+  'warframe.darvo': 'Darvo deal',
+  'warframe.news': 'News',
   'play.dlHint': 'dlbuild: how to guess',
   'play.answersTitle': "Yesterday's answers post: title",
   'play.answersFound': "Yesterday's answers post: players count",
@@ -419,6 +442,7 @@ function colourPreview(key) {
     wrapped: { title: '📊 November 2026 Wrapped', desc: '⏱️ 120h in voice together\n🤝 Top duo: @Jankat + @Talha (40h)', fields: [{ name: '🏆 Most time in voice', value: '🥇 @Jankat — 60h\n🥈 @Talha — 52h' }] },
     play: { title: 'dlbuild · High rank · Round 1/4', desc: 'Type your guess with `/play dlbuild mode:High rank guess:`', fields: [{ name: '🟠 Hidden King', value: 'Oracle 3\n👤 3.5k\n➡️ 👤 **2.8k**\n👤 3.1k', inline: true }, { name: '⠀', value: '🟠 **21.5k**\n🕘 **6:00**\n🔵 **22.8k**', inline: true }, { name: '🔵 Archmother', value: 'Oracle 5\n👤 3.9k\n👤 3.4k\n👤 3.6k', inline: true }, { name: '🛒 Items at 6:00', value: '🟫 🟫 ⬛ ⬛ ⬛ ⬛\nHigh-Velocity Rounds · Mystic Burst' }], footer: 'Match played 2026-11-04 · Data from deadlock-api.com' },
     help: { title: 'Khut commands', fields: [{ name: '📊 Stats', value: '`/stats game:Deadlock` — your Deadlock stats' }], footer: 'Khut · Open source (AGPL-3.0)' },
+    warframe: { title: t('warframe.title'), fields: [{ name: t('warframe.cetus'), value: '☀️ **Day**\n' + t('warframe.ends', { time: 'in 1 hour' }), inline: true }, { name: t('warframe.vallis'), value: '❄️ **Cold**\n' + t('warframe.ends', { time: 'in 8 minutes' }), inline: true }, { name: t('warframe.cambion'), value: '**Fass**\n' + t('warframe.ends', { time: 'in 1 hour' }), inline: true }], footer: t('warframe.footer') },
     leaderboard: { title: t('leaderboard.title', { game: 'dlbuild', period: 'This week' }), desc: [t('leaderboard.dlRow', { place: '🥇', user: '@Jankat', points: 250, games: 3 }), t('leaderboard.dlRow', { place: '🥈', user: '@Talha', points: 180, games: 3 })].join('\n'), footer: t('leaderboard.footer') }
   };
   if (key.startsWith('lfg')) return lfgCard(key.slice(3).toLowerCase());
@@ -426,7 +450,7 @@ function colourPreview(key) {
 }
 
 function textPreview(key) {
-  const vars = { users: '@Talha @Emre @Ali', role: '@Deadlock', user: '@Jankat', mode: 'High rank', points: 52, grid: '1️⃣ 🟩⬛⬛⬛⬛\n2️⃣ 🟥🟥🟩⬛⬛', hero: 'Haze', guesses: 'guesses', channel: '#games', names: '**Haze**, **Holliday**', game: 'Deadlock', host: key === 'lfg.host' ? '@Jankat' : 'Jankat', server: 'Friends', time: 'in 10 minutes', count: key === 'lfg.other' ? 1 : key === 'lfg.others' ? 4 : key.startsWith('play.') ? 4 : key.startsWith('card.') ? 20 : '3/6', region: 'EUW', queue: '1v1', loaded: 12, total: 40, timezone: 'Europe/Istanbul', name: key === 'card.discordWith' ? 'Jankat' : 'Ahri', days: 3, place: '🥇', solved: 5, average: '2.4', games: 3, period: 'This week', line: '**14.** @Jankat · **52** points · 2 played' };
+  const vars = { users: '@Talha @Emre @Ali', role: '@Deadlock', user: '@Jankat', mode: 'High rank', points: 52, grid: '1️⃣ 🟩⬛⬛⬛⬛\n2️⃣ 🟥🟥🟩⬛⬛', hero: 'Haze', guesses: 'guesses', channel: '#games', names: '**Haze**, **Holliday**', game: 'Deadlock', host: key === 'lfg.host' ? '@Jankat' : 'Jankat', server: 'Friends', time: 'in 10 minutes', count: key === 'warframe.baroItems' ? 24 : key === 'lfg.other' ? 1 : key === 'lfg.others' ? 4 : key.startsWith('play.') ? 4 : key.startsWith('card.') ? 20 : '3/6', region: 'EUW', queue: '1v1', loaded: 12, total: 40, timezone: 'Europe/Istanbul', name: key === 'card.discordWith' ? 'Jankat' : 'Ahri', days: 3, place: '🥇', solved: 5, average: '2.4', games: 3, period: 'This week', line: '**14.** @Jankat · **52** points · 2 played' };
   const value = t(key, vars);
   if (BUTTONS.includes(key)) return message('', buttons([[value, key === 'lfg.join' ? 'green' : key === 'lfg.cancel' ? 'red' : '']]));
   if (key.startsWith('lfg.') && ['host', 'other', 'others', 'footerCancelled', 'footerClosed'].includes(key.slice(4))) return lfgCard(key === 'lfg.footerCancelled' ? 'cancelled' : key === 'lfg.footerClosed' ? 'closed' : key === 'lfg.others' ? 'full' : 'open');
@@ -558,12 +582,12 @@ function setStatus(field, value) {
   statusPreview();
 }
 
-const RESULTS = { lolhero: ['max', 'Up to', 'guesses'], dlbuild: ['min', 'From', 'points'] };
+const RESULTS = { lolhero: ['max', 'Up to', 'guesses'], wftenno: ['max', 'Up to', 'guesses'], dlbuild: ['min', 'From', 'points'] };
 
 function resultPreview(game, i) {
   const row = state.settings.results[game][i];
   const count = Math.max(1, Math.min(row.max ?? 1, 10));
-  const vars = { user: '@Jankat', mode: game === 'lolhero' ? 'Classic' : 'High rank', count, guesses: count === 1 ? 'guess' : 'guesses', points: Math.min(row.min ?? 0, 100), grid: '1️⃣ 🟩⬛⬛⬛⬛\n2️⃣ 🟥🟥🟩⬛⬛' };
+  const vars = { user: '@Jankat', mode: game === 'dlbuild' ? 'High rank' : 'Classic', count, guesses: count === 1 ? 'guess' : 'guesses', points: Math.min(row.min ?? 0, 100), grid: '1️⃣ 🟩⬛⬛⬛⬛\n2️⃣ 🟥🟥🟩⬛⬛' };
   return message(streakApply(3, fill(row.text, vars)));
 }
 

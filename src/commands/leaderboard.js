@@ -14,7 +14,8 @@ const data = new SlashCommandBuilder()
   .setContexts(InteractionContextType.Guild)
   .addStringOption(o => o.setName('game').setDescription('Which game').setRequired(true).addChoices(
     { name: 'dlbuild', value: 'dlbuild' },
-    { name: 'lolhero', value: 'lolhero' }
+    { name: 'lolhero', value: 'lolhero' },
+    { name: 'wftenno', value: 'wftenno' }
   ))
   .addStringOption(o => o.setName('period').setDescription('Time range (this week if empty)').addChoices(
     { name: 'This week', value: 'week' },

@@ -3,6 +3,7 @@ const list = [
   require('./stats'),
   require('./play'),
   require('./leaderboard'),
+  require('./warframe'),
   require('./lfg'),
   require('./lfg').games,
   require('./dm'),

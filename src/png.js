@@ -95,6 +95,18 @@ function rotate(image, turns) {
   return { width, height, data };
 }
 
+function backdrop(image, [r, g, b]) {
+  const data = Buffer.from(image.data);
+  for (let i = 0; i < data.length; i += 4) {
+    const a = data[i + 3] / 255;
+    data[i] = Math.round(data[i] * a + r * (1 - a));
+    data[i + 1] = Math.round(data[i + 1] * a + g * (1 - a));
+    data[i + 2] = Math.round(data[i + 2] * a + b * (1 - a));
+    data[i + 3] = 255;
+  }
+  return { ...image, data };
+}
+
 function grey(image) {
   const data = Buffer.from(image.data);
   for (let i = 0; i < data.length; i += 4) {
@@ -127,4 +139,4 @@ function scale(image, factor) {
   return { width, height, data };
 }
 
-module.exports = { decode, encode, rotate, grey, scale };
+module.exports = { decode, encode, rotate, backdrop, grey, scale };

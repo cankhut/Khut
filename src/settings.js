@@ -17,7 +17,8 @@ const defaults = {
     lfgClosed: '#4F545C',
     lfgCancelled: '#ED4245',
     play: '#1238E0',
-    leaderboard: '#F1C40F'
+    leaderboard: '#F1C40F',
+    warframe: '#4EB0E1'
   },
   limits: {
     lfgReminderMinutes: 10,
@@ -32,6 +33,12 @@ const defaults = {
       { max: 3, text: "⚡ {user} found today's lolhero {mode} in **{count}** {guesses}" },
       { max: 6, text: "{user} found today's lolhero {mode} in **{count}** {guesses}" },
       { max: 99, text: "😅 {user} found today's lolhero {mode} in **{count}** {guesses}. Got there in the end!" }
+    ],
+    wftenno: [
+      { max: 1, text: "🤯 {user} found today's wftenno {mode} on the **first** try!" },
+      { max: 3, text: "⚡ {user} found today's wftenno {mode} in **{count}** {guesses}" },
+      { max: 6, text: "{user} found today's wftenno {mode} in **{count}** {guesses}" },
+      { max: 99, text: "😅 {user} found today's wftenno {mode} in **{count}** {guesses}. Got there in the end!" }
     ],
     dlbuild: [
       { min: 90, text: "🏆 {user} finished today's dlbuild ({mode}) with **{points}** points\n{grid}" },
@@ -166,6 +173,28 @@ const defaults = {
     'leaderboard.footer': 'Scores from every server you share with Khut',
     'play.dlHint': 'Press ✏️ **Guess** to type a hero.',
     'play.lolHint': 'Press ✏️ **Guess** to type a champion.',
+    'play.wfHint': 'Press ✏️ **Guess** to type a Warframe.',
+    'play.wfClassicIntro': "Guess today's Warframe. Each guess shows how close it is: 🟩 match · 🟧 partly · 🟥 no · ⬆️⬇️ higher or lower",
+    'play.wfAbilityIntro': 'Which Warframe has this ability? It gets its colour back after 3 wrong guesses and turns upright after 6.',
+    'play.wfClue': '🔍 Clue: one of their abilities',
+    'warframe.title': '🌍 Warframe cycles',
+    'warframe.unavailable': "Couldn't load Warframe's world state. Try again in a few minutes.",
+    'warframe.footer': 'PC · Data from warframestat.us',
+    'warframe.ends': 'ends {time}',
+    'warframe.cetus': '🌄 Cetus',
+    'warframe.vallis': '🏔️ Orb Vallis',
+    'warframe.cambion': '🪱 Cambion Drift',
+    'warframe.zariman': '🚀 Zariman',
+    'warframe.duviri': '🌀 Duviri',
+    'warframe.steelPath': '⚔️ Steel Path reward',
+    'warframe.archon': '👹 Archon Hunt',
+    'warframe.sortie': '🎯 Sortie',
+    'warframe.baro': "🛒 Baro Ki'Teer",
+    'warframe.baroComing': 'Arrives {time}',
+    'warframe.baroHere': 'Here, leaves {time}',
+    'warframe.baroItems': '{count} items',
+    'warframe.darvo': '💰 Darvo deal',
+    'warframe.news': '📰 News',
     'play.answersTitle': "📅 Yesterday's answers",
     'play.answersFound': '{count} found it here',
 
@@ -241,8 +270,9 @@ function streakText(days, message) {
 
 function resultText(game, value, vars) {
   const rows = settings.results[game]?.length ? settings.results[game] : defaults.results[game];
-  const sorted = game === 'lolhero' ? [...rows].sort((a, b) => a.max - b.max) : [...rows].sort((a, b) => b.min - a.min);
-  const row = sorted.find(r => (game === 'lolhero' ? value <= r.max : value >= r.min)) ?? sorted[sorted.length - 1];
+  const byGuesses = game !== 'dlbuild';
+  const sorted = byGuesses ? [...rows].sort((a, b) => a.max - b.max) : [...rows].sort((a, b) => b.min - a.min);
+  const row = sorted.find(r => (byGuesses ? value <= r.max : value >= r.min)) ?? sorted[sorted.length - 1];
   return fill(row.text, vars);
 }
 

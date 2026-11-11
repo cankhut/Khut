@@ -5,6 +5,7 @@ const colors = require('../colors');
 const core = require('../games/core');
 const dlbuild = require('../games/dlbuild');
 const lolhero = require('../games/lolhero');
+const wftenno = require('../games/wftenno');
 const log = require('../log');
 
 const data = new SlashCommandBuilder()
@@ -22,28 +23,38 @@ const data = new SlashCommandBuilder()
       { name: 'Classic', value: 'classic' },
       { name: 'Ability', value: 'ability' }
     ))
-    .addStringOption(o => o.setName('guess').setDescription('Champion name').setAutocomplete(true)));
+    .addStringOption(o => o.setName('guess').setDescription('Champion name').setAutocomplete(true)))
+  .addSubcommand(s => s.setName('wftenno').setDescription('Guess today\'s Warframe')
+    .addStringOption(o => o.setName('mode').setDescription('Game mode').setRequired(true).addChoices(
+      { name: 'Classic', value: 'classic' },
+      { name: 'Ability', value: 'ability' }
+    ))
+    .addStringOption(o => o.setName('guess').setDescription('Warframe name').setAutocomplete(true)));
+
+const GAMES = { dlbuild, lolhero, wftenno };
 
 async function execute(interaction) {
   const mode = interaction.options.getString('mode');
-  const game = interaction.options.getSubcommand() === 'dlbuild' ? dlbuild : lolhero;
-  return game.play(interaction, mode, interaction.options.getString('guess'));
+  return GAMES[interaction.options.getSubcommand()].play(interaction, mode, interaction.options.getString('guess'));
 }
 
 async function autocomplete(interaction) {
   if (interaction.options.getSubcommand() === 'dlbuild') return dlbuild.autocomplete(interaction, interaction.options.getString('mode') ?? 'high');
-  await lolhero.autocomplete(interaction, interaction.options.getString('mode') ?? 'classic');
+  await GAMES[interaction.options.getSubcommand()].autocomplete(interaction, interaction.options.getString('mode') ?? 'classic');
 }
 
 async function component(interaction) {
   const [, game, ...parts] = interaction.customId.split(':');
   if (game === 'dl') return dlbuild.component(interaction, parts);
   if (game === 'lol') return lolhero.component(interaction, parts);
+  if (game === 'wf') return wftenno.component(interaction, parts);
 }
 
 const ANSWERS = [
   ['LoL classic', lolhero, 'classic'],
   ['LoL ability', lolhero, 'ability'],
+  ['Warframe classic', wftenno, 'classic'],
+  ['Warframe ability', wftenno, 'ability'],
   ['dlbuild high rank', dlbuild, 'high'],
   ['dlbuild all ranks', dlbuild, 'all']
 ];

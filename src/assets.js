@@ -3,6 +3,7 @@ const log = require('./log');
 const { db } = require('./db');
 const { settings } = require('./settings');
 const { loadLegendCatalog, legendIconUrl } = require('./brawlhalla');
+const WARFRAMES = require('../data/warframes.json');
 
 const emojis = new Map();
 let heroes;
@@ -75,6 +76,19 @@ async function championLabel(key) {
   return `${emoji(`lol_${key}`)} ${champion?.name ?? `Champion ${key}`}`.trim();
 }
 
+function warframeKey(name) {
+  return `wf_${slug(name)}`;
+}
+
+function warframeLabel(name) {
+  return `${emoji(warframeKey(name))} ${name}`.trim();
+}
+
+function warframeImage(file) {
+  const name = encodeURIComponent(file.replace(/ /g, '_'));
+  return `https://wiki.warframe.com/images/thumb/${name}/128px-${name}`;
+}
+
 async function fetchImage(url) {
   const res = await fetch(url, { headers: { 'User-Agent': 'Khut Discord bot (https://github.com/cankhut/khut)' } });
   if (!res.ok || !res.headers.get('content-type')?.startsWith('image/')) return null;
@@ -117,6 +131,7 @@ async function wantedEmojis() {
       `https://ddragon.leagueoflegends.com/cdn/${ddragonVersion}/img/champion/${champion.image.full}`
     ]);
   }
+  for (const [name, frame] of Object.entries(WARFRAMES)) add(warframeKey(name), name, 'wf', [warframeImage(frame.portrait)]);
   for (const game of settings.icons.games) {
     if (game.name && game.url) list.push({ key: gameEmojiName(game.name), name: gameEmojiName(game.name), urls: [game.url], stamp: game.url, game: game.name });
   }
@@ -194,4 +209,4 @@ async function syncEmojis(client) {
   log.info(`Icons ready: ${emojis.size}`);
 }
 
-module.exports = { syncEmojis, emoji, gameEmoji, heroLabel, championLabel, profileIconUrl, deadlockHeroes, deadlockItems, playableHeroes, lolChampions, lolChampionDetail, ddragon, fetchImage };
+module.exports = { syncEmojis, emoji, gameEmoji, heroLabel, championLabel, warframeLabel, warframeImage, profileIconUrl, deadlockHeroes, deadlockItems, playableHeroes, lolChampions, lolChampionDetail, ddragon, fetchImage };
