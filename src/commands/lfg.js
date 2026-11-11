@@ -6,6 +6,7 @@ const log = require('../log');
 const { settings, text } = require('../settings');
 const roles = require('../roles');
 const { gameEmoji } = require('../assets');
+const { parseEmoji } = require('../games/core');
 
 const data = new SlashCommandBuilder()
   .setName('lfg')
@@ -253,10 +254,11 @@ function picker(guildId, userId) {
 function gameRows(list, style) {
   const rows = [];
   for (let i = 0; i < list.length; i += 5) {
-    rows.push(new ActionRowBuilder().addComponents(list.slice(i, i + 5).map(g => new ButtonBuilder()
-      .setCustomId(`${g.id}:${g.name}`)
-      .setLabel(g.name)
-      .setStyle(style(g)))));
+    rows.push(new ActionRowBuilder().addComponents(list.slice(i, i + 5).map(g => {
+      const button = new ButtonBuilder().setCustomId(`${g.id}:${g.name}`).setLabel(g.name).setStyle(style(g));
+      const emoji = parseEmoji(gameEmoji(g.name));
+      return emoji ? button.setEmoji(emoji) : button;
+    })));
   }
   return rows;
 }

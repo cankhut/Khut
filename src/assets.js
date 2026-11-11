@@ -118,7 +118,7 @@ async function wantedEmojis() {
     ]);
   }
   for (const game of settings.icons.games) {
-    if (game.name && game.url && !game.big) list.push({ key: gameEmojiName(game.name), name: gameEmojiName(game.name), urls: [game.url], stamp: game.url, game: game.name });
+    if (game.name && game.url) list.push({ key: gameEmojiName(game.name), name: gameEmojiName(game.name), urls: [game.url], stamp: game.url, game: game.name });
   }
   let legends;
   try {
@@ -180,7 +180,7 @@ async function syncEmojis(client) {
       }
       break;
     }
-    if (item.game && !byName.has(item.name)) log.warn(`Couldn't load the icon for ${item.game}. Check the link in the panel.`);
+    if (item.game && !byName.has(item.name)) log.warn(`Couldn't load the icon for ${item.game} as an emoji. Check the link in the panel and keep the image under 256 KB.`);
   }
 
   const names = new Set(wanted.map(w => w.name));

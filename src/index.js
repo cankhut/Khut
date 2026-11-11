@@ -65,7 +65,7 @@ client.once(Events.ClientReady, c => {
   every('Bio', 30000, showBio);
   showStatus();
   showBio().catch(err => log.error('Bio failed:', err));
-  syncEmojis(client).catch(err => log.error('Emoji sync failed:', err));
+  syncEmojis(client).then(() => Promise.all(client.guilds.cache.map(guild => lfg.refreshPanel(guild)))).catch(err => log.error('Emoji sync failed:', err));
 });
 
 client.on(Events.ShardDisconnect, (event, id) => log.warn(`Disconnected from Discord (shard ${id}, code ${event.code})`));
