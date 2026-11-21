@@ -1,6 +1,7 @@
 {
   "name": "khut-desktop",
-  "version": "1.0.0",
+  "productName": "Khut",
+  "version": "1.0.1",
   "private": true,
   "description": "Khut desktop app: runs the bot and its control panel",
   "author": "cankhut",

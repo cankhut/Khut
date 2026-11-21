@@ -158,6 +158,8 @@ ssh -L 3001:localhost:3001 user@your-server
 
 Then open <http://localhost:3001> on your own computer.
 
+To back up the bot, press **Create backup** on the panel's Bot tab. It saves your keys, settings and database to a new folder on your Desktop, or in your home folder on a server without one.
+
 ### Desktop app (Windows)
 
 The `desktop` folder has a small app that runs the bot and the panel in their own window, with no terminal and no Node.js install needed. It also puts Khut in the system tray. Under **Limits**, or by right-clicking the tray icon, you can turn on:

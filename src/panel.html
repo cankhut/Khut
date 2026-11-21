@@ -121,6 +121,12 @@
       <button class="btn" onclick="botAction('deploy')">Register commands</button>
     </div>
     <div class="box">
+      <h2>Backup</h2>
+      <p class="hint">Saves your keys, settings and database to a new folder on your Desktop, or in your home folder if there's no Desktop. Keep it private, it has your bot token. To restore, stop the bot and copy the files back into Khut's data folder.</p>
+      <button class="btn" onclick="backup()">Create backup</button>
+      <p class="hint" id="backupResult" style="margin: 8px 0 0; font-size: 12px"></p>
+    </div>
+    <div class="box">
       <h2>Log</h2>
       <div id="log"></div>
     </div>
@@ -763,6 +769,11 @@ async function pollLogs() {
 
 function botAction(action) {
   attempt(() => api('POST', `/api/${action}`));
+}
+
+async function backup() {
+  const result = await attempt(() => api('POST', '/api/backup'));
+  if (result) $('backupResult').textContent = `Backup created at ${result.path}`;
 }
 
 function copyInvite() {

@@ -1,5 +1,6 @@
 const http = require('node:http');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 
@@ -168,6 +169,17 @@ const routes = {
   'POST /api/deploy': () => {
     deploy();
     return { message: 'Registering commands. Watch the log.' };
+  },
+  'POST /api/backup': () => {
+    const home = os.homedir();
+    const base = [path.join(home, 'Desktop'), path.join(home, 'OneDrive', 'Desktop'), home].find(dir => fs.existsSync(dir));
+    const folder = path.join(base, `Khut backup ${new Date().toLocaleString('sv-SE').replace(/:/g, '-')}`);
+    fs.mkdirSync(folder);
+    for (const file of ['.env', 'settings.json']) {
+      if (fs.existsSync(path.join(root, file))) fs.copyFileSync(path.join(root, file), path.join(folder, file));
+    }
+    db.exec(`VACUUM INTO '${path.join(folder, 'data.db').replace(/'/g, "''")}'`);
+    return { message: 'Backup created.', path: folder };
   },
   'GET /api/guilds': guilds,
   'POST /api/guild': async body => {
