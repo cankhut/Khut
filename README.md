@@ -158,6 +158,26 @@ ssh -L 3001:localhost:3001 user@your-server
 
 Then open <http://localhost:3001> on your own computer.
 
+### Desktop app (Windows)
+
+The `desktop` folder has a small app that runs the bot and the panel in their own window, with no terminal and no Node.js install needed. It also puts Khut in the system tray. Under **Limits**, or by right-clicking the tray icon, you can turn on:
+
+- **Close to tray**: closing the window keeps Khut running in the tray instead of quitting
+- **Start with Windows**: Khut starts in the tray when you log in. Turn on **Start the bot when the panel opens** too
+
+Quitting stops the bot.
+
+To build the installer, run this in the `desktop` folder:
+
+```bash
+npm install
+npm run dist
+```
+
+This makes `desktop/dist/Khut Setup 1.0.0.exe`, which you can upload to a GitHub release. The installed app keeps its keys, settings and database in `%APPDATA%\Khut\bot` (**Open data folder** in the tray menu). To move an existing setup there, quit the bot and copy `.env`, `settings.json` and the `data.db` files into that folder. Windows may warn that the installer is from an unknown publisher because it isn't code-signed: click **More info**, then **Run anyway**.
+
+To try the app from your Khut folder without installing it, run `npm start` in the `desktop` folder. It then uses the keys and database in your Khut folder.
+
 ## Updating
 
 ```bash

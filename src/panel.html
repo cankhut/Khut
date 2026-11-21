@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Khut Panel</title>
+<link rel="icon" href="/icon.png">
 <style>
   :root {
     --bg: #1e1f22; --panel: #2b2d31; --card: #313338; --line: #3f4147; --text: #dbdee1; --muted: #949ba4;
@@ -205,6 +206,11 @@ const LIMITS = {
 const PANEL_OPTIONS = {
   autoStart: 'Start the bot when the panel opens',
   restartOnCrash: 'Restart the bot if it crashes'
+};
+
+const APP_OPTIONS = {
+  closeToTray: 'Closing the window keeps Khut running in the system tray',
+  startWithWindows: 'Start Khut with Windows, in the tray'
 };
 
 const GROUPS = { error: 'General', stats: '/stats', play: '/play games', lfg: 'LFG', games: '/games and the game picker', dm: '/dm', link: '/link', mydata: '/mydata', wrapped: '/wrapped', setup: '/setup', leaderboard: '/leaderboard', warframe: '/warframe cycle', card: 'Stat cards' };
@@ -549,7 +555,17 @@ function renderLimits() {
   $('limitList').innerHTML = Object.entries(LIMITS).map(([key, [name, help]]) => `
     <label class="field"><b>${name}</b><input type="number" min="${key === 'voiceMinPeople' ? 2 : 1}" value="${state.settings.limits[key]}" oninput="state.settings.limits['${key}'] = Number(this.value)"><small>${help}</small></label>`).join('')
     + `<div class="group-title">Panel</div>` + Object.entries(PANEL_OPTIONS).map(([key, name]) => `
-    <label class="switch field"><input type="checkbox" ${state.settings.panel[key] ? 'checked' : ''} onchange="state.settings.panel['${key}'] = this.checked">${name}</label>`).join('');
+    <label class="switch field"><input type="checkbox" ${state.settings.panel[key] ? 'checked' : ''} onchange="state.settings.panel['${key}'] = this.checked">${name}</label>`).join('')
+    + '<div id="appOptions"></div>';
+  renderAppOptions();
+}
+
+async function renderAppOptions() {
+  if (!window.khutApp) return;
+  const options = await khutApp.get();
+  $('appOptions').innerHTML = `<div class="group-title">Desktop app</div><p class="hint">Saved right away. With Start with Windows, also turn on Start the bot when the panel opens.</p>` + Object.entries(APP_OPTIONS).map(([key, name]) => `
+    <label class="switch field"><input type="checkbox" ${options[key] ? 'checked' : ''} ${key === 'startWithWindows' && !options.packaged ? 'disabled' : ''} onchange="khutApp.set('${key}', this.checked)">${name}</label>`).join('')
+    + `<button class="btn grey" onclick="khutApp.openData()">Open data folder</button>`;
 }
 
 const STATUS = { None: 'No status', Custom: 'Custom', Playing: 'Playing', Listening: 'Listening to', Watching: 'Watching', Competing: 'Competing in' };

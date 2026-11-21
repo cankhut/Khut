@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const FILE = path.join(__dirname, '..', 'settings.json');
+const FILE = path.join(process.env.KHUT_DATA || path.join(__dirname, '..'), 'settings.json');
 
 const defaults = {
   colors: {

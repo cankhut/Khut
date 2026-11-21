@@ -3,7 +3,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 
-const root = path.join(__dirname, '..');
+const appDir = path.join(__dirname, '..');
+const root = process.env.KHUT_DATA || appDir;
 process.chdir(root);
 
 const ENV_FILE = path.join(root, '.env');
@@ -43,7 +44,7 @@ function addLog(line) {
 }
 
 function run(file, onExit) {
-  const child = spawn(process.execPath, [file], { cwd: root });
+  const child = spawn(process.execPath, [path.join(appDir, file)], { cwd: root });
   for (const stream of [child.stdout, child.stderr]) {
     let rest = '';
     stream.on('data', chunk => {
@@ -210,6 +211,9 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && url.pathname === '/') {
     return send(200, 'text/html; charset=utf-8', fs.readFileSync(path.join(__dirname, 'panel.html')));
   }
+  if (req.method === 'GET' && url.pathname === '/icon.png') {
+    return send(200, 'image/png', fs.readFileSync(path.join(appDir, 'desktop', 'icon.png')));
+  }
 
   const handler = routes[`${req.method} ${url.pathname}`];
   if (!handler) return send(404, 'text/plain', 'Not found');
@@ -230,7 +234,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(port, '127.0.0.1', () => {
   console.log(`Khut panel: http://localhost:${port}`);
-  console.log('Closing this window stops the panel and the bot.');
+  if (!process.argv.includes('--app')) console.log('Closing this window stops the panel and the bot.');
   if (process.argv.includes('--open')) {
     const url = `http://localhost:${port}`;
     const [cmd, args] = process.platform === 'win32' ? ['cmd', ['/c', 'start', '', url]] : [process.platform === 'darwin' ? 'open' : 'xdg-open', [url]];
@@ -243,3 +247,11 @@ process.on('SIGINT', async () => {
   await stopBot();
   process.exit(0);
 });
+
+if (process.argv.includes('--app')) {
+  process.stdin.resume();
+  process.stdin.on('end', async () => {
+    await stopBot();
+    process.exit(0);
+  });
+}
