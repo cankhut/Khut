@@ -174,7 +174,7 @@ npm install
 npm run dist
 ```
 
-This makes `desktop/dist/Khut Setup 1.0.0.exe`, which you can upload to a GitHub release. The installed app keeps its keys, settings and database in `%APPDATA%\Khut\bot` (**Open data folder** in the tray menu). To move an existing setup there, quit the bot and copy `.env`, `settings.json` and the `data.db` files into that folder. Windows may warn that the installer is from an unknown publisher because it isn't code-signed: click **More info**, then **Run anyway**.
+This makes `desktop/dist/Khut Setup 1.0.0.exe`, which you can upload to a GitHub release. Running it again on a computer that already has Khut lets you update or repair it (both keep your keys, settings and database), or uninstall it together with its data. Uninstalling from Windows' Apps settings asks whether to delete the data too. The installed app keeps its keys, settings and database in `%APPDATA%\Khut\bot` (**Open data folder** in the tray menu). To move an existing setup there, quit the bot and copy `.env`, `settings.json` and the `data.db` files into that folder. Windows may warn that the installer is from an unknown publisher because it isn't code-signed: click **More info**, then **Run anyway**.
 
 To try the app from your Khut folder without installing it, run `npm start` in the `desktop` folder. It then uses the keys and database in your Khut folder.
 

@@ -8,7 +8,10 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "npm install --prefix .. --omit=dev && electron-builder --win"
+    "dist": "electron-builder --win"
+  },
+  "dependencies": {
+    "discord.js": "^14.25.1"
   },
   "devDependencies": {
     "electron": "^45.4.1",
@@ -17,12 +20,13 @@
   "build": {
     "appId": "com.cankhut.khut",
     "productName": "Khut",
+    "asar": false,
     "files": ["main.js", "preload.js", "icon.png", "icon.ico"],
     "extraResources": [
       {
         "from": "..",
         "to": "khut",
-        "filter": ["src/**", "data/**", "node_modules/**", "package.json", "LICENSE", "desktop/icon.png"]
+        "filter": ["src/**", "data/**", "package.json", "LICENSE", "desktop/icon.png"]
       }
     ],
     "win": {
@@ -30,8 +34,10 @@
       "icon": "icon.ico"
     },
     "nsis": {
-      "oneClick": true,
-      "perMachine": false
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "include": "installer.nsh"
     }
   }
 }

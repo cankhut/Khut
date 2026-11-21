@@ -47,7 +47,7 @@ function startPanel() {
     panel = spawn(process.execPath, [path.join(KHUT, 'src', 'panel.js'), '--app'], {
       cwd: DATA,
       windowsHide: true,
-      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1', KHUT_DATA: DATA }
+      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1', KHUT_DATA: DATA, NODE_PATH: path.join(__dirname, 'node_modules') }
     });
     panel.on('error', reject);
     panel.stderr.on('data', chunk => (output += chunk));
@@ -144,6 +144,8 @@ async function quit() {
   await stopPanel();
   app.exit(0);
 }
+
+if (process.platform === 'win32') app.setAppUserModelId('com.cankhut.khut');
 
 if (!app.requestSingleInstanceLock()) {
   app.exit(0);
