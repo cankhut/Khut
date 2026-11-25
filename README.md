@@ -150,6 +150,8 @@ Colours, texts, results, icons, status and timings are saved in `settings.json` 
 
 Closing the panel also stops the bot. Turn on **Start the bot when the panel opens** under **Limits** if the panel is how you host it.
 
+Under **Limits → Optional messages** you can turn off messages the bot posts on its own: the LFG reminder, start and full-group pings, LFG DMs, the game result posts for dlbuild, lolhero and framedle, and yesterday's /play answers.
+
 The panel only listens on the computer it runs on. To use it for a bot on another machine (a home server, a VPS), run `npm run panel` there and connect with an SSH tunnel:
 
 ```bash

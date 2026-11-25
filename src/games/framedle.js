@@ -114,7 +114,7 @@ async function guess(interaction, mode, day, p, state, done, input) {
   core.save(interaction.user.id, GAME, mode, day, state, won, interaction.guildId);
   log.info(`${interaction.user.tag} guessed in framedle ${mode}${won ? ' (correct)' : ''}`);
   if (won) {
-    await core.postResult(interaction, streakText(core.streak(interaction.user.id, GAME, mode, day), resultText('framedle', state.guesses.length, { user: `<@${interaction.user.id}>`, mode: MODES[mode].name, count: state.guesses.length, guesses: plural(state.guesses.length) })));
+    await core.postResult(interaction, streakText(core.streak(interaction.user.id, GAME, mode, day), resultText('framedle', state.guesses.length, { user: `<@${interaction.user.id}>`, mode: MODES[mode].name, count: state.guesses.length, guesses: plural(state.guesses.length) })), GAME);
   }
   return null;
 }

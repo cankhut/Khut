@@ -27,6 +27,16 @@ const defaults = {
     errorDeleteHours: 2,
     voiceMinPeople: 2
   },
+  messages: {
+    lfgReminder: true,
+    lfgStart: true,
+    lfgSquadFull: true,
+    lfgDm: true,
+    dlbuildResults: true,
+    lolheroResults: true,
+    framedleResults: true,
+    playAnswers: true
+  },
   results: {
     lolhero: [
       { max: 1, text: "🤯 {user} found today's lolhero {mode} on the **first** try!" },
@@ -249,6 +259,10 @@ function save(next) {
   load();
 }
 
+function enabled(key) {
+  return settings.messages[key] !== false;
+}
+
 function color(name) {
   return parseInt(settings.colors[name].slice(1), 16);
 }
@@ -281,4 +295,4 @@ function resultText(game, value, vars) {
 load();
 fs.watchFile(FILE, { interval: 2000 }, load).unref();
 
-module.exports = { settings, defaults, save, color, text, resultText, streakText };
+module.exports = { settings, defaults, save, color, text, resultText, streakText, enabled };

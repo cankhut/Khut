@@ -230,7 +230,7 @@ async function guess(interaction, mode, day, p, state, input) {
     const content = resultPost(interaction.user.id, mode, day, p, state);
     if (state.post) await core.editResult(interaction.client, state.post, content);
     else {
-      state.post = await core.postResult(interaction, content);
+      state.post = await core.postResult(interaction, content, GAME);
       core.save(interaction.user.id, GAME, mode, day, state, state.done, interaction.guildId);
     }
   }

@@ -3,7 +3,7 @@ const { db, guildSettings } = require('../db');
 const { parseStart } = require('../time');
 const colors = require('../colors');
 const log = require('../log');
-const { settings, text } = require('../settings');
+const { settings, text, enabled } = require('../settings');
 const roles = require('../roles');
 const { gameEmoji } = require('../assets');
 const { parseEmoji } = require('../games/core');
@@ -150,6 +150,7 @@ async function execute(interaction) {
 }
 
 async function dmSubscribers(interaction, subscribers, game, start, url) {
+  if (!enabled('lfgDm')) return;
   const wantDm = new Set(db.prepare('SELECT discord_id FROM dm_on').all().map(r => r.discord_id));
   const when = start - Date.now() > 60000 ? text('lfg.dmStarts', { time: `<t:${Math.floor(start / 1000)}:R>` }) : '';
   const message = {
@@ -187,7 +188,7 @@ async function button(interaction) {
   await interaction.update(card(id));
 
   const players = getMembers(id);
-  if (action === 'in' && players.length + group.extra === group.slots) {
+  if (enabled('lfgSquadFull') && action === 'in' && players.length + group.extra === group.slots) {
     track(id, await interaction.followUp(ping(players, text('lfg.squadFull', { game: group.game }))));
   }
 }
@@ -207,12 +208,12 @@ async function tick(client) {
     const remind = settings.limits.lfgReminderMinutes * 60000;
     if (lead > remind + 5 * 60000 && !group.reminded && group.start_at - now <= remind) {
       db.prepare('UPDATE lfg SET reminded = 1 WHERE id = ?').run(group.id);
-      track(group.id, await channel.send(ping(players, text('lfg.reminder', { game: group.game, time: `<t:${Math.floor(group.start_at / 1000)}:R>`, count: `${players.length + group.extra}/${group.slots}` }))));
+      if (enabled('lfgReminder')) track(group.id, await channel.send(ping(players, text('lfg.reminder', { game: group.game, time: `<t:${Math.floor(group.start_at / 1000)}:R>`, count: `${players.length + group.extra}/${group.slots}` }))));
     }
 
     if (lead > 60000 && !group.started && now >= group.start_at) {
       db.prepare('UPDATE lfg SET started = 1 WHERE id = ?').run(group.id);
-      track(group.id, await channel.send(ping(players, text('lfg.start', { game: group.game }))));
+      if (enabled('lfgStart')) track(group.id, await channel.send(ping(players, text('lfg.start', { game: group.game }))));
     }
 
     if (now >= group.start_at + settings.limits.lfgCloseHours * 3600000) {

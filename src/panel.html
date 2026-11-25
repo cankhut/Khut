@@ -172,7 +172,7 @@
 
   <section id="limits">
     <div class="box" id="limitList"></div>
-    <div class="savebar"><button class="btn grey" onclick="resetSection('limits')">Reset all</button><button class="btn" onclick="saveSettings()">Save</button></div>
+    <div class="savebar"><button class="btn grey" onclick="resetSection('limits'); resetSection('messages')">Reset all</button><button class="btn" onclick="saveSettings()">Save</button></div>
   </section>
 </main>
 <div id="toast"></div>
@@ -212,6 +212,17 @@ const LIMITS = {
 const PANEL_OPTIONS = {
   autoStart: 'Start the bot when the panel opens',
   restartOnCrash: 'Restart the bot if it crashes'
+};
+
+const MESSAGES = {
+  lfgReminder: 'LFG: reminder before the game starts',
+  lfgStart: 'LFG: ping when the game starts',
+  lfgSquadFull: 'LFG: ping when the group is full',
+  lfgDm: 'LFG: DM people who turned on /dm',
+  dlbuildResults: 'dlbuild: post results in the channel',
+  lolheroResults: 'lolhero: post results in the channel',
+  framedleResults: 'framedle: post results in the channel',
+  playAnswers: "/play: post yesterday's answers"
 };
 
 const APP_OPTIONS = {
@@ -560,6 +571,8 @@ function setText(key, value, redraw) {
 function renderLimits() {
   $('limitList').innerHTML = Object.entries(LIMITS).map(([key, [name, help]]) => `
     <label class="field"><b>${name}</b><input type="number" min="${key === 'voiceMinPeople' ? 2 : 1}" value="${state.settings.limits[key]}" oninput="state.settings.limits['${key}'] = Number(this.value)"><small>${help}</small></label>`).join('')
+    + `<div class="group-title">Optional messages</div>` + Object.entries(MESSAGES).map(([key, name]) => `
+    <label class="switch field"><input type="checkbox" ${state.settings.messages[key] ? 'checked' : ''} onchange="state.settings.messages['${key}'] = this.checked">${name}</label>`).join('')
     + `<div class="group-title">Panel</div>` + Object.entries(PANEL_OPTIONS).map(([key, name]) => `
     <label class="switch field"><input type="checkbox" ${state.settings.panel[key] ? 'checked' : ''} onchange="state.settings.panel['${key}'] = this.checked">${name}</label>`).join('')
     + '<div id="appOptions"></div>';

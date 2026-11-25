@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, InteractionContextType, EmbedBuilder } = require('discord.js');
 const { guildSettings, setGuild } = require('../db');
-const { text } = require('../settings');
+const { text, enabled } = require('../settings');
 const colors = require('../colors');
 const core = require('../games/core');
 const dlbuild = require('../games/dlbuild');
@@ -80,7 +80,7 @@ async function tick(client) {
     const day = core.today(guild.id);
     if (settings.play_posted === day) continue;
     setGuild(guild.id, 'play_posted', day);
-    if (!settings.play_posted || !settings.play_channel) continue;
+    if (!settings.play_posted || !settings.play_channel || !enabled('playAnswers')) continue;
     await postAnswers(guild, settings.play_channel, core.previousDay(day)).catch(err => log.error(`Daily answers failed in ${guild.name}:`, err));
   }
 }

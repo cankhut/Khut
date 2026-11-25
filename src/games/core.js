@@ -1,6 +1,6 @@
 const crypto = require('node:crypto');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, LabelBuilder, TextInputBuilder, TextInputStyle, Routes } = require('discord.js');
-const { text } = require('../settings');
+const { text, enabled } = require('../settings');
 const { db, guildSettings } = require('../db');
 const { dayKey, parts, localToUtc } = require('../time');
 const log = require('../log');
@@ -77,7 +77,8 @@ function streak(userId, game, mode, day) {
   return days;
 }
 
-async function postResult(interaction, content) {
+async function postResult(interaction, content, game) {
+  if (!enabled(`${game}Results`)) return null;
   const message = await interaction.channel?.send({ content, allowedMentions: { parse: [] } }).catch(err => log.debug(`Couldn't post a game result: ${err.message}`));
   return message ? { channel: message.channelId, id: message.id } : null;
 }
