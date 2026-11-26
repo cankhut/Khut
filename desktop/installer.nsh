@@ -7,6 +7,8 @@
 
 !ifndef BUILD_UNINSTALLER
   Var khutRepair
+  Var khutShortcut
+  Var khutShortcutBox
   Var khutInstallButton
   Var khutRepairButton
   Var khutRemoveButton
@@ -31,6 +33,9 @@
       Pop $khutRemoveButton
       ${NSD_CreateLabel} 12u 94u 95% 18u "Removes the app and deletes its keys, settings and database."
       Pop $0
+      ${NSD_CreateCheckbox} 0 122u 100% 12u "Create a desktop shortcut"
+      Pop $khutShortcutBox
+      ${NSD_Check} $khutShortcutBox
       ${NSD_Check} $khutInstallButton
       ${IfNot} ${FileExists} "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
         EnableWindow $khutRepairButton 0
@@ -40,6 +45,7 @@
     FunctionEnd
 
     Function khutChooseLeave
+      ${NSD_GetState} $khutShortcutBox $khutShortcut
       ${NSD_GetState} $khutRepairButton $0
       ${If} $0 == ${BST_CHECKED}
         StrCpy $khutRepair "1"
@@ -59,6 +65,12 @@
   !macroend
 
   !macro customInstall
+    ${If} $khutShortcut == ${BST_CHECKED}
+      CreateShortCut "$DESKTOP\${PRODUCT_NAME}.lnk" "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
+      WinShell::SetLnkAUMI "$DESKTOP\${PRODUCT_NAME}.lnk" "${APP_ID}"
+    ${Else}
+      Delete "$DESKTOP\${PRODUCT_NAME}.lnk"
+    ${EndIf}
     ${If} $khutRepair == "1"
       FindFirst $0 $1 "$APPDATA\${PRODUCT_NAME}\*"
       khutClean:
@@ -80,6 +92,7 @@
 
 !macro customUnInstall
   ${IfNot} ${isUpdated}
+    Delete "$DESKTOP\${PRODUCT_NAME}.lnk"
     DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${APP_ID}"
     DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "electron.app.${PRODUCT_NAME}"
     DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run" "${APP_ID}"
