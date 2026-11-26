@@ -42,6 +42,10 @@ function slug(text) {
   return text.trim().toLowerCase().replace(/\s+/g, '-');
 }
 
+function profile(region, name) {
+  return blizzard(region, 'profile', `/profile/wow/character/${encodeURIComponent(slug(name))}`);
+}
+
 async function character(region, name) {
   const base = `/profile/wow/character/${encodeURIComponent(slug(name))}`;
   const profile = await blizzard(region, 'profile', base);
@@ -107,4 +111,4 @@ async function auctionHouses(region, ruleset) {
   return data;
 }
 
-module.exports = { REGIONS, RULESETS, FACTIONS, hasKeys, slug, character, guild, searchItems, item, auctionHouses };
+module.exports = { REGIONS, RULESETS, FACTIONS, hasKeys, slug, profile, character, guild, searchItems, item, auctionHouses };

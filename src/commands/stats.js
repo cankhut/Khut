@@ -10,19 +10,25 @@ const { periodStart, formatMinutes } = require('../time');
 const { later } = require('../cleanup');
 const log = require('../log');
 const { settings, text } = require('../settings');
+const wowcards = require('../wowcards');
 
 const data = new SlashCommandBuilder()
   .setName('stats')
   .setDescription('Show a player\'s game stats')
-  .addStringOption(o => o.setName('game').setDescription('Game').setRequired(true).addChoices(
-    { name: 'Deadlock', value: 'deadlock' },
-    { name: 'CS2', value: 'cs2' },
-    { name: 'League', value: 'lol' },
-    { name: 'Brawlhalla', value: 'brawlhalla' },
-    { name: 'Discord', value: 'discord' }
-  ))
-  .addStringOption(o => o.setName('player').setDescription('@user, Brawlhalla ID, Steam link / friend code or Riot ID'))
-  .addUserOption(o => o.setName('with').setDescription('DISCORD ONLY: show voice time between player and this person'));
+  .addSubcommand(s => s.setName('deadlock').setDescription('Deadlock stats').addStringOption(o => o.setName('player').setDescription('@user, Steam profile link or friend code. Empty: you')))
+  .addSubcommand(s => s.setName('cs2').setDescription('Counter-Strike 2 stats').addStringOption(o => o.setName('player').setDescription('@user, Steam profile link or friend code. Empty: you')))
+  .addSubcommand(s => s.setName('league').setDescription('League of Legends stats').addStringOption(o => o.setName('player').setDescription('@user or Riot ID (Name#Tag). Empty: you')))
+  .addSubcommand(s => s.setName('brawlhalla').setDescription('Brawlhalla stats').addStringOption(o => o.setName('player').setDescription('@user or Brawlhalla ID. Empty: you')))
+  .addSubcommand(s => s.setName('discord').setDescription('Voice time on this server')
+    .addStringOption(o => o.setName('player').setDescription('@user. Empty: you'))
+    .addUserOption(o => o.setName('with').setDescription('Show the voice time between player and this person')))
+  .addSubcommandGroup(g => g.setName('wow').setDescription('World of Warcraft: Forever')
+    .addSubcommand(s => s.setName('character').setDescription('A character, or someone\'s linked characters')
+      .addStringOption(o => o.setName('name').setDescription('Name Surname, or @user to see their characters. Empty: your characters'))
+      .addStringOption(wowcards.regionOption))
+    .addSubcommand(s => s.setName('guild').setDescription('A guild')
+      .addStringOption(o => o.setName('name').setDescription('Guild name').setRequired(true))
+      .addStringOption(wowcards.regionOption)));
 
 function pct(wins, total) {
   return total ? Math.round(wins / total * 100) : 0;
@@ -386,8 +392,10 @@ async function fail(interaction, message) {
 }
 
 async function execute(interaction) {
+  if (interaction.options.getSubcommandGroup(false) === 'wow') return wowcards.stats(interaction);
   await interaction.deferReply();
-  const game = interaction.options.getString('game');
+  const sub = interaction.options.getSubcommand();
+  const game = sub === 'league' ? 'lol' : sub;
   const input = interaction.options.getString('player');
 
   try {

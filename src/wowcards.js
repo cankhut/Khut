@@ -1,28 +1,15 @@
-const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
-const wow = require('../wow');
-const { getLinks } = require('../db');
-const { wowIcon } = require('../assets');
-const { text } = require('../settings');
-const colors = require('../colors');
-const log = require('../log');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
+const wow = require('./wow');
+const { wowCharacters } = require('./db');
+const { wowIcon } = require('./assets');
+const { parseEmoji } = require('./games/core');
+const { text } = require('./settings');
+const colors = require('./colors');
+const log = require('./log');
 
 const QUALITY = { POOR: '⬛', COMMON: '⬜', UNCOMMON: '🟩', RARE: '🟦', EPIC: '🟪', LEGENDARY: '🟧', ARTIFACT: '🟨', HEIRLOOM: '🟨' };
 const HIDDEN_SLOTS = ['SHIRT', 'TABARD'];
 const regionOption = o => o.setName('region').setDescription('Region (default EU)').addChoices(...wow.REGIONS.map(r => ({ name: r.toUpperCase(), value: r })));
-
-const data = new SlashCommandBuilder()
-  .setName('wow')
-  .setDescription('World of Warcraft: Forever')
-  .addSubcommand(s => s.setName('character').setDescription('Show a WoW: Forever character')
-    .addStringOption(o => o.setName('name').setDescription('Name Surname, or @user if they used /link'))
-    .addStringOption(regionOption))
-  .addSubcommand(s => s.setName('guild').setDescription('Show a WoW: Forever guild')
-    .addStringOption(o => o.setName('name').setDescription('Guild name').setRequired(true))
-    .addStringOption(regionOption))
-  .addSubcommand(s => s.setName('price').setDescription('Auction house prices for an item')
-    .addStringOption(o => o.setName('item').setDescription('Item name').setRequired(true).setAutocomplete(true))
-    .addStringOption(o => o.setName('ruleset').setDescription('Ruleset (default: your linked character, or Normal)').addChoices(...Object.entries(wow.RULESETS).map(([id, name]) => ({ name, value: id }))))
-    .addStringOption(regionOption));
 
 function time(ms) {
   return `<t:${Math.floor(ms / 1000)}:R>`;
@@ -41,20 +28,12 @@ function raceIcon(race, gender) {
   return wowIcon(`race_${race.id === 96 ? 95 : race.id}_${gender === 'FEMALE' ? 'female' : 'male'}`);
 }
 
-function linked(userId) {
-  const value = getLinks(userId)?.wow_character;
-  if (!value) return null;
-  const [region, name] = value.split('/');
-  return { region, name };
+function fullName(p) {
+  return [p.name, p.surname].filter(Boolean).join(' ');
 }
 
-function target(interaction) {
-  const input = interaction.options.getString('name');
-  const region = interaction.options.getString('region');
-  const mention = input?.trim().match(/^<@!?(\d+)>$/)?.[1];
-  if (input && !mention) return { name: input, region: region ?? 'eu' };
-  const link = linked(mention ?? interaction.user.id);
-  return link && { name: link.name, region: region ?? link.region };
+function slugName(slug) {
+  return slug.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
 }
 
 function activeSpec(c) {
@@ -74,7 +53,7 @@ function characterEmbed(c, region) {
   if (p.last_login_timestamp) lines.push(text('wow.lastOnline', { time: time(p.last_login_timestamp) }));
   const embed = new EmbedBuilder()
     .setColor(colors.wow)
-    .setAuthor({ name: `${p.name} ${p.surname ?? ''}`.trim(), iconURL: media.avatar })
+    .setAuthor({ name: fullName(p), iconURL: media.avatar })
     .setDescription(lines.join('\n'))
     .setFooter({ text: text('wow.footer', { region: region.toUpperCase() }) });
   if (media['main-raw']) embed.setImage(media['main-raw']);
@@ -159,42 +138,111 @@ async function priceEmbed(region, ruleset, id) {
   return embed;
 }
 
-async function execute(interaction) {
+async function displayName(interaction, userId) {
+  const member = await interaction.guild?.members.fetch(userId).catch(() => null);
+  return member?.displayName ?? (await interaction.client.users.fetch(userId).catch(() => null))?.displayName ?? 'Someone';
+}
+
+async function listView(interaction, invoker, userId) {
+  const chars = wowCharacters(userId);
+  const profiles = await Promise.all(chars.map(c => wow.profile(c.region, c.slug).catch(() => null)));
+  const lines = chars.map((c, i) => {
+    const p = profiles[i];
+    if (!p) return `❔ **${slugName(c.slug)}** · ${c.region.toUpperCase()} · ${text('wow.notLoaded')}`;
+    return `${raceIcon(p.race, p.gender.type)}${wowIcon(`class_${p.character_class.id}`)} **${fullName(p)}** · ${text('wow.level', { level: p.level })} · ${p.ruleset?.name ?? '-'} · ${c.region.toUpperCase()}${p.guild ? ` · <${p.guild.name}>` : ''}`;
+  });
+  const embed = new EmbedBuilder()
+    .setColor(colors.wow)
+    .setTitle(text('wow.characters', { user: await displayName(interaction, userId) }))
+    .setDescription(lines.join('\n'))
+    .setFooter({ text: text('wow.pick') });
+  const buttons = chars.map((c, i) => {
+    const p = profiles[i];
+    const button = new ButtonBuilder()
+      .setCustomId(`wow:c:${invoker}:${userId}:${c.region}:${c.slug}`.slice(0, 100))
+      .setLabel((p ? fullName(p) : slugName(c.slug)).slice(0, 80))
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(!p);
+    const icon = p && parseEmoji(wowIcon(`class_${p.character_class.id}`));
+    if (icon) button.setEmoji(icon);
+    return button;
+  });
+  const rows = [];
+  for (let n = 0; n < buttons.length; n += 5) rows.push(new ActionRowBuilder().addComponents(buttons.slice(n, n + 5)));
+  return { content: '', embeds: [embed], components: rows };
+}
+
+function backRow(invoker, userId) {
+  return new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`wow:l:${invoker}:${userId}`).setLabel(text('wow.back')).setStyle(ButtonStyle.Secondary).setEmoji('↩️'));
+}
+
+function failText(err, sub) {
+  if (err.status === 404) return text(sub === 'guild' ? 'wow.guildNotFound' : sub === 'price' ? 'wow.itemNotFound' : 'wow.notFound');
+  log.warn(`WoW ${sub}: ${err.message}`);
+  return text('wow.unavailable');
+}
+
+async function stats(interaction) {
   if (!wow.hasKeys()) return interaction.reply({ content: text('wow.noKeys'), flags: MessageFlags.Ephemeral });
   const sub = interaction.options.getSubcommand();
+  const input = interaction.options.getString('name')?.trim();
+  const region = interaction.options.getString('region');
   await interaction.deferReply();
   try {
-    if (sub === 'character') {
-      const who = target(interaction);
-      if (!who) return interaction.editReply(text('wow.notLinked'));
-      const c = await wow.character(who.region, who.name);
-      return interaction.editReply({ embeds: [characterEmbed(c, who.region)] });
-    }
     if (sub === 'guild') {
-      const region = interaction.options.getString('region') ?? 'eu';
-      const g = await wow.guild(region, interaction.options.getString('name'));
-      return interaction.editReply({ embeds: [guildEmbed(g, region)] });
+      const g = await wow.guild(region ?? 'eu', input);
+      return interaction.editReply({ embeds: [guildEmbed(g, region ?? 'eu')] });
     }
-    const link = linked(interaction.user.id);
-    const region = interaction.options.getString('region') ?? link?.region ?? 'eu';
-    const id = Number(interaction.options.getString('item'));
-    let ruleset = interaction.options.getString('ruleset');
-    if (!ruleset && link) ruleset = String((await wow.character(link.region, link.name).catch(() => null))?.profile?.ruleset?.id ?? '');
-    if (!wow.RULESETS[ruleset]) ruleset = '2';
-    if (!id) {
-      const found = (await wow.searchItems(region, interaction.options.getString('item')))[0];
-      if (!found) return interaction.editReply(text('wow.itemNotFound'));
-      return interaction.editReply({ embeds: [await priceEmbed(region, ruleset, found.id)] });
+    const mention = input?.match(/^<@!?(\d+)>$/)?.[1];
+    if (input && !mention) {
+      const c = await wow.character(region ?? 'eu', input);
+      return interaction.editReply({ embeds: [characterEmbed(c, region ?? 'eu')] });
     }
-    return interaction.editReply({ embeds: [await priceEmbed(region, ruleset, id)] });
+    const userId = mention ?? interaction.user.id;
+    const chars = wowCharacters(userId);
+    if (!chars.length) return interaction.editReply({ content: mention ? text('wow.noneLinked', { user: `<@${userId}>` }) : text('wow.notLinked'), allowedMentions: { parse: [] } });
+    if (chars.length === 1) {
+      const c = await wow.character(chars[0].region, chars[0].slug);
+      return interaction.editReply({ embeds: [characterEmbed(c, chars[0].region)] });
+    }
+    return interaction.editReply(await listView(interaction, interaction.user.id, userId));
   } catch (err) {
-    if (err.status === 404) return interaction.editReply(text(sub === 'guild' ? 'wow.guildNotFound' : sub === 'price' ? 'wow.itemNotFound' : 'wow.notFound'));
-    log.warn(`WoW ${sub}: ${err.message}`);
-    return interaction.editReply(text('wow.unavailable'));
+    return interaction.editReply(failText(err, sub));
   }
 }
 
-async function autocomplete(interaction) {
+async function component(interaction) {
+  const [, action, invoker, userId, region, slug] = interaction.customId.split(':');
+  if (interaction.user.id !== invoker) return interaction.reply({ content: text('wow.notYours'), flags: MessageFlags.Ephemeral });
+  await interaction.deferUpdate();
+  if (action === 'l') return interaction.editReply(await listView(interaction, invoker, userId));
+  try {
+    const c = await wow.character(region, slug);
+    await interaction.editReply({ embeds: [characterEmbed(c, region)], components: [backRow(invoker, userId)] });
+  } catch (err) {
+    await interaction.followUp({ content: failText(err, 'character'), flags: MessageFlags.Ephemeral });
+  }
+}
+
+async function price(interaction) {
+  if (!wow.hasKeys()) return interaction.reply({ content: text('wow.noKeys'), flags: MessageFlags.Ephemeral });
+  await interaction.deferReply();
+  try {
+    const own = wowCharacters(interaction.user.id)[0];
+    const region = interaction.options.getString('region') ?? own?.region ?? 'eu';
+    let ruleset = interaction.options.getString('ruleset');
+    if (!ruleset && own) ruleset = String((await wow.profile(own.region, own.slug).catch(() => null))?.ruleset?.id ?? '');
+    if (!wow.RULESETS[ruleset]) ruleset = '2';
+    let id = Number(interaction.options.getString('item'));
+    if (!id) id = (await wow.searchItems(region, interaction.options.getString('item')))[0]?.id;
+    if (!id) return interaction.editReply(text('wow.itemNotFound'));
+    return interaction.editReply({ embeds: [await priceEmbed(region, ruleset, id)] });
+  } catch (err) {
+    return interaction.editReply(failText(err, 'price'));
+  }
+}
+
+async function priceAutocomplete(interaction) {
   const typed = interaction.options.getFocused().trim();
   if (typed.length < 2 || !wow.hasKeys()) return interaction.respond([]);
   const region = interaction.options.getString('region') ?? 'eu';
@@ -202,4 +250,4 @@ async function autocomplete(interaction) {
   await interaction.respond(results.slice(0, 25).map(i => ({ name: `${QUALITY[i.quality] ?? ''} ${i.name}`.trim().slice(0, 100), value: String(i.id) })));
 }
 
-module.exports = { data, execute, autocomplete };
+module.exports = { regionOption, slugName, stats, component, price, priceAutocomplete };

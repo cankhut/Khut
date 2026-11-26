@@ -1,3 +1,4 @@
+const { createHash } = require('node:crypto');
 const { getJson } = require('./api');
 const log = require('./log');
 const { db } = require('./db');
@@ -66,6 +67,12 @@ function gameEmojiName(game) {
 
 function gameEmoji(game) {
   return emoji(gameEmojiName(game));
+}
+
+function gameImage(game) {
+  if (!game.url.startsWith('data:')) return game.url;
+  const id = gameEmoji(game.name).match(/:(\d+)>$/)?.[1];
+  return id ? `https://cdn.discordapp.com/emojis/${id}.png?size=128` : null;
 }
 
 async function heroLabel(id) {
@@ -145,7 +152,7 @@ async function wantedEmojis() {
   for (const [key, [name, file]] of Object.entries(WARFRAME_ICONS)) add(`wfi_${key}`, name, 'wf', [warframeImage(file)]);
   for (const [key, [name, url]] of Object.entries(WOW_ICONS)) add(`wow_${key}`, name, 'wow', [url]);
   for (const game of settings.icons.games) {
-    if (game.name && game.url) list.push({ key: gameEmojiName(game.name), name: gameEmojiName(game.name), urls: [game.url], stamp: game.url, game: game.name });
+    if (game.name && game.url) list.push({ key: gameEmojiName(game.name), name: gameEmojiName(game.name), urls: [game.url], stamp: game.url.startsWith('data:') ? createHash('sha1').update(game.url).digest('hex') : game.url, game: game.name });
   }
   let legends;
   try {
@@ -221,4 +228,4 @@ async function syncEmojis(client) {
   log.info(`Icons ready: ${emojis.size}`);
 }
 
-module.exports = { syncEmojis, emoji, gameEmoji, heroLabel, championLabel, warframeLabel, warframeIcon, warframeImage, wowIcon, profileIconUrl, deadlockHeroes, deadlockItems, playableHeroes, lolChampions, lolChampionDetail, ddragon, fetchImage };
+module.exports = { syncEmojis, emoji, gameEmoji, gameImage, heroLabel, championLabel, warframeLabel, warframeIcon, warframeImage, wowIcon, profileIconUrl, deadlockHeroes, deadlockItems, playableHeroes, lolChampions, lolChampionDetail, ddragon, fetchImage };

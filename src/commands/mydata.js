@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, MessageFlags } = require('discord.js');
-const { db, getLinks } = require('../db');
+const { db, getLinks, wowCharacters, removeWowCharacters } = require('../db');
+const { slugName } = require('../wowcards');
 const { text } = require('../settings');
 const roles = require('../roles');
 
@@ -28,7 +29,7 @@ async function execute(interaction) {
       `Steam: ${links?.steam_id ?? '-'}`,
       `Riot: ${links?.riot_id ?? '-'}`,
       `Brawlhalla ID: ${links?.brawlhalla_id ?? '-'}`,
-      `WoW: Forever: ${links?.wow_character ?? '-'}`,
+      `WoW: Forever: ${wowCharacters(id).map(c => `${slugName(c.slug)} (${c.region.toUpperCase()})`).join(', ') || '-'}`,
       `Voice minutes stored: ${minutes}`,
       `Voice tracking: ${paused ? 'paused' : 'on'}`,
       `LFG pings here: ${subs.join(', ') || '-'}`,
@@ -38,6 +39,7 @@ async function execute(interaction) {
 
   if (action === 'unlink') {
     db.prepare('DELETE FROM links WHERE discord_id = ?').run(id);
+    removeWowCharacters(id);
     return reply(text('mydata.unlink'));
   }
 
@@ -53,6 +55,7 @@ async function execute(interaction) {
 
   if (action === 'delete') {
     db.prepare('DELETE FROM links WHERE discord_id = ?').run(id);
+    removeWowCharacters(id);
     db.prepare('DELETE FROM voice_minutes WHERE user_id = ?').run(id);
     db.prepare('DELETE FROM pair_minutes WHERE user_a = ? OR user_b = ?').run(id, id);
     db.prepare('DELETE FROM sessions WHERE user_id = ?').run(id);

@@ -6,6 +6,7 @@ const tracker = require('./tracker');
 const cleanup = require('./cleanup');
 const roles = require('./roles');
 const play = require('./commands/play');
+const wowcards = require('./wowcards');
 const web = require('./web');
 const log = require('./log');
 const { text, settings } = require('./settings');
@@ -22,7 +23,8 @@ const buttons = {
   lfg: lfg.button,
   sub: lfg.subscribeButton,
   pick: lfg.pickButton,
-  play: play.component
+  play: play.component,
+  wow: wowcards.component
 };
 
 function every(name, ms, job) {
@@ -80,7 +82,8 @@ client.on(Events.GuildDelete, guild => log.info(`Removed from server ${guild.nam
 function describe(interaction) {
   const where = interaction.guild ? `${interaction.guild.name} #${interaction.channel?.name ?? '?'}` : 'DM';
   if (interaction.isChatInputCommand()) {
-    const options = interaction.options.data.flatMap(o => o.options ? [o.name, ...o.options.map(x => `${x.name}:${x.value}`)] : [`${o.name}:${o.value}`]);
+    const flat = list => list.flatMap(o => o.options ? [o.name, ...flat(o.options)] : [`${o.name}:${o.value}`]);
+    const options = flat(interaction.options.data);
     return `${interaction.user.tag} used /${[interaction.commandName, ...options].join(' ')} in ${where}`;
   }
   return `${interaction.user.tag} clicked ${interaction.customId} in ${where}`;

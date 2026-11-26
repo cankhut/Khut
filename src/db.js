@@ -22,12 +22,15 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS play_puzzles (game TEXT, mode TEXT, day TEXT, data TEXT, PRIMARY KEY (game, mode, day));
   CREATE TABLE IF NOT EXISTS emoji_sources (name TEXT PRIMARY KEY, stamp TEXT);
   CREATE TABLE IF NOT EXISTS emoji_names (name TEXT PRIMARY KEY, key TEXT);
+  CREATE TABLE IF NOT EXISTS wow_characters (discord_id TEXT, region TEXT, slug TEXT, added_at INTEGER, PRIMARY KEY (discord_id, region, slug));
   CREATE TABLE IF NOT EXISTS play_progress (user_id TEXT, game TEXT, mode TEXT, day TEXT, state TEXT, done INTEGER NOT NULL DEFAULT 0, guild_id TEXT, PRIMARY KEY (user_id, game, mode, day));
 `);
 
 for (const sql of [
   'ALTER TABLE links ADD COLUMN brawlhalla_id TEXT',
   'ALTER TABLE links ADD COLUMN wow_character TEXT',
+  "INSERT OR IGNORE INTO wow_characters SELECT discord_id, substr(wow_character, 1, instr(wow_character, '/') - 1), substr(wow_character, instr(wow_character, '/') + 1), 0 FROM links WHERE wow_character IS NOT NULL",
+  'UPDATE links SET wow_character = NULL',
   'ALTER TABLE lfg ADD COLUMN extra INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE lfg ADD COLUMN image TEXT',
   'ALTER TABLE lfg ADD COLUMN ended_at INTEGER',
@@ -61,15 +64,27 @@ function getLinks(discordId) {
   return db.prepare('SELECT * FROM links WHERE discord_id = ?').get(discordId);
 }
 
-function saveLinks(discordId, steamId, riotId, brawlhallaId, wowCharacter) {
+function saveLinks(discordId, steamId, riotId, brawlhallaId) {
   db.prepare(`
-    INSERT INTO links (discord_id, steam_id, riot_id, brawlhalla_id, wow_character) VALUES (?, ?, ?, ?, ?)
+    INSERT INTO links (discord_id, steam_id, riot_id, brawlhalla_id) VALUES (?, ?, ?, ?)
     ON CONFLICT(discord_id) DO UPDATE SET
       steam_id = COALESCE(excluded.steam_id, steam_id),
       riot_id = COALESCE(excluded.riot_id, riot_id),
-      brawlhalla_id = COALESCE(excluded.brawlhalla_id, brawlhalla_id),
-      wow_character = COALESCE(excluded.wow_character, wow_character)
-  `).run(discordId, steamId ?? null, riotId ?? null, brawlhallaId ?? null, wowCharacter ?? null);
+      brawlhalla_id = COALESCE(excluded.brawlhalla_id, brawlhalla_id)
+  `).run(discordId, steamId ?? null, riotId ?? null, brawlhallaId ?? null);
 }
 
-module.exports = { db, guildSettings, setGuild, getLinks, saveLinks };
+function wowCharacters(discordId) {
+  return db.prepare('SELECT region, slug FROM wow_characters WHERE discord_id = ? ORDER BY added_at, rowid').all(discordId);
+}
+
+function addWowCharacter(discordId, region, slug) {
+  db.prepare('INSERT OR IGNORE INTO wow_characters VALUES (?, ?, ?, ?)').run(discordId, region, slug, Date.now());
+}
+
+function removeWowCharacters(discordId, region, slug) {
+  if (slug) return db.prepare('DELETE FROM wow_characters WHERE discord_id = ? AND region = ? AND slug = ?').run(discordId, region, slug).changes;
+  return db.prepare('DELETE FROM wow_characters WHERE discord_id = ?').run(discordId).changes;
+}
+
+module.exports = { db, guildSettings, setGuild, getLinks, saveLinks, wowCharacters, addWowCharacter, removeWowCharacters };

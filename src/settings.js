@@ -68,6 +68,9 @@ const defaults = {
     text: '',
     bio: ''
   },
+  commands: {
+    linkFor: false
+  },
   panel: {
     autoStart: false,
     restartOnCrash: true
@@ -189,7 +192,13 @@ const defaults = {
     'play.wfAbilityIntro': 'Which Warframe has this ability? It gets its colour back after 3 wrong guesses and turns upright after 6.',
     'play.wfClue': '🔍 Clue: one of their abilities',
     'wow.noKeys': 'WoW: Forever needs a Blizzard client ID and secret on the panel Keys page.',
-    'wow.notLinked': 'No WoW: Forever character linked. Use `/wow character name:Name Surname` or `/link wow:Name Surname`.',
+    'wow.notLinked': "You haven't linked a WoW: Forever character. Use `/link wow:Name Surname`, or look one up with `/stats wow character name:Name Surname`.",
+    'wow.noneLinked': "{user} hasn't linked a WoW: Forever character.",
+    'wow.characters': "{user}'s characters",
+    'wow.pick': 'Pick a character to see its stats.',
+    'wow.back': 'All characters',
+    'wow.notYours': 'Only the person who used the command can pick here. Use `/stats wow character` yourself.',
+    'wow.notLoaded': "couldn't be loaded",
     'wow.notFound': "Character not found. It has to be level 10 or higher, have logged out at least once, and have **Community Sites and Apps** turned on in the Battle.net privacy settings.",
     'wow.guildNotFound': 'Guild not found. Check the name and region.',
     'wow.itemNotFound': 'Item not found. Pick one from the list while typing.',
@@ -247,7 +256,13 @@ const defaults = {
     'play.answersTitle': "📅 Yesterday's answers",
     'play.answersFound': '{count} found it here',
 
-    'link.usage': 'Use `/link steam:<profile link or friend code> riot:<Name#Tag> brawlhalla:<ID> wow:<Name Surname>`',
+    'link.usage': 'Use `/link steam:<profile link or friend code> riot:<Name#Tag> brawlhalla:<ID> wow:<Name Surname>`. Run it again with `wow:` to add more characters.',
+    'link.wowLimit': 'Up to {count} WoW: Forever characters can be linked. Remove one with `/unlink`.',
+    'link.forDone': 'Linked for {user}. They can remove it with `/unlink`.',
+    'link.forOff': 'This command is turned off in the Khut panel.',
+    'link.forOwner': "Only the bot's owner can link accounts for other people.",
+    'unlink.done': 'Unlinked {what}.',
+    'unlink.nothing': "That isn't linked.",
     'link.connect': 'This reads the Steam and Riot accounts connected to your Discord profile. Brawlhalla IDs cannot be read from Discord, so add yours with `/link brawlhalla:<ID>`.',
     'link.connectButton': 'Connect with Discord',
     'link.badSteam': "Couldn't find that Steam account.",
@@ -255,7 +270,7 @@ const defaults = {
     'link.badBrawlhalla': 'Brawlhalla ID must be a positive number. Find it at the top-right of the Inventory tab.',
     'link.done': 'Linked!',
 
-    'mydata.unlink': 'Your Steam, Riot and Brawlhalla links are removed.',
+    'mydata.unlink': 'Your Steam, Riot and Brawlhalla links and WoW: Forever characters are removed.',
     'mydata.pause': 'Voice tracking paused. Your old data stays until you delete it.',
     'mydata.resume': 'Voice tracking is on again.',
     'mydata.delete': 'Everything about you is deleted and voice tracking is paused. Use /mydata Resume voice tracking to turn it back on.',

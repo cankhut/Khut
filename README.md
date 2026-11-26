@@ -9,21 +9,23 @@ All commands work in any channel. `/help` shows this list in Discord.
 | Command | What it does |
 |---|---|
 | `/help` | Every command, with examples. |
-| `/stats game player` | Deadlock, CS2, League or Brawlhalla stats. `player` = @user, Steam link / friend code, Riot ID (`Name#Tag`) or numeric Brawlhalla ID. Empty = you. |
-| `/stats game:Discord player with` | Someone's voice time, or with `with:` the voice time between two people. |
+| `/stats deadlock` · `cs2` · `league` · `brawlhalla` | Game stats. `player` = @user, Steam link / friend code, Riot ID (`Name#Tag`) or numeric Brawlhalla ID. Empty = you (needs `/link`). |
+| `/stats discord player with` | Someone's voice time, or with `with:` the voice time between two people. |
 | `/play dlbuild mode guess` | Daily Deadlock game: guess heroes from their items in a real match. |
 | `/play lolhero mode guess` | Daily League game: Classic (champion properties) or Ability (a rotated, greyed ability icon). |
 | `/play framedle mode guess` | Daily Warframe game: Classic (Warframe properties) or Ability (a rotated, greyed ability card). |
 | `/leaderboard game period` | The best `/play` players in this server: dlbuild by points, lolhero and framedle by days solved (fewer guesses wins ties). This week, this month or all time. Counts games played in any server you share with Khut. |
 | `/warframe cycle` | Warframe (PC) right now: Cetus, Orb Vallis, Cambion Drift, Zariman and Duviri cycles, Steel Path reward, Archon Hunt, Sortie, Baro Ki'Teer, Arbitration (with its tier), Darvo's deal and the 5 latest news posts. Countdowns update live in Discord. |
-| `/wow character name:<Name Surname>` | A WoW: Forever character: race, class, spec, guild, professions, stats, PvP, reputation, gear (linked to Wowhead) and the character render. Leave the name empty for your linked character. |
-| `/wow guild name:<guild>` | A WoW: Forever guild: members, class spread, how many are level 60, and its leaders. |
-| `/wow price item:<item>` | Auction house prices for an item on Alliance, Horde and Blackwater, for one ruleset. Pick the item from the list while typing. Uses your linked character's ruleset, or Normal. |
+| `/stats wow character name` | WoW: Forever. Empty = your linked characters, `name:@user` = theirs: a list with a button per character that opens its card. `name:<Name Surname>` shows anyone's card: race, class, spec, guild, professions, stats, PvP, reputation, gear (linked to Wowhead) and the character render. |
+| `/stats wow guild name` | A WoW: Forever guild: members, class spread, how many are level 60, and its leaders. |
+| `/price wow item ruleset` | WoW: Forever auction house prices on Alliance, Horde and Blackwater. Pick the item from the list while typing. Uses your linked character's ruleset, or Normal. |
 | `/lfg game time players note image` | Look for players. Time: `now`, `30m`, `2h`, `21:00`, `9pm`. Players: `3/6` if 3 of you are already together, or just `6`. A picture attached as `image`, or a GIF or image link in `note` (Tenor, Giphy, Discord), shows on the post. Quietly pings everyone subscribed to that game, pings the group when full and reminds them 10 minutes before. Closes 2 hours after the start time and is deleted 12 hours after it closes or is cancelled. |
 | `/games` | Subscribe to games so you get pinged when someone uses `/lfg` for them. Only you see it. |
 | `/dm on` / `/dm off` | Also get those pings as a DM. |
 | `/wrapped period` | Server voice Wrapped: this month, last month, this year or all time. |
-| `/link` | Link your Steam, Riot, Brawlhalla and WoW: Forever accounts so people can use `player:@you`. |
+| `/link` | Link your Steam, Riot, Brawlhalla and WoW: Forever accounts so people can use `player:@you`. Use `wow:` again to add more characters (up to 10). |
+| `/unlink account character` | Remove one linked account, one WoW: Forever character, or everything. |
+| `/linkfor user` | Bot owner only, and only when it's turned on in the panel (Limits > Owner tools): link accounts for someone else. Only server admins see it. |
 | `/mydata` | See, pause or delete what Khut stores about you. |
 | `/setup` | Admins: `games`, `roles`, `answers`, `addgame`, `removegame`, `wrapped`, `timezone`. |
 

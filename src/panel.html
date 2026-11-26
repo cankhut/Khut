@@ -7,177 +7,346 @@
 <link rel="icon" href="/icon.png">
 <style>
   :root {
-    --bg: #1e1f22; --panel: #2b2d31; --card: #313338; --line: #3f4147; --text: #dbdee1; --muted: #949ba4;
-    --accent: #5865F2; --green: #23a55a; --red: #da373c; --embed: #2b2d31;
+    --bg: #0f1116; --side: #13161d; --surface: #171a22; --raised: #1f232d; --line: #272c37; --line2: #343a48;
+    --text: #e7e9ef; --muted: #8c93a6; --faint: #5d6476;
+    --accent: #f2b48c; --accent-ink: #2a1a10; --accent-soft: rgba(242,180,140,.12); --blue: #6d8bff; --green: #3fb27f; --red: #e5534b;
+    --dc-bg: #1b1e25; --dc-embed: #23262f;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 14px/1.45 "gg sans", "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); }
-  .top { position: sticky; top: 0; z-index: 5; }
-  header { display: flex; align-items: center; gap: 12px; padding: 14px 24px; background: var(--panel); border-bottom: 1px solid var(--line); }
-  header h1 { font-size: 18px; margin: 0 8px 0 0; }
-  .pill { padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; background: var(--line); }
-  .pill.on { background: var(--green); color: #fff; }
-  header .spacer { flex: 1; }
-  nav { display: flex; gap: 4px; padding: 10px 24px 0; background: var(--panel); border-bottom: 1px solid var(--line); }
-  nav button { background: none; border: 0; color: var(--muted); padding: 8px 14px; border-bottom: 2px solid transparent; cursor: pointer; font: inherit; font-weight: 600; }
-  nav button.active { color: var(--text); border-color: var(--accent); }
-  main { max-width: 1100px; margin: 0 auto; padding: 24px; }
-  section { display: none; }
+  html { scroll-padding-top: 20px; }
+  body { margin: 0; font: 14px/1.5 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; }
+  a { color: var(--blue); }
+  code { font: 12px Consolas, "Cascadia Mono", monospace; background: var(--raised); padding: 1px 5px; border-radius: 4px; }
+  h1, h2, h3 { margin: 0; }
+  [hidden] { display: none !important; }
+
+  .side { position: sticky; top: 0; height: 100vh; background: var(--side); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 18px 12px; gap: 16px; }
+  .brand { display: flex; gap: 10px; align-items: center; padding: 0 6px; }
+  .brand img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: var(--raised); }
+  .brand b { display: block; font-size: 15px; }
+  .state { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .state::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+  .state.on { color: var(--green); }
+  .state.on::before { background: var(--green); box-shadow: 0 0 0 3px rgba(63,178,127,.18); }
+  .power { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 6px; }
+  .power .btn { justify-content: center; }
+  .power #stopBtn, .power #startBtn { grid-column: 1 / -1; }
+  nav { display: flex; flex-direction: column; gap: 2px; }
+  nav button { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: 0; color: var(--muted); padding: 8px 12px; border-radius: 8px; font: inherit; font-weight: 500; cursor: pointer; text-align: left; }
+  nav button:hover { background: var(--surface); color: var(--text); }
+  nav button.active { background: var(--accent-soft); color: var(--accent); }
+  nav svg, .ico { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+  main { min-width: 0; padding: 28px 36px 120px; }
+  section { display: none; max-width: 1080px; margin: 0 auto; }
   section.active { display: block; }
-  h2 { font-size: 16px; margin: 0 0 4px; }
-  p.hint { color: var(--muted); margin: 0 0 16px; }
-  .box { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-  button.btn { background: var(--accent); color: #fff; border: 0; border-radius: 4px; padding: 7px 14px; font: inherit; font-weight: 600; cursor: pointer; }
-  button.btn.grey { background: #4e5058; }
-  button.btn.red { background: var(--red); }
-  button.btn.small { padding: 3px 8px; font-size: 12px; }
-  button.btn:disabled { opacity: .5; cursor: default; }
-  input, select, textarea { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 4px; padding: 7px 9px; font: inherit; width: 100%; }
-  textarea { resize: vertical; min-height: 38px; }
-  label.field { display: block; margin-bottom: 14px; }
-  label.field b { display: block; margin-bottom: 4px; }
-  label.field small { color: var(--muted); display: block; margin-top: 3px; }
-  a { color: #00a8fc; }
+  .page-head { display: flex; align-items: flex-end; gap: 16px; margin-bottom: 20px; }
+  .page-head > div:first-child { flex: 1; }
+  .page-head h1 { font-size: 24px; font-weight: 700; letter-spacing: -.01em; }
+  .page-head p { margin: 4px 0 0; color: var(--muted); max-width: 680px; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .card > h2 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .card > .hint:last-child { margin-bottom: 0; }
+  .hint { color: var(--muted); margin: 0 0 14px; font-size: 13px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid2 > .card { margin: 0; }
   .row { display: flex; gap: 8px; align-items: center; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
-  #log { background: #111214; border-radius: 6px; padding: 10px; height: 420px; overflow: auto; font: 12px/1.5 Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
-  #log .ERROR { color: #f57c7c; } #log .WARN { color: #f0c674; } #log .DEBUG { color: #7d8590; } #log .PANEL { color: #8ea1ff; }
-  .savebar { position: sticky; bottom: 0; background: var(--bg); padding: 12px 0; display: flex; gap: 8px; justify-content: flex-end; border-top: 1px solid var(--line); }
-  #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--line); padding: 10px 16px; border-radius: 6px; display: none; z-index: 10; }
-  #toast.err { border-color: var(--red); }
-  .item { display: grid; grid-template-columns: 340px 1fr; gap: 20px; padding: 14px 0; border-bottom: 1px solid var(--line); align-items: start; }
-  .item:last-child { border: 0; }
-  .item .label b { display: block; }
-  .item .label small { color: var(--muted); }
-  .color-input { display: flex; gap: 6px; margin-top: 6px; }
-  .color-input input[type=color] { width: 44px; padding: 2px; height: 34px; }
-  .group-title { margin: 22px 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
-  .preview { background: var(--card); border-radius: 6px; padding: 10px 14px; }
-  .msg { display: flex; gap: 12px; }
-  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); flex: none; display: grid; place-items: center; font-weight: 700; color: #fff; }
-  .name { font-weight: 600; } .tag { background: var(--accent); color: #fff; font-size: 10px; border-radius: 3px; padding: 0 4px; margin-left: 4px; vertical-align: 1px; }
-  .content { flex: 1; min-width: 0; }
-  .content .h2 { font-size: 20px; font-weight: 700; margin: 2px 0; }
-  .content .sub { font-size: 12px; color: var(--muted); }
-  .content code { background: #1e1f22; padding: 1px 4px; border-radius: 3px; font-size: 13px; }
-  .spoiler { background: #1e1f22; border-radius: 3px; padding: 0 2px; }
+  .grow { flex: 1; }
+  .muted { color: var(--muted); }
+  small.muted { font-size: 12px; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; background: var(--raised); color: var(--text); border: 1px solid var(--line2); border-radius: 8px; padding: 7px 14px; font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .btn:hover { border-color: var(--faint); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .btn.primary:hover { filter: brightness(1.06); }
+  .btn.danger { color: #ff8a84; }
+  .btn.danger:hover { border-color: var(--red); }
+  .btn.ghost { background: none; border-color: transparent; color: var(--muted); }
+  .btn.ghost:hover { color: var(--text); background: var(--raised); }
+  .btn.small { padding: 4px 10px; font-size: 12px; }
+  .btn:disabled { opacity: .4; cursor: default; filter: none; }
+
+  input, select, textarea { background: var(--bg); color: var(--text); border: 1px solid var(--line2); border-radius: 8px; padding: 8px 10px; font: inherit; width: 100%; }
+  input:focus, select:focus, textarea:focus, .tx.editing { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+  textarea { resize: vertical; min-height: 40px; }
+  input:disabled, textarea:disabled { opacity: .5; }
+  .field { display: block; margin-bottom: 16px; }
+  .field > b { display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; }
+  .field > small { color: var(--muted); display: block; margin-top: 5px; font-size: 12px; }
+
+  .toggle { display: flex; gap: 12px; align-items: center; padding: 10px 0; cursor: pointer; border-bottom: 1px solid var(--line); }
+  .toggle:last-child { border: 0; }
+  .toggle input { appearance: none; width: 36px; height: 20px; border-radius: 99px; background: var(--line2); border: 0; padding: 0; position: relative; flex: none; cursor: pointer; transition: background .15s; }
+  .toggle input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform .15s; }
+  .toggle input:checked { background: var(--accent); }
+  .toggle input:checked::after { transform: translateX(16px); }
+  .toggle input:disabled { opacity: .4; }
+  .toggle input:focus { outline: none; }
+  .toggle input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .subhead { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 4px; }
+
+  .profile { display: flex; gap: 20px; align-items: center; }
+  .profile .avatar-xl { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; background: var(--raised); flex: none; }
+  .profile h2 { font-size: 20px; }
+
+  #log { background: #0b0d11; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; height: 320px; overflow: auto; font: 12px/1.55 Consolas, "Cascadia Mono", monospace; white-space: pre-wrap; word-break: break-word; color: #b9bfcc; }
+  #log .ERROR { color: #ff8a84; } #log .WARN { color: #e2c068; } #log .DEBUG { color: var(--faint); } #log .PANEL { color: var(--accent); }
+
+  .item { display: grid; grid-template-columns: 300px 1fr; gap: 24px; padding: 18px 0; border-bottom: 1px solid var(--line); align-items: start; }
+  .item:first-child { padding-top: 0; }
+  .item:last-child { border: 0; padding-bottom: 0; }
+  .item .label b { display: block; margin-bottom: 8px; }
+  .swatch { display: flex; gap: 8px; align-items: center; }
+  .swatch input[type=color] { width: 40px; height: 36px; padding: 3px; flex: none; cursor: pointer; }
+  .swatch input:not([type]) { width: 110px; font-family: Consolas, monospace; }
+
+  .savebar { position: fixed; left: 50%; bottom: 20px; transform: translate(calc(-50% + 116px), 140%); background: var(--raised); border: 1px solid var(--line2); border-radius: 12px; padding: 10px 10px 10px 18px; display: flex; gap: 10px; align-items: center; box-shadow: 0 12px 40px rgba(0,0,0,.45); transition: transform .2s, opacity .2s; z-index: 20; opacity: 0; pointer-events: none; }
+  .savebar.show { transform: translate(calc(-50% + 116px), 0); opacity: 1; pointer-events: auto; }
+  .savebar span { margin-right: 12px; }
+  #toast { position: fixed; top: 20px; right: 20px; background: var(--raised); border: 1px solid var(--line2); border-left: 3px solid var(--green); padding: 10px 16px; border-radius: 8px; display: none; z-index: 40; max-width: 420px; box-shadow: 0 8px 30px rgba(0,0,0,.4); }
+  #toast.err { border-left-color: var(--red); }
+
+  .stage { background: var(--dc-bg); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .dmsg { display: flex; gap: 12px; }
+  .dmsg + .dmsg { margin-top: 14px; }
+  .dmsg .av { width: 38px; height: 38px; border-radius: 50%; flex: none; object-fit: cover; background: var(--raised); }
+  .dbody { flex: 1; min-width: 0; color: #dbdee1; }
+  .dname { font-weight: 600; color: #f2f3f5; }
+  .dname .app { background: #5865f2; color: #fff; font-size: 10px; font-weight: 700; border-radius: 3px; padding: 0 4px; margin-left: 5px; vertical-align: 1px; }
+  .dbody .h2 { display: inline-block; font-size: 19px; font-weight: 700; margin: 2px 0; }
+  .dbody .sub { display: inline-block; font-size: 12px; color: #949ba4; }
+  .dbody code { background: #15171c; }
+  .spoiler { background: #15171c; border-radius: 3px; padding: 0 2px; }
   .mention { background: rgba(88,101,242,.3); color: #c9cdfb; border-radius: 3px; padding: 0 2px; }
-  .embed { background: var(--embed); border-left: 4px solid; border-radius: 4px; padding: 10px 14px; margin-top: 6px; width: 100%; max-width: 440px; }
+  .embed { background: var(--dc-embed); border-left: 4px solid; border-radius: 4px; padding: 10px 14px 12px; margin-top: 6px; max-width: 460px; display: grid; grid-template-columns: 1fr auto; column-gap: 12px; }
+  .embed > * { grid-column: 1; }
+  .embed .thumb { grid-column: 2; grid-row: 1 / 4; width: 64px; height: 64px; object-fit: contain; border-radius: 4px; }
   .embed .author { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
-  .embed .title { font-weight: 700; margin-bottom: 4px; }
-  .embed .thumb { float: right; width: 64px; height: 64px; object-fit: contain; margin-left: 12px; }
-  .embed .fields { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 6px; }
-  .embed .f { min-width: 100%; } .embed .f.inline { min-width: 0; flex: 1; }
-  .embed .fn { font-weight: 700; font-size: 13px; }
-  .embed .foot { font-size: 12px; color: var(--muted); margin-top: 8px; }
-  .buttons { display: flex; gap: 8px; margin-top: 8px; }
-  .dbtn { padding: 5px 14px; border-radius: 4px; font-weight: 600; font-size: 13px; color: #fff; background: #4e5058; }
-  .dbtn.green { background: var(--green); } .dbtn.red { background: var(--red); }
-  .guild { display: flex; gap: 16px; }
-  .guild img, .guild .gi { width: 48px; height: 48px; border-radius: 50%; flex: none; background: var(--accent); display: grid; place-items: center; font-weight: 700; }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
-  .chip { background: var(--card); border: 1px solid var(--line); border-radius: 99px; padding: 3px 6px 3px 12px; display: flex; gap: 6px; align-items: center; }
-  .chip button { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 15px; }
-  .chip small { color: var(--muted); }
-  .switch { display: flex; gap: 8px; align-items: center; cursor: pointer; }
-  .switch input { width: auto; }
+  .embed .title { font-weight: 700; margin-bottom: 4px; color: #f2f3f5; }
+  .embed .fields { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 8px; }
+  .embed .f { min-width: 100%; font-size: 13.5px; } .embed .f.inline { min-width: 0; flex: 1 1 120px; }
+  .embed .fn { font-weight: 700; margin-bottom: 2px; color: #f2f3f5; }
+  .embed .foot { font-size: 12px; color: #949ba4; margin-top: 10px; }
+  .dbtns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .dbtn { padding: 5px 16px; border-radius: 4px; font-weight: 600; font-size: 13px; color: #fff; background: #4e5058; }
+  .dbtn.green { background: #248046; } .dbtn.red { background: #da373c; } .dbtn.blue { background: #5865f2; }
+
+  .texts { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: start; }
+  .tnav { position: sticky; top: 20px; display: flex; flex-direction: column; gap: 2px; }
+  .tnav input { margin-bottom: 10px; }
+  .tnav button { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 8px; background: none; border: 0; color: var(--muted); font: inherit; text-align: left; padding: 7px 10px; border-radius: 8px; cursor: pointer; }
+  .tnav button:hover { background: var(--surface); color: var(--text); }
+  .tnav button.active { background: var(--surface); color: var(--text); box-shadow: inset 3px 0 0 var(--accent); }
+  .tnav .count { font-size: 11px; color: var(--faint); }
+  .tnav .edited { font-size: 11px; color: var(--accent); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { font-style: normal; }
+  .scene { margin-bottom: 16px; }
+  .scene-title { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px 2px; }
+  .lines .line { display: grid; grid-template-columns: 240px 1fr; gap: 16px; align-items: center; padding: 10px 0; border-bottom: 1px solid #262932; }
+  .lines .line:last-child { border: 0; padding-bottom: 0; }
+  .lines .line:first-child { padding-top: 0; }
+  .line-label { font-size: 13px; color: var(--muted); }
+  .line-label b { color: var(--text); font-weight: 600; display: block; }
+
+  .fx { opacity: .5; }
+  .var { background: rgba(109,139,255,.16); color: #b7c6ff; border-radius: 4px; padding: 0 3px; border-bottom: 1px dashed rgba(109,139,255,.7); }
+  .tx { border-radius: 4px; cursor: text; transition: background .1s, box-shadow .1s; box-shadow: 0 0 0 1px rgba(242,180,140,.28); position: relative; }
+  .tx:hover, .tx:focus-visible { background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent); outline: none; }
+  .tx.changed { box-shadow: 0 0 0 1px rgba(242,180,140,.28), inset 0 -2px 0 var(--accent); }
+  .tx.empty::before { content: 'empty'; color: var(--faint); font-style: italic; }
+  .tx.off { cursor: not-allowed; opacity: .35; box-shadow: 0 0 0 1px var(--line2); }
+  .tx.off:hover { background: none; }
+  .tx.off::after { content: 'off'; font-size: 10px; font-weight: 700; text-transform: uppercase; background: var(--line2); color: var(--muted); border-radius: 3px; padding: 0 4px; margin-left: 4px; vertical-align: 1px; }
+  .tx.editing { white-space: pre-wrap; background: #11131a; box-shadow: none; cursor: text; display: inline-block; min-width: 60px; padding: 0 4px; opacity: 1; }
+  .pill { display: inline-block; background: rgba(109,139,255,.22); color: #c9d4ff; border-radius: 4px; padding: 0 5px; font-size: 12px; font-family: Consolas, monospace; margin: 0 1px; user-select: all; }
+  #txbar { position: fixed; z-index: 30; width: 380px; background: var(--raised); border: 1px solid var(--line2); border-radius: 10px; padding: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.5); font-size: 13px; }
+  #txbar .head { display: flex; gap: 8px; align-items: baseline; margin-bottom: 8px; }
+  #txbar .head b { flex: 1; }
+  #txbar .vars { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; color: var(--muted); }
+  #txbar .vars .pill { cursor: pointer; }
+  #txbar .warn { color: #e2c068; margin-bottom: 8px; }
+  #txbar .foot { display: flex; gap: 6px; align-items: center; color: var(--faint); font-size: 11.5px; }
+  #txbar .foot span { flex: 1; }
+
+  .off-note { color: var(--muted); font-size: 12px; margin: 0 0 10px; }
+  fieldset.card { display: block; min-width: 0; width: 100%; margin: 0 0 16px; }
+  fieldset:disabled { opacity: .45; }
+  fieldset:not(:disabled) .off-note { display: none; }
+
+  .icon-tile { width: 56px; height: 56px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line2); display: grid; place-items: center; overflow: hidden; flex: none; font-size: 24px; }
+  .icon-tile img { width: 100%; height: 100%; object-fit: contain; }
+
+  .guild-head { display: flex; gap: 14px; align-items: center; margin-bottom: 16px; }
+  .guild-head img, .guild-head .gi { width: 48px; height: 48px; border-radius: 14px; flex: none; background: var(--raised); display: grid; place-items: center; font-weight: 700; font-size: 18px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 10px; }
+  .chip { background: var(--raised); border: 1px solid var(--line2); border-radius: 99px; padding: 3px 6px 3px 12px; display: flex; gap: 6px; align-items: center; }
+  .chip button { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 15px; line-height: 1; }
+  .chip button:hover { color: var(--red); }
+  .chip small { color: var(--faint); }
+  .loading { color: var(--muted); padding: 30px; text-align: center; }
+
+  .modal { position: fixed; inset: 0; background: rgba(5,6,9,.72); display: grid; place-items: center; z-index: 50; }
+  .modal-card { background: var(--surface); border: 1px solid var(--line2); border-radius: 14px; padding: 22px; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+  .crop-main { display: flex; gap: 22px; margin: 16px 0 18px; }
+  .crop-wrap { overflow: hidden; padding: 12px; background: #0b0d11; border-radius: 8px; align-self: flex-start; }
+  .crop-stage { position: relative; user-select: none; touch-action: none; }
+  .crop-stage img { display: block; width: 100%; height: 100%; pointer-events: none; }
+  .crop-box { position: absolute; box-shadow: 0 0 0 9999px rgba(6,7,10,.68); outline: 2px solid rgba(255,255,255,.95); cursor: move; }
+  .round .crop-box { background: radial-gradient(circle closest-side, transparent calc(100% - 1px), rgba(6,7,10,.42) 100%); }
+  .round .crop-box::before { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(255,255,255,.95); pointer-events: none; }
+  .crop-box .h { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.5); }
+  .crop-box .tl { left: -8px; top: -8px; cursor: nwse-resize; } .crop-box .tr { right: -8px; top: -8px; cursor: nesw-resize; }
+  .crop-box .bl { left: -8px; bottom: -8px; cursor: nesw-resize; } .crop-box .br { right: -8px; bottom: -8px; cursor: nwse-resize; }
+  .crop-box .plus { position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; transform: translate(-50%, -50%); pointer-events: none; }
+  .crop-box .plus::before, .crop-box .plus::after { content: ''; position: absolute; background: rgba(255,255,255,.9); }
+  .crop-box .plus::before { left: 7px; top: 0; width: 2px; height: 16px; } .crop-box .plus::after { top: 7px; left: 0; height: 2px; width: 16px; }
+  .crop-side { width: 200px; display: flex; flex-direction: column; gap: 14px; }
+  .crop-side canvas { width: 128px; height: 128px; border-radius: 12px; background: var(--bg); }
+  .round .crop-side canvas { border-radius: 50%; }
+  .crop-mini { display: flex; gap: 8px; align-items: center; background: var(--dc-bg); border-radius: 8px; padding: 8px 10px; }
+  .crop-mini canvas { width: 32px; height: 32px; }
+  .crop-side input[type=range] { padding: 0; accent-color: var(--accent); }
 </style>
 </head>
 <body>
-<div class="top">
-<header>
-  <h1>Khut</h1>
-  <span id="status" class="pill">Stopped</span>
-  <div class="spacer"></div>
-  <button class="btn" id="startBtn" onclick="botAction('start')">Start</button>
-  <button class="btn grey" id="restartBtn" onclick="botAction('restart')">Restart</button>
-  <button class="btn red" id="stopBtn" onclick="botAction('stop')">Stop</button>
-</header>
-<nav id="tabs"></nav>
-</div>
+<aside class="side">
+  <div class="brand"><img id="sideAvatar" src="/icon.png" alt=""><div><b id="sideName">Khut</b><span id="status" class="state">Stopped</span></div></div>
+  <div class="power">
+    <button class="btn primary" id="startBtn" onclick="botAction('start')">Start bot</button>
+    <button class="btn danger" id="stopBtn" onclick="botAction('stop')" hidden>Stop bot</button>
+    <button class="btn" id="restartBtn" onclick="botAction('restart')">Restart</button>
+    <button class="btn" onclick="botAction('deploy')" title="Register the slash commands with Discord">Register</button>
+  </div>
+  <nav id="tabs"></nav>
+</aside>
 <main>
   <section id="bot">
-    <div class="box">
-      <h2>Invite</h2>
-      <p class="hint">Use this link to add Khut to a server. You need Manage Server there.</p>
-      <div class="row"><input id="invite" readonly><button class="btn grey" onclick="copyInvite()">Copy</button></div>
+    <div class="page-head"><div><h1>Bot</h1><p>The bot's profile and status, plus the log of what it's doing.</p></div></div>
+    <div class="card profile">
+      <img id="profileAvatar" class="avatar-xl" src="/icon.png" alt="">
+      <div class="grow">
+        <h2 id="profileName">Khut</h2>
+        <p class="hint" style="margin:4px 0 12px">The picture people see on the bot in Discord. You can change it a couple of times every few minutes.</p>
+        <div class="row"><button class="btn primary" onclick="changeAvatar()">Change picture</button><button class="btn" onclick="copyInvite()">Copy invite link</button></div>
+      </div>
     </div>
-    <div class="box">
-      <h2>Status</h2>
-      <p class="hint">What shows under the bot's name in the member list. Changes show up within a few seconds.</p>
-      <div class="row"><select id="statusType" style="width:auto" onchange="setStatus('type', this.value)"></select><input id="statusText" placeholder="Deadlock" oninput="setStatus('text', this.value)"><button class="btn" onclick="saveSettings()">Save</button></div>
-      <div id="statusPreview" style="margin-top:10px"></div>
+    <div class="grid2" style="margin-bottom:16px">
+      <div class="card">
+        <h2>Status</h2>
+        <p class="hint">Shown under the bot's name in the member list.</p>
+        <div class="row"><select id="statusType" style="width:150px" onchange="setStatus('type', this.value)"></select><input id="statusText" placeholder="Deadlock" oninput="setStatus('text', this.value)"></div>
+        <div id="statusPreview" style="margin-top:12px"></div>
+      </div>
+      <div class="card">
+        <h2>Bio</h2>
+        <p class="hint">The About Me on the bot's profile. Leave it empty to keep the Developer Portal one.</p>
+        <textarea id="bioText" rows="3" maxlength="400" placeholder="A Discord bot made for small groups." oninput="setBio(this.value)"></textarea>
+        <small id="bioCount" class="muted"></small>
+      </div>
     </div>
-    <div class="box">
-      <h2>Bio</h2>
-      <p class="hint">The "About Me" text on the bot's profile, up to 400 characters. Links work. Leave it empty to keep the one from the Developer Portal. Changes show up within a minute.</p>
-      <textarea id="bioText" rows="4" maxlength="400" placeholder="A Discord bot made for small groups." oninput="setBio(this.value)"></textarea>
-      <div class="row" style="margin-top:6px"><small id="bioCount" style="flex:1;color:#b5bac1"></small><button class="btn" onclick="saveSettings()">Save</button></div>
-      <div id="bioPreview" style="margin-top:10px"></div>
+    <div class="grid2" style="margin-bottom:16px">
+      <div class="card">
+        <h2>Commands</h2>
+        <p class="hint">Register the slash commands with Discord. Needed the first time and after an update that adds or changes commands.</p>
+        <button class="btn" onclick="botAction('deploy')">Register commands</button>
+      </div>
+      <div class="card">
+        <h2>Backup</h2>
+        <p class="hint">Copies your keys, settings and database into a new folder on your Desktop. It has your bot token, so keep it private.</p>
+        <button class="btn" onclick="backup()">Create backup</button>
+        <small id="backupResult" class="muted" style="display:block;margin-top:8px"></small>
+      </div>
     </div>
-    <div class="box">
-      <h2>Commands</h2>
-      <p class="hint">Register the slash commands with Discord. Only needed the first time and after an update that changes commands.</p>
-      <button class="btn" onclick="botAction('deploy')">Register commands</button>
-    </div>
-    <div class="box">
-      <h2>Backup</h2>
-      <p class="hint">Saves your keys, settings and database to a new folder on your Desktop, or in your home folder if there's no Desktop. Keep it private, it has your bot token. To restore, stop the bot and copy the files back into Khut's data folder.</p>
-      <button class="btn" onclick="backup()">Create backup</button>
-      <p class="hint" id="backupResult" style="margin: 8px 0 0; font-size: 12px"></p>
-    </div>
-    <div class="box">
-      <h2>Log</h2>
+    <div class="card">
+      <div class="row" style="margin-bottom:10px"><h2 class="grow" style="font-size:15px">Log</h2><button class="btn ghost small" onclick="$('log').innerHTML = ''">Clear</button></div>
       <div id="log"></div>
     </div>
   </section>
 
   <section id="keys">
-    <p class="hint">These are saved in <code>.env</code> next to the bot and never leave this computer. Restart the bot after changing them.</p>
-    <div class="box" id="envFields"></div>
-    <div class="savebar"><button class="btn" onclick="saveEnv()">Save keys</button></div>
+    <div class="page-head"><div><h1>Keys</h1><p>Saved in <code>.env</code> on this computer and never sent anywhere else. Restart the bot after changing them.</p></div><button class="btn primary" onclick="saveEnv()">Save keys</button></div>
+    <div class="card" id="envFields"></div>
   </section>
 
   <section id="servers">
-    <p class="hint">Settings for each server the bot is in. Same as <code>/setup</code> in Discord.</p>
-    <div id="guildList"><button class="btn" onclick="loadGuilds()">Load servers</button></div>
+    <div class="page-head"><div><h1>Servers</h1><p>Settings for each server the bot is in. The same as <code>/setup</code> in Discord.</p></div><button class="btn" onclick="loadGuilds()">Refresh</button></div>
+    <div id="guildList"></div>
   </section>
 
   <section id="colours">
-    <p class="hint">Embed colours. The preview shows how each card will look in Discord.</p>
-    <div class="box" id="colourList"></div>
-    <div class="savebar"><button class="btn grey" onclick="resetSection('colors')">Reset all</button><button class="btn" onclick="saveSettings()">Save colours</button></div>
+    <div class="page-head"><div><h1>Colours</h1><p>The colour strip on the side of each card the bot posts.</p></div><button class="btn ghost" onclick="resetSection('colors')">Reset all</button></div>
+    <div class="card" id="colourList"></div>
   </section>
 
   <section id="texts">
-    <p class="hint">Everything the bot says. Words in {curly brackets} are filled in by the bot, so keep them. <code>**bold**</code>, <code>`code`</code>, <code>## Heading</code> and <code>-# small text</code> work like in Discord.</p>
-    <div class="box" id="textList"></div>
-    <div class="savebar"><button class="btn grey" onclick="resetSection('texts')">Reset all</button><button class="btn" onclick="saveSettings()">Save texts</button></div>
+    <div class="page-head"><div><h1>Texts</h1><p>Everything the bot says, shown where it appears. Click any highlighted text to change it.</p></div><button class="btn ghost" onclick="resetSection('texts')">Reset all</button></div>
+    <div class="texts">
+      <div class="tnav" id="textNav"></div>
+      <div id="textBody"></div>
+    </div>
   </section>
 
   <section id="results">
-    <p class="hint">What the bot posts in the channel when someone finishes a /play game. It uses the first row that fits, and the last row covers everything after it. Words in {curly brackets} are filled in by the bot.</p>
-    <div class="box"><h2>lolhero</h2><p class="hint">By number of guesses. You can use {user} {mode} {count} {guesses}</p><div id="res-lolhero"></div><button class="btn grey small" onclick="addResult('lolhero')">Add row</button></div>
-    <div class="box"><h2>framedle</h2><p class="hint">By number of guesses. You can use {user} {mode} {count} {guesses}</p><div id="res-framedle"></div><button class="btn grey small" onclick="addResult('framedle')">Add row</button></div>
-    <div class="box"><h2>dlbuild</h2><p class="hint">By total points: 100 for the 4 rounds, more with bonus rounds. You can use {user} {mode} {points} {grid}</p><div id="res-dlbuild"></div><button class="btn grey small" onclick="addResult('dlbuild')">Add row</button></div>
-    <div class="box"><h2>Streak</h2><p class="hint">Added to the result post when someone finished the same game on the days before too. It uses the row with the highest number they reached, and adds nothing below the lowest one. You can use {days}</p><div id="res-streak"></div><button class="btn grey small" onclick="addStreak()">Add row</button></div>
-    <div class="savebar"><button class="btn grey" onclick="resetSection('results')">Reset all</button><button class="btn" onclick="saveSettings()">Save results</button></div>
+    <div class="page-head"><div><h1>Game results</h1><p>What the bot posts in the channel when someone finishes a /play game. It uses the first row that fits; the last row covers everything after it.</p></div><button class="btn ghost" onclick="resetSection('results')">Reset all</button></div>
+    <fieldset class="card" id="box-lolhero"><h2>lolhero</h2><p class="off-note">Turned off in Limits.</p><p class="hint">By number of guesses. You can use {user} {mode} {count} {guesses}</p><div id="res-lolhero"></div><button class="btn small" style="margin-top:14px" onclick="addResult('lolhero')">Add row</button></fieldset>
+    <fieldset class="card" id="box-framedle"><h2>framedle</h2><p class="off-note">Turned off in Limits.</p><p class="hint">By number of guesses. You can use {user} {mode} {count} {guesses}</p><div id="res-framedle"></div><button class="btn small" style="margin-top:14px" onclick="addResult('framedle')">Add row</button></fieldset>
+    <fieldset class="card" id="box-dlbuild"><h2>dlbuild</h2><p class="off-note">Turned off in Limits.</p><p class="hint">By total points: 100 for the 4 rounds, more with bonus rounds. You can use {user} {mode} {points} {grid}</p><div id="res-dlbuild"></div><button class="btn small" style="margin-top:14px" onclick="addResult('dlbuild')">Add row</button></fieldset>
+    <fieldset class="card" id="box-streak"><h2>Streak</h2><p class="off-note">Every game result post is turned off in Limits.</p><p class="hint">Added to the result post when someone also finished the same game on the days before. It uses the row with the highest number they reached. You can use {days}</p><div id="res-streak"></div><button class="btn small" style="margin-top:14px" onclick="addStreak()">Add row</button></fieldset>
   </section>
 
   <section id="icons">
-    <p class="hint">Icons for LFG posts. The name has to match the game's name in /setup (capital letters don't matter). Use an image link from the game's official wiki or wiki.gg, under 256 KB. Icons also show on the game picker buttons. Small icons go in front of the game name, big icons at the top right of LFG posts. Restart the bot after adding or changing an icon.</p>
-    <div class="box" id="iconList"></div>
-    <div class="savebar"><button class="btn grey" onclick="addIcon()">Add game</button><button class="btn" onclick="saveSettings()">Save icons</button></div>
+    <div class="page-head"><div><h1>Game icons</h1><p>Icons for LFG posts and the game picker. The name has to match the game's name in /setup. Restart the bot after changing an icon.</p></div><button class="btn" onclick="addIcon()">Add game</button></div>
+    <div class="card" id="iconList"></div>
   </section>
 
   <section id="limits">
-    <div class="box" id="limitList"></div>
-    <div class="savebar"><button class="btn grey" onclick="resetSection('limits'); resetSection('messages')">Reset all</button><button class="btn" onclick="saveSettings()">Save</button></div>
+    <div class="page-head"><div><h1>Limits</h1><p>Timings, optional messages and how the panel and app behave.</p></div><button class="btn ghost" onclick="resetSection('limits'); resetSection('messages'); resetSection('commands')">Reset all</button></div>
+    <div class="card"><div class="grid2" id="limitList"></div></div>
+    <div class="grid2">
+      <div class="card"><p class="subhead">Optional messages</p><p class="hint">Turned-off messages are greyed out on the Texts and Game results pages.</p><div id="messageList"></div></div>
+      <div>
+        <div class="card"><p class="subhead">Owner tools</p><p class="hint">Only you, the bot's owner in the Developer Portal, can use these. Only server admins can see the command. Press Register after turning it on the first time.</p><div id="commandList"></div></div>
+        <div class="card"><p class="subhead">Panel</p><div id="panelList"></div></div>
+        <div class="card" id="appOptions" hidden></div>
+      </div>
+    </div>
   </section>
 </main>
+
+<div class="savebar" id="savebar"><span>You have unsaved changes</span><button class="btn ghost" onclick="discardChanges()">Discard</button><button class="btn primary" onclick="saveSettings()">Save changes</button></div>
 <div id="toast"></div>
+<div id="txbar" hidden></div>
+
+<div class="modal" id="crop" hidden>
+  <div class="modal-card">
+    <h2 id="cropTitle"></h2>
+    <div class="crop-main">
+      <div class="crop-wrap"><div class="crop-stage" id="cropStage"><img id="cropImg" alt=""><div class="crop-box" id="cropBox"><i class="h tl" data-c="tl"></i><i class="h tr" data-c="tr"></i><i class="h bl" data-c="bl"></i><i class="h br" data-c="br"></i><span class="plus"></span></div></div></div>
+      <div class="crop-side">
+        <canvas id="cropPreview" width="256" height="256"></canvas>
+        <div class="crop-mini"><canvas id="cropMini" width="64" height="64"></canvas><span id="cropMiniText"></span></div>
+        <label class="field" style="margin:0"><b>Size</b><input type="range" id="cropSize" oninput="cropResize(Number(this.value))"></label>
+        <small class="muted">Drag the square to move it, pull a corner or scroll to resize.</small>
+      </div>
+    </div>
+    <div class="row" style="justify-content:flex-end"><button class="btn ghost" onclick="closeCrop()">Cancel</button><button class="btn primary" id="cropSave" onclick="finishCrop()">Save</button></div>
+  </div>
+</div>
 
 <script>
+const ICONS = {
+  bot: '<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 13.5h.01M15 13.5h.01"/>',
+  keys: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M14.5 8.5l2 2"/>',
+  servers: '<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/>',
+  colours: '<circle cx="12" cy="12" r="9"/><circle cx="8" cy="10" r="1.3"/><circle cx="12" cy="7.5" r="1.3"/><circle cx="16" cy="10" r="1.3"/><path d="M12 21a3 3 0 0 1 0-6h2"/>',
+  texts: '<path d="M4 6h16M4 12h10M4 18h13"/>',
+  results: '<path d="M8 4h8v5a4 4 0 0 1-8 0V4zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/>',
+  icons: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>',
+  limits: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>'
+};
 const TABS = [['bot', 'Bot'], ['keys', 'Keys'], ['servers', 'Servers'], ['colours', 'Colours'], ['texts', 'Texts'], ['results', 'Game results'], ['icons', 'Game icons'], ['limits', 'Limits']];
 
 const ENV = [
@@ -227,161 +396,76 @@ const MESSAGES = {
   playAnswers: "/play: post yesterday's answers"
 };
 
+const OPTIONAL_TEXTS = {
+  'lfg.reminder': 'lfgReminder', 'lfg.start': 'lfgStart', 'lfg.squadFull': 'lfgSquadFull',
+  'lfg.dm': 'lfgDm', 'lfg.dmStarts': 'lfgDm', 'lfg.dmButton': 'lfgDm',
+  'play.answersTitle': 'playAnswers', 'play.answersFound': 'playAnswers'
+};
+
+const COMMAND_OPTIONS = {
+  linkFor: 'Let me link accounts and WoW characters for other people with /linkfor'
+};
+
 const APP_OPTIONS = {
   closeToTray: 'Closing the window keeps Khut running in the system tray',
   startWithWindows: 'Start Khut with Windows, in the tray'
 };
 
-const GROUPS = { error: 'General', stats: '/stats', play: '/play games', lfg: 'LFG', games: '/games and the game picker', dm: '/dm', link: '/link', mydata: '/mydata', wrapped: '/wrapped', setup: '/setup', leaderboard: '/leaderboard', warframe: '/warframe cycle', wow: 'WoW: Forever', card: 'Stat cards' };
+const GROUPS = { error: 'General', stats: '/stats errors', card: 'Stat cards', lfg: 'LFG', games: 'Game picker', dm: '/dm', play: '/play games', leaderboard: '/leaderboard', warframe: '/warframe', wow: 'WoW: Forever', link: '/link and /linkfor', unlink: '/unlink', mydata: '/mydata', wrapped: '/wrapped', setup: '/setup' };
 
 const ABOUT = {
   'error': 'Any unexpected error',
   'stats.notFound': 'Player not found or a lookup failed',
   'stats.rateLimit': 'Too many lookups',
-  'stats.noMatches': 'Player has no matches',
-  'stats.noSteam': 'Steam link or code not found',
-  'stats.noSteamLinked': 'No player given and Steam not linked',
+  'stats.noMatches': 'No match data',
+  'stats.noSteam': 'Steam account not found',
+  'stats.noSteamLinked': 'No player given, Steam not linked',
   'stats.noRiot': 'Riot ID not found',
-  'stats.noRiotLinked': 'No player given and Riot not linked',
-  'stats.noBrawlhalla': 'No valid Brawlhalla ID was supplied',
-  'stats.noBrawlhallaLinked': 'No player given and Brawlhalla ID not linked',
-  'stats.noCs': 'No CS2 data anywhere',
+  'stats.noRiotLinked': 'No player given, Riot not linked',
+  'stats.noBrawlhalla': 'Brawlhalla ID not valid',
+  'stats.noBrawlhallaLinked': 'No player given, Brawlhalla not linked',
+  'stats.noCs': 'No CS2 stats anywhere',
   'stats.discordServerOnly': 'Discord stats used in DMs',
   'stats.discordMention': 'Discord stats without a mention',
-  'card.unranked': 'Any card: no rank',
-  'card.discordWith': 'Voice card: second person, at the bottom',
-  'card.dlTitle': 'Deadlock card title',
-  'card.dlOverall': 'Deadlock card: overall stats heading',
-  'card.dlRanked': 'Deadlock card: ranked stats heading',
-  'card.dlTopHeroes': 'Deadlock card: top heroes heading',
-  'card.csTitle': 'CS2 card title',
-  'card.csRanks': 'CS2 card: ranks heading',
-  'card.csLifetime': 'CS2 card: Steam stats heading',
-  'card.csPlaytime': 'CS2 card: playtime heading (no Steam stats)',
-  'card.csRatings': 'CS2 card: Leetify ratings heading',
-  'card.csBans': 'CS2 card: bans heading',
-  'card.lolTitle': 'League card title',
-  'card.lolRecent': 'League card: recent games heading',
-  'card.lolNoGames': 'League card: no recent games',
-  'card.lolSolo': 'League card: Solo/Duo heading',
-  'card.lolFlex': 'League card: Flex heading',
-  'card.lolTopRanked': 'League card: top champions from ranked',
-  'card.lolTopRecent': 'League card: top champions from recent games',
-  'card.lolLoading': 'League card: still loading games',
-  'card.bhTitle': 'Brawlhalla card title',
-  'card.bhRanked': 'Brawlhalla card: 1v1 and 3v3 headings',
-  'card.bhTeams': 'Brawlhalla card: 2v2 heading',
-  'card.bhLifetime': 'Brawlhalla card: lifetime heading',
-  'card.bhCombat': 'Brawlhalla card: combat heading',
-  'card.bhMostPlayed': 'Brawlhalla card: most played heading',
-  'card.bhTopRanked': 'Brawlhalla card: best 1v1 legends heading',
-  'card.bhNoRanked': 'Brawlhalla card: no ranked games',
-  'card.bhRankedDown': 'Brawlhalla card: ranked stats down',
-  'card.bhNoTeams': 'Brawlhalla card: no 2v2 teams',
-  'card.bhTeamsDown': 'Brawlhalla card: 2v2 stats down',
-  'card.bhNoLegends': 'Brawlhalla card: no legend data',
-  'card.bhNoRankedLegends': 'Brawlhalla card: no ranked legend data',
-  'play.unavailable': "Today's puzzle couldn't load",
-  'play.newDay': 'Board from an earlier day',
-  'play.finished': 'Guessing after finishing',
-  'play.unknown': 'Name not found',
-  'play.didYouMean': 'Name could be several',
-  'play.guessButton': 'Guess button and box title',
-  'play.pickHero': 'dlbuild: hero list placeholder',
-  'play.pickOne': 'dlbuild: nothing or two heroes picked',
-  'play.lolHint': 'lolhero: how to guess',
-  'play.wfHint': 'framedle: how to guess',
-  'play.wfClassicIntro': 'framedle Classic: top of the board',
-  'play.wfAbilityIntro': 'framedle Ability: top of the board',
-  'play.wfClue': 'framedle Classic: clue after 6 wrong guesses',
-  'play.repeat': 'Same name guessed twice',
-  'play.classicIntro': 'lolhero Classic: top of the board',
-  'play.abilityIntro': 'lolhero Ability: top of the board',
-  'play.clue': 'lolhero Classic: clue after 6 wrong guesses',
-  'play.solved': 'lolhero and framedle solved',
-  'play.dlCorrect': 'dlbuild: round won',
-  'play.dlWrong': 'dlbuild: round lost',
-  'play.dlDone': 'dlbuild: game over',
-  'play.dlMore': 'dlbuild: offer a bonus round',
-  'play.dlChoose': 'dlbuild: guessing while a bonus round is offered',
-  'play.keepGoing': 'dlbuild: bonus round button',
-  'play.stop': 'dlbuild: stop button',
-  'play.statlocker': 'dlbuild: Statlocker link button',
-  'leaderboard.title': '/leaderboard title',
-  'leaderboard.dlRow': '/leaderboard: dlbuild row',
-  'leaderboard.lolRow': '/leaderboard: lolhero and framedle row',
-  'leaderboard.you': '/leaderboard: your place below the top 10',
-  'leaderboard.empty': '/leaderboard: nobody played yet',
-  'leaderboard.footer': '/leaderboard footer',
-  'warframe.title': 'Title',
-  'warframe.unavailable': "Couldn't load",
-  'warframe.footer': 'Footer',
-  'warframe.ends': 'Ends in',
-  'warframe.cetus': 'Cetus',
-  'warframe.vallis': 'Orb Vallis',
-  'warframe.cambion': 'Cambion Drift',
-  'warframe.zariman': 'Zariman',
-  'warframe.duviri': 'Duviri',
-  'warframe.steelPath': 'Steel Path reward',
-  'warframe.archon': 'Archon Hunt',
-  'warframe.sortie': 'Sortie',
-  'warframe.baro': 'Baro',
-  'warframe.baroComing': 'Baro: on the way',
-  'warframe.baroHere': 'Baro: here now',
-  'warframe.baroItems': 'Baro: item count',
-  'warframe.arbitration': 'Arbitration',
-  'warframe.tier': 'Arbitration tier',
-  'warframe.darvo': 'Darvo deal',
-  'warframe.news': 'News',
   'wow.noKeys': 'Blizzard keys missing',
   'wow.notLinked': 'No character given and none linked',
   'wow.notFound': 'Character not found',
   'wow.guildNotFound': 'Guild not found',
   'wow.itemNotFound': 'Item not found',
   'wow.unavailable': "Blizzard's API didn't answer",
-  'wow.footer': 'Footer',
+  'warframe.unavailable': "World state couldn't load",
   'link.badWow': 'WoW: Forever character not found',
-  'play.dlHint': 'dlbuild: how to guess',
-  'play.answersTitle': "Yesterday's answers post: title",
-  'play.answersFound': "Yesterday's answers post: players count",
-  'lfg.pingUsers': 'LFG ping without game roles',
-  'lfg.pingRole': 'LFG ping with game roles on',
-  'lfg.host': 'Card: host line',
-  'lfg.join': 'Card: Join button',
-  'lfg.leave': 'Card: Leave button',
-  'lfg.cancel': 'Card: Cancel button',
-  'lfg.footerCancelled': 'Card footer when cancelled',
-  'lfg.footerClosed': 'Card footer when closed',
-  'lfg.other': 'Card: 1 extra player',
-  'lfg.others': 'Card: more extra players',
+  'link.wowLimit': 'Too many WoW characters linked',
+  'link.forOff': '/linkfor while it is turned off',
+  'link.forOwner': '/linkfor used by someone else',
+  'wow.noneLinked': 'Someone else has no characters linked',
+  'wow.notYours': "Someone clicked another person's character list",
+  'unlink.done': 'Unlinked',
+  'unlink.nothing': 'Nothing to unlink',
+  'play.unavailable': "Puzzle couldn't load",
+  'play.newDay': 'Old board clicked',
+  'play.finished': 'Already finished today',
+  'play.unknown': 'Unknown name guessed',
+  'play.didYouMean': 'Did you mean',
+  'play.pickHero': 'dlbuild: hero list placeholder',
+  'play.pickOne': 'dlbuild: picked from two lists',
+  'play.repeat': 'Guessed the same name twice',
   'lfg.badTime': 'Wrong time format',
   'lfg.badPlayers': 'Wrong players format',
   'lfg.groupClosed': 'Button clicked on a closed group',
   'lfg.onlyHost': 'Someone else clicked Cancel',
   'lfg.alreadyIn': 'Clicked Join twice',
   'lfg.groupFull': 'Group is full',
-  'lfg.squadFull': 'Ping when the group fills up',
-  'lfg.reminder': 'Reminder ping before the start',
-  'lfg.start': 'Ping at the start time',
-  'lfg.dm': 'DM to subscribers',
-  'lfg.dmStarts': 'Added to the DM when it starts later',
-  'lfg.dmButton': 'DM button',
-  'games.picker': '/games message',
   'games.none': 'No games added yet',
-  'games.panel': 'Fixed game picker message',
-  'games.subscribed': 'Picker: subscribed',
-  'games.unsubscribed': 'Picker: unsubscribed',
   'games.gone': 'Picker: game was removed',
   'dm.on': '/dm on', 'dm.off': '/dm off',
   'link.usage': '/link with nothing filled in',
-  'link.connect': '/link with one-click linking on',
-  'link.connectButton': 'One-click link button',
   'link.badSteam': 'Steam account not found',
   'link.badRiot': 'Riot ID not found',
-  'link.badBrawlhalla': 'Brawlhalla ID must be a positive number',
-  'link.done': 'Linked',
+  'link.badBrawlhalla': 'Brawlhalla ID not valid',
   'mydata.unlink': 'Unlink', 'mydata.pause': 'Pause voice tracking', 'mydata.resume': 'Resume voice tracking', 'mydata.delete': 'Delete everything',
   'wrapped.none': 'No voice time yet',
+  'leaderboard.empty': 'Nobody played yet',
   'setup.added': 'Game added', 'setup.exists': 'Game already exists', 'setup.limit': 'Too many games', 'setup.removed': 'Game removed', 'setup.unknown': 'Game not found',
   'setup.wrappedOn': 'Automatic Wrapped on', 'setup.wrappedOff': 'Automatic Wrapped off',
   'setup.timezone': 'Timezone changed', 'setup.badTimezone': 'Unknown timezone',
@@ -390,11 +474,15 @@ const ABOUT = {
   'setup.panelPosted': 'Game picker posted', 'setup.panelFailed': "Game picker can't be posted"
 };
 
-const PINGS = ['lfg.squadFull', 'lfg.reminder', 'lfg.start'];
-const BUTTONS = ['lfg.join', 'lfg.leave', 'lfg.cancel', 'lfg.dmButton', 'link.connectButton'];
-
 let state;
+let saved = '';
 let lastLog = 0;
+let bot = { name: 'Khut', avatar: '/icon.png' };
+let guildsLoaded = false;
+let textGroup = 'error';
+let textSearch = '';
+let editing = null;
+let crop = null;
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -407,12 +495,12 @@ async function api(method, url, body) {
 }
 
 function toast(message, error) {
-  const t = $('toast');
-  t.textContent = message;
-  t.className = error ? 'err' : '';
-  t.style.display = 'block';
-  clearTimeout(t.timer);
-  t.timer = setTimeout(() => t.style.display = 'none', 3500);
+  const el = $('toast');
+  el.textContent = message;
+  el.className = error ? 'err' : '';
+  el.style.display = 'block';
+  clearTimeout(el.timer);
+  el.timer = setTimeout(() => el.style.display = 'none', 4000);
 }
 
 async function attempt(job) {
@@ -429,41 +517,48 @@ function fill(template, vars) {
   return template.replace(/\{(\w+)\}/g, (m, k) => vars[k] ?? m);
 }
 
+function inline(line) {
+  return line.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`(.+?)`/g, '<code>$1</code>').replace(/\|\|(.+?)\|\|/g, '<span class="spoiler">$1</span>').replace(/(^|\s|>|)(@[\w.]+)/g, '$1<span class="mention">$2</span>');
+}
+
 function md(s) {
-  return esc(s).split('\n').map(line => {
-    const inline = l => l.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`(.+?)`/g, '<code>$1</code>').replace(/\|\|(.+?)\|\|/g, '<span class="spoiler">$1</span>').replace(/(^|\s|>)(@\w+)/g, '$1<span class="mention">$2</span>');
-    if (line.startsWith('## ')) return `<div class="h2">${inline(line.slice(3))}</div>`;
-    if (line.startsWith('-# ')) return `<div class="sub">${inline(line.slice(3))}</div>`;
-    return `<div>${inline(line) || '&nbsp;'}</div>`;
-  }).join('');
+  return esc(s).split('\n').map(line => line.startsWith('## ') ? `<span class="h2">${inline(line.slice(3))}</span>` : line.startsWith('-# ') ? `<span class="sub">${inline(line.slice(3))}</span>` : inline(line)).join('<br>');
 }
 
 const t = (key, vars = {}) => fill(state.settings.texts[key] ?? state.defaults.texts[key], vars);
 
+function msg(inner) {
+  return `<div class="dmsg"><img class="av" src="${esc(bot.avatar)}" alt=""><div class="dbody"><div class="dname">${esc(bot.name)}<span class="app">APP</span></div>${inner}</div></div>`;
+}
+
 function message(content, extra = '') {
-  return `<div class="preview"><div class="msg"><div class="avatar">K</div><div class="content"><span class="name">Khut</span><span class="tag">APP</span>${content ? md(content) : ''}${extra}</div></div></div>`;
+  return `<div class="stage">${msg((content ? md(content) : '') + extra)}</div>`;
 }
 
 function embed(e) {
-  const fields = (e.fields || []).map(f => `<div class="f ${f.inline ? 'inline' : ''}"><div class="fn">${md(f.name)}</div>${md(f.value)}</div>`).join('');
-  return `<div class="embed" style="border-color:${e.color}">${e.author ? `<div class="author">${esc(e.author)}</div>` : ''}${e.title ? `<div class="title">${esc(e.title)}</div>` : ''}${e.desc ? md(e.desc) : ''}${fields ? `<div class="fields">${fields}</div>` : ''}${e.footer ? `<div class="foot">${esc(e.footer)}</div>` : ''}</div>`;
+  const fields = (e.fields || []).map(f => `<div class="f ${f.inline ? 'inline' : ''}"><div class="fn">${f.name}</div>${f.value}</div>`).join('');
+  return `<div class="embed" style="border-color:${e.color}">${e.thumb ? `<img class="thumb" src="${esc(e.thumb)}" alt="">` : ''}${e.author ? `<div class="author">${e.author}</div>` : ''}${e.title ? `<div class="title">${e.title}</div>` : ''}${e.desc ? `<div>${e.desc}</div>` : ''}${fields ? `<div class="fields">${fields}</div>` : ''}${e.footer ? `<div class="foot">${e.footer}</div>` : ''}</div>`;
+}
+
+function mdEmbed(e) {
+  return embed({ ...e, author: e.author && esc(e.author), title: e.title && esc(e.title), desc: e.desc && md(e.desc), footer: e.footer && esc(e.footer), fields: (e.fields || []).map(f => ({ ...f, name: md(f.name), value: md(f.value) })) });
 }
 
 function buttons(list) {
-  return `<div class="buttons">${list.map(([label, kind]) => `<span class="dbtn ${kind || ''}">${esc(label)}</span>`).join('')}</div>`;
+  return `<div class="dbtns">${list.map(([label, kind]) => `<span class="dbtn ${kind || ''}">${label}</span>`).join('')}</div>`;
 }
 
 function lfgCard(status) {
   const color = state.settings.colors[{ open: 'lfgOpen', full: 'lfgFull', closed: 'lfgClosed', cancelled: 'lfgCancelled' }[status]];
   const full = status === 'full';
-  const card = embed({
+  const card = mdEmbed({
     color,
     title: '🎮 Deadlock',
     desc: `${t('lfg.host', { host: '@Jankat' })}\n🕘 Friday 21:00 (in 2 hours)\n\nRanked, bring comms`,
     fields: [{ name: `👥 ${full ? '6/6' : '3/6'}`, value: `@Jankat\n@Talha\n${t(full ? 'lfg.others' : 'lfg.other', { count: full ? 4 : 1 })}` }],
     footer: status === 'cancelled' ? t('lfg.footerCancelled') : status === 'closed' ? t('lfg.footerClosed') : ''
   });
-  return message('', card + (status === 'open' || full ? buttons([[t('lfg.join'), 'green'], [t('lfg.leave')], [t('lfg.cancel'), 'red']]) : ''));
+  return message('', card + (status === 'open' || full ? buttons([[esc(t('lfg.join')), 'green'], [esc(t('lfg.leave'))], [esc(t('lfg.cancel')), 'red']]) : ''));
 }
 
 function colourPreview(key) {
@@ -472,45 +567,48 @@ function colourPreview(key) {
     deadlock: { author: 'Talha', title: t('card.dlTitle'), fields: [{ name: t('card.dlOverall'), value: '54% WR (120 games)\n6.2 / 4.1 / 9.8 KDA', inline: true }, { name: t('card.dlRanked'), value: '**Archon 4**\n52% WR (40 games)', inline: true }], footer: 'Deadlock · Data from deadlock-api.com' },
     cs2: { author: 'Talha', title: t('card.csTitle'), fields: [{ name: t('card.csRanks'), value: 'Premier: **14,250**\nFACEIT: **Level 7** (1650 Elo)' }, { name: t('card.csLifetime'), value: '1.12 K/D · 46% HS', inline: true }], footer: 'Counter-Strike 2' },
     lol: { author: 'shark#bard', title: t('card.lolTitle', { region: 'EUW' }), fields: [{ name: t('card.lolSolo'), value: '**Silver III** 91 LP\n30% WR (20 games)', inline: true }, { name: t('card.lolFlex'), value: '**Gold II** 26 LP\n43% WR (30 games)', inline: true }], footer: 'League of Legends' },
-    brawlhalla: { author: 'Octavius · Brawlhalla', title: t('card.bhTitle'), desc: 'Brawlhalla ID: `1234567`', fields: [{ name: t('card.bhRanked', { queue: '1v1' }), value: '**Platinum** · **1,650 Elo**\n42W – 30L · **58% WR** (72 games)', inline: true }, { name: t('card.bhRanked', { queue: '3v3' }), value: t('card.bhNoRanked', { queue: '3v3' }), inline: true }, { name: t('card.bhTeams'), value: '**1. Partner** · 1,540 Elo · 24W/18L', inline: true }, { name: t('card.bhLifetime'), value: '**56% WR** · 320W / 251L\n571 games played\nLevel **42**', inline: true }, { name: t('card.bhCombat'), value: 'KOs **4,120** · Falls **1,930** · K/F **2.13**\nDamage dealt **1.2m** · taken **980k**', inline: true }, { name: t('card.bhMostPlayed'), value: 'Bödvar · 124g, 58% WR\nHattori · 89g, 55% WR', inline: true }], footer: 'Brawlhalla · Official Developer API v1' },
+    brawlhalla: { author: 'Octavius · Brawlhalla', title: t('card.bhTitle'), desc: 'Brawlhalla ID: `1234567`', fields: [{ name: t('card.bhRanked', { queue: '1v1' }), value: '**Platinum** · **1,650 Elo**\n42W – 30L · **58% WR**', inline: true }, { name: t('card.bhLifetime'), value: '**56% WR** · 320W / 251L\nLevel **42**', inline: true }], footer: 'Brawlhalla · Official Developer API v1' },
     discord: { author: 'Talha', title: '🎙️ Voice time together', fields: [{ name: 'This week', value: '12h 30m', inline: true }, { name: 'This month', value: '48h', inline: true }, { name: 'All time', value: '310h', inline: true }], footer: t('card.discordWith', { name: 'Jankat' }) },
     wrapped: { title: '📊 November 2026 Wrapped', desc: '⏱️ 120h in voice together\n🤝 Top duo: @Jankat + @Talha (40h)', fields: [{ name: '🏆 Most time in voice', value: '🥇 @Jankat — 60h\n🥈 @Talha — 52h' }] },
-    play: { title: 'dlbuild · High rank · Round 1/4', desc: 'Type your guess with `/play dlbuild mode:High rank guess:`', fields: [{ name: '🟠 Hidden King', value: 'Oracle 3\n👤 3.5k\n➡️ 👤 **2.8k**\n👤 3.1k', inline: true }, { name: '⠀', value: '🟠 **21.5k**\n🕘 **6:00**\n🔵 **22.8k**', inline: true }, { name: '🔵 Archmother', value: 'Oracle 5\n👤 3.9k\n👤 3.4k\n👤 3.6k', inline: true }, { name: '🛒 Items at 6:00', value: '🟫 🟫 ⬛ ⬛ ⬛ ⬛\nHigh-Velocity Rounds · Mystic Burst' }], footer: 'Match played 2026-11-04 · Data from deadlock-api.com' },
-    help: { title: 'Khut commands', fields: [{ name: '📊 Stats', value: '`/stats game:Deadlock` — your Deadlock stats' }], footer: 'Khut · Open source (AGPL-3.0)' },
-    wow: { author: 'Joe Gun', desc: `Troll Hunter · ${t('wow.level', { level: 60 })} · Marksmanship\nHorde · PvP · EU\n<Aggressively Average>`, fields: [{ name: t('wow.professions'), value: 'Enchanting 256/300', inline: true }, { name: t('wow.pvp'), value: t('wow.kills', { count: 51 }), inline: true }], footer: t('wow.footer', { region: 'EU' }) },
-    warframe: { title: t('warframe.title'), fields: [{ name: t('warframe.cetus'), value: '☀️ **Day**\n' + t('warframe.ends', { time: 'in 1 hour' }), inline: true }, { name: t('warframe.vallis'), value: '❄️ **Cold**\n' + t('warframe.ends', { time: 'in 8 minutes' }), inline: true }, { name: t('warframe.cambion'), value: '**Fass**\n' + t('warframe.ends', { time: 'in 1 hour' }), inline: true }], footer: t('warframe.footer') },
+    play: { title: 'dlbuild · High rank · Round 1/4', desc: t('play.dlHint'), fields: [{ name: '🟠 Hidden King', value: 'Oracle 3\n👤 3.5k', inline: true }, { name: '🔵 Archmother', value: 'Oracle 5\n👤 3.9k', inline: true }], footer: 'Match played 2026-11-04 · Data from deadlock-api.com' },
+    help: { title: 'Khut commands', fields: [{ name: '📊 Stats', value: '`/stats deadlock` — your Deadlock stats' }], footer: 'Khut · Open source (AGPL-3.0)' },
+    wow: { author: 'Joe Gun', desc: `Troll Hunter · ${t('wow.level', { level: 60 })} · Marksmanship\nHorde · PvP · EU`, fields: [{ name: t('wow.professions'), value: 'Enchanting 256/300', inline: true }, { name: t('wow.pvp'), value: t('wow.kills', { count: 51 }), inline: true }], footer: t('wow.footer', { region: 'EU' }) },
+    warframe: { title: t('warframe.title'), fields: [{ name: t('warframe.cetus'), value: '☀️ **Day**\n' + t('warframe.ends', { time: 'in 1 hour' }), inline: true }, { name: t('warframe.vallis'), value: '❄️ **Cold**\n' + t('warframe.ends', { time: 'in 8 minutes' }), inline: true }], footer: t('warframe.footer') },
     leaderboard: { title: t('leaderboard.title', { game: 'dlbuild', period: 'This week' }), desc: [t('leaderboard.dlRow', { place: '🥇', user: '@Jankat', points: 250, games: 3 }), t('leaderboard.dlRow', { place: '🥈', user: '@Talha', points: 180, games: 3 })].join('\n'), footer: t('leaderboard.footer') }
   };
   if (key.startsWith('lfg')) return lfgCard(key.slice(3).toLowerCase());
-  return message('', embed({ color: c, ...cards[key] }));
-}
-
-function textPreview(key) {
-  const vars = { users: '@Talha @Emre @Ali', role: '@Deadlock', user: '@Jankat', mode: 'High rank', points: 52, grid: '1️⃣ 🟩⬛⬛⬛⬛\n2️⃣ 🟥🟥🟩⬛⬛', hero: 'Haze', guesses: 'guesses', channel: '#games', names: '**Haze**, **Holliday**', game: 'Deadlock', host: key === 'lfg.host' ? '@Jankat' : 'Jankat', server: 'Friends', time: 'in 10 minutes', tier: 'S', count: key === 'warframe.baroItems' ? 24 : key === 'lfg.other' ? 1 : key === 'lfg.others' ? 4 : key.startsWith('play.') ? 4 : key.startsWith('card.') ? 20 : '3/6', region: 'EUW', queue: '1v1', loaded: 12, total: 40, timezone: 'Europe/Istanbul', name: key === 'card.discordWith' ? 'Jankat' : 'Ahri', days: 3, place: '🥇', solved: 5, average: '2.4', games: 3, period: 'This week', line: '**14.** @Jankat · **52** points · 2 played' };
-  const value = t(key, vars);
-  if (BUTTONS.includes(key)) return message('', buttons([[value, key === 'lfg.join' ? 'green' : key === 'lfg.cancel' ? 'red' : '']]));
-  if (key.startsWith('lfg.') && ['host', 'other', 'others', 'footerCancelled', 'footerClosed'].includes(key.slice(4))) return lfgCard(key === 'lfg.footerCancelled' ? 'cancelled' : key === 'lfg.footerClosed' ? 'closed' : key === 'lfg.others' ? 'full' : 'open');
-  if (key === 'lfg.dmStarts') return message(t('lfg.dm', vars) + value);
-  if (PINGS.includes(key)) return message(`@Jankat @Talha ${value}`);
-  if (key === 'lfg.pingUsers' || key === 'lfg.pingRole') return message(value, embed({ color: state.settings.colors.lfgOpen, title: '🎮 Deadlock', desc: t('lfg.host', { host: '@Jankat' }) }));
-  if (key === 'games.subscribed' || key === 'games.unsubscribed') return message(`${value}\n${t('games.picker')}`);
-  if (key === 'games.panel') return message(value, buttons([['CS2'], ['Deadlock'], ['League']]));
-  if (key === 'link.done') return message(`${value}\nSteam: https://steamcommunity.com/profiles/7656…\nRiot: shark#bard\nBrawlhalla ID: 1234567`);
-  return message(value);
+  return message('', mdEmbed({ color: c, ...cards[key] }));
 }
 
 function renderTabs() {
-  $('tabs').innerHTML = TABS.map(([id, name]) => `<button data-tab="${id}">${name}</button>`).join('');
-  $('tabs').onclick = e => e.target.dataset.tab && showTab(e.target.dataset.tab);
+  $('tabs').innerHTML = TABS.map(([id, name]) => `<button data-tab="${id}"><svg viewBox="0 0 24 24">${ICONS[id]}</svg>${name}</button>`).join('');
+  $('tabs').onclick = e => {
+    const button = e.target.closest('button');
+    if (button) showTab(button.dataset.tab);
+  };
   showTab(location.hash.slice(1) || 'bot');
   window.onhashchange = () => showTab(location.hash.slice(1) || 'bot');
 }
 
 function showTab(id) {
+  if (!TABS.some(([tab]) => tab === id)) id = 'bot';
+  finishEdit();
   history.replaceState(null, '', `#${id}`);
   window.scrollTo(0, 0);
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
   document.querySelectorAll('section').forEach(s => s.classList.toggle('active', s.id === id));
+  if (id === 'servers' && !guildsLoaded) loadGuilds();
+}
+
+function checkDirty() {
+  $('savebar').classList.toggle('show', !!state && JSON.stringify(state.settings) !== saved);
+}
+
+function discardChanges() {
+  finishEdit();
+  state.settings = JSON.parse(saved);
+  renderAll();
+  checkDirty();
 }
 
 function renderEnv() {
@@ -518,7 +616,7 @@ function renderEnv() {
     const value = esc(state.env[key] ?? '');
     const input = key === 'LOG_LEVEL'
       ? `<select data-env="${key}">${['info', 'debug', 'warn', 'error'].map(l => `<option ${state.env[key] === l ? 'selected' : ''}>${l}</option>`).join('')}</select>`
-      : `<div class="row"><input data-env="${key}" value="${value}" ${secret ? 'type="password"' : ''} autocomplete="off" spellcheck="false">${secret ? `<button class="btn grey small" onclick="peek(this)">Show</button>` : ''}</div>`;
+      : `<div class="row"><input data-env="${key}" value="${value}" ${secret ? 'type="password"' : ''} autocomplete="off" spellcheck="false">${secret ? `<button class="btn small" onclick="peek(this)">Show</button>` : ''}</div>`;
     return `<label class="field"><b>${name}</b>${input}<small>${help}${link ? ` <a href="${link}" target="_blank">Get it</a>` : ''}</small></label>`;
   }).join('')}</div>`;
 }
@@ -533,10 +631,10 @@ function renderColours() {
   $('colourList').innerHTML = Object.entries(COLOURS).map(([key, name]) => `
     <div class="item">
       <div class="label"><b>${name}</b>
-        <div class="color-input">
+        <div class="swatch">
           <input type="color" value="${state.settings.colors[key]}" oninput="setColour('${key}', this.value)">
           <input value="${state.settings.colors[key]}" maxlength="7" oninput="/^#[0-9a-fA-F]{6}$/.test(this.value) && setColour('${key}', this.value)">
-          <button class="btn grey small" onclick="setColour('${key}', state.defaults.colors['${key}'], true)">Reset</button>
+          <button class="btn ghost small" onclick="setColour('${key}', state.defaults.colors['${key}'], true)">Reset</button>
         </div>
       </div>
       <div id="cp-${key}">${colourPreview(key)}</div>
@@ -547,55 +645,394 @@ function setColour(key, value, redraw) {
   state.settings.colors[key] = value.toUpperCase();
   if (redraw) return renderColours();
   $(`cp-${key}`).innerHTML = colourPreview(key);
-  const row = $(`cp-${key}`).previousElementSibling;
-  row.querySelector('input[type=color]').value = value;
+  $(`cp-${key}`).previousElementSibling.querySelector('input[type=color]').value = value;
+}
+
+function sampleVars(key) {
+  const count = key === 'warframe.baroItems' ? 24 : key === 'lfg.other' ? 1 : key === 'lfg.others' ? 4 : key.startsWith('play.') ? 4 : key.startsWith('card.') ? 20 : key.startsWith('wow.') ? 51 : '3/6';
+  return { users: '@Talha @Emre @Ali', role: '@Deadlock', user: '@Jankat', mode: 'High rank', points: 52, grid: '1️⃣ 🟩⬛⬛⬛⬛', hero: 'Haze', guesses: 'guesses', channel: '#games', names: '**Haze**, **Holliday**', game: 'Deadlock', host: key === 'lfg.host' ? '@Jankat' : 'Jankat', server: 'Friends', time: 'in 10 minutes', tier: 'S', count, region: key.startsWith('wow.') ? 'EU' : 'EUW', queue: '1v1', loaded: 12, total: 40, timezone: 'Europe/Istanbul', name: 'Ahri', days: 3, place: '🥇', solved: 5, average: '2.4', games: 3, period: 'This week', line: '**14.** @Jankat · **52** points · 2 played', level: 60, won: 1, played: 1, rank: 3 };
+}
+
+function label(key) {
+  return ABOUT[key] ?? key.split('.')[1].replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase());
+}
+
+function isChanged(key) {
+  return state.settings.texts[key] !== state.defaults.texts[key];
+}
+
+function isOff(key) {
+  return !!OPTIONAL_TEXTS[key] && !state.settings.messages[OPTIONAL_TEXTS[key]];
+}
+
+function renderText(key, vars) {
+  const values = [];
+  const marked = t(key, {}).replace(/\{(\w+)\}/g, (m, k) => {
+    if (!(k in vars)) return m;
+    values.push(vars[k]);
+    return `${values.length - 1}`;
+  });
+  return md(marked).replace(/(\d+)/g, (m, i) => `<span class="var" title="Filled in by the bot">${inline(esc(values[i]))}</span>`);
+}
+
+function T(key, vars = {}) {
+  const all = { ...sampleVars(key), ...vars };
+  const off = isOff(key);
+  const value = state.settings.texts[key] ?? '';
+  return `<span class="tx${off ? ' off' : ''}${isChanged(key) ? ' changed' : ''}${value ? '' : ' empty'}" data-key="${key}" data-vars="${esc(JSON.stringify(all))}" tabindex="${off ? -1 : 0}" title="${esc(label(key))}${off ? ` (turned off: ${esc(MESSAGES[OPTIONAL_TEXTS[key]])})` : ''}">${renderText(key, all)}</span>`;
+}
+
+const fx = s => `<span class="fx">${md(s)}</span>`;
+const br = '<br>';
+
+function scenes(group) {
+  const c = state.settings.colors;
+  const card = (color, e) => embed({ color, ...e });
+  const S = {
+    card: () => [
+      ['Deadlock card', msg(card(c.deadlock, { author: fx('Talha'), title: T('card.dlTitle'), fields: [
+        { name: T('card.dlOverall'), value: fx('54% WR (120 games)\n6.2 / 4.1 / 9.8 KDA'), inline: true },
+        { name: T('card.dlRanked'), value: T('card.unranked'), inline: true },
+        { name: T('card.dlTopHeroes'), value: fx('Haze · 40 games, 58% WR\nInfernus · 22 games, 50% WR') }
+      ], footer: fx('Deadlock · Data from deadlock-api.com') }))],
+      ['Counter-Strike 2 card', msg(card(c.cs2, { author: fx('Talha'), title: T('card.csTitle'), fields: [
+        { name: T('card.csRanks'), value: fx('Premier: **14,250**\nFACEIT: **Level 7** (1650 Elo)') },
+        { name: T('card.csLifetime'), value: fx('1.12 K/D · 46% HS'), inline: true },
+        { name: T('card.csPlaytime'), value: fx('1,240 hours'), inline: true },
+        { name: T('card.csRatings'), value: fx('Leetify **+2.1** · Aim 74'), inline: true },
+        { name: T('card.csBans'), value: fx('1 VAC ban, 2,140 days ago') }
+      ], footer: fx('Counter-Strike 2') }))],
+      ['League of Legends card', msg(card(c.lol, { author: fx('shark#bard'), title: T('card.lolTitle', { region: 'EUW' }), desc: T('card.lolLoading', { loaded: 12, total: 40 }), fields: [
+        { name: T('card.lolSolo'), value: fx('**Silver III** 91 LP\n30% WR (20 games)'), inline: true },
+        { name: T('card.lolFlex'), value: T('card.unranked'), inline: true },
+        { name: T('card.lolRecent', { count: 20 }), value: fx('11W 9L · 55% WR\n7.1 / 5.2 / 8.4 KDA') },
+        { name: T('card.lolTopRanked'), value: fx('Ahri · 12 games, 58% WR'), inline: true },
+        { name: T('card.lolTopRecent', { count: 20 }), value: fx('Lux · 6 games, 50% WR'), inline: true }
+      ], footer: fx('League of Legends') }))],
+      ['League card with no recent games', msg(card(c.lol, { author: fx('shark#bard'), title: T('card.lolTitle', { region: 'EUW' }), fields: [
+        { name: T('card.lolRecent', { count: 20 }), value: T('card.lolNoGames') }
+      ] }))],
+      ['Brawlhalla card', msg(card(c.brawlhalla, { author: fx('Octavius · Brawlhalla'), title: T('card.bhTitle'), desc: fx('Brawlhalla ID: `1234567`'), fields: [
+        { name: T('card.bhRanked', { queue: '1v1' }), value: fx('**Platinum** · **1,650 Elo**\n42W – 30L · **58% WR**'), inline: true },
+        { name: T('card.bhRanked', { queue: '3v3' }), value: T('card.bhNoRanked', { queue: '3v3' }), inline: true },
+        { name: T('card.bhTeams'), value: fx('**1. Partner** · 1,540 Elo · 24W/18L') },
+        { name: T('card.bhLifetime'), value: fx('**56% WR** · 320W / 251L\nLevel **42**'), inline: true },
+        { name: T('card.bhCombat'), value: fx('KOs **4,120** · Falls **1,930**'), inline: true },
+        { name: T('card.bhMostPlayed'), value: fx('Bödvar · 124g, 58% WR'), inline: true },
+        { name: T('card.bhTopRanked'), value: fx('Hattori · 1,710 Elo'), inline: true }
+      ], footer: fx('Brawlhalla · Official Developer API v1') }))],
+      ['Brawlhalla card with missing data', msg(card(c.brawlhalla, { author: fx('Octavius · Brawlhalla'), title: T('card.bhTitle'), fields: [
+        { name: T('card.bhRanked', { queue: '1v1' }), value: T('card.bhRankedDown', { queue: '1v1' }), inline: true },
+        { name: T('card.bhTeams'), value: T('card.bhNoTeams') + br + T('card.bhTeamsDown'), inline: true },
+        { name: T('card.bhMostPlayed'), value: T('card.bhNoLegends'), inline: true },
+        { name: T('card.bhTopRanked'), value: T('card.bhNoRankedLegends'), inline: true }
+      ] }))],
+      ['Discord voice card', msg(card(c.discord, { author: fx('Talha'), title: fx('🎙️ Voice time together'), fields: [
+        { name: fx('This week'), value: fx('12h 30m'), inline: true }, { name: fx('All time'), value: fx('310h'), inline: true }
+      ], footer: T('card.discordWith', { name: 'Jankat' }) }))]
+    ],
+    lfg: () => {
+      const post = (color, status, extra) => card(color, { title: fx('🎮 Deadlock'), desc: T('lfg.host', { host: '@Jankat' }) + fx('\n🕘 Friday 21:00 (in 2 hours)'), fields: [{ name: fx(status === 'full' ? '👥 6/6' : '👥 3/6'), value: fx('@Jankat\n@Talha') + br + (status === 'full' ? T('lfg.others', { count: 4 }) : T('lfg.other', { count: 1 })) }], ...extra });
+      const btns = buttons([[T('lfg.join'), 'green'], [T('lfg.leave')], [T('lfg.cancel'), 'red']]);
+      return [
+        ['LFG post', msg(T('lfg.pingUsers') + post(c.lfgOpen, 'open') + btns)],
+        ['Full group, with game roles on', msg(T('lfg.pingRole', { role: '@Deadlock' }) + post(c.lfgFull, 'full') + btns)],
+        ['Closed and cancelled posts', msg(post(c.lfgClosed, 'open', { footer: T('lfg.footerClosed') })) + msg(post(c.lfgCancelled, 'open', { footer: T('lfg.footerCancelled') }))],
+        ['Pings in the channel', msg(fx('@Jankat @Talha ') + T('lfg.squadFull')) + msg(fx('@Jankat @Talha ') + T('lfg.reminder')) + msg(fx('@Jankat @Talha ') + T('lfg.start'))],
+        ['DM to subscribers', msg(T('lfg.dm') + T('lfg.dmStarts') + buttons([[T('lfg.dmButton')]]))]
+      ];
+    },
+    games: () => [
+      ['Game picker posted with /setup games', msg(T('games.panel') + buttons([[fx('CS2')], [fx('Deadlock'), 'green'], [fx('League')]]))],
+      ['After clicking a game', msg(T('games.subscribed') + br + T('games.picker') + buttons([[fx('CS2')], [fx('Deadlock'), 'green'], [fx('League')]])) + msg(T('games.unsubscribed'))]
+    ],
+    play: () => [
+      ['dlbuild', msg(card(c.play, { title: fx('dlbuild · High rank · Round 1/4'), desc: T('play.dlHint') }) + buttons([[T('play.guessButton'), 'blue']]))
+        + msg(T('play.dlCorrect', { hero: 'Haze', points: 25 })) + msg(T('play.dlWrong', { hero: 'Haze' }))
+        + msg(T('play.dlMore', { points: 100 }) + br + T('play.dlChoose') + buttons([[T('play.keepGoing'), 'green'], [T('play.stop'), 'red']]))
+        + msg(T('play.dlDone', { points: 125 }) + buttons([[T('play.statlocker')]]))],
+      ['lolhero', msg(card(c.play, { title: fx('lolhero · Classic'), desc: T('play.classicIntro') + br + T('play.lolHint') }) + buttons([[T('play.guessButton'), 'blue']]))
+        + msg(card(c.play, { title: fx('lolhero · Ability'), desc: T('play.abilityIntro'), fields: [{ name: T('play.clue'), value: fx('Spirit Rush') }] }))
+        + msg(T('play.solved', { name: 'Ahri', count: 3, guesses: 'guesses' }))],
+      ['framedle', msg(card(c.play, { title: fx('framedle · Classic'), desc: T('play.wfClassicIntro') + br + T('play.wfHint') }) + buttons([[T('play.guessButton'), 'blue']]))
+        + msg(card(c.play, { title: fx('framedle · Ability'), desc: T('play.wfAbilityIntro'), fields: [{ name: T('play.wfClue'), value: fx('Miasma') }] }))],
+      ["Yesterday's answers", msg(card(c.play, { title: T('play.answersTitle'), fields: [
+        { name: fx('lolhero Classic'), value: fx('**Ahri**') + br + T('play.answersFound', { count: 4 }), inline: true },
+        { name: fx('framedle Classic'), value: fx('**Saryn**') + br + T('play.answersFound', { count: 2 }), inline: true }
+      ] }))]
+    ],
+    leaderboard: () => [
+      ['dlbuild leaderboard', msg(card(c.leaderboard, { title: T('leaderboard.title', { game: 'dlbuild', period: 'This week' }), desc: T('leaderboard.dlRow', { place: '🥇', user: '@Jankat', points: 250, games: 3 }) + br + T('leaderboard.dlRow', { place: '🥈', user: '@Talha', points: 180, games: 3 }) + br + br + T('leaderboard.you'), footer: T('leaderboard.footer') }))],
+      ['lolhero leaderboard', msg(card(c.leaderboard, { title: T('leaderboard.title', { game: 'lolhero', period: 'All time' }), desc: T('leaderboard.lolRow', { place: '🥇', user: '@Talha', solved: 21, average: '2.8' }) + br + T('leaderboard.lolRow', { place: '🥈', user: '@Jankat', solved: 18, average: '3.1' }), footer: T('leaderboard.footer') }))]
+    ],
+    warframe: () => [
+      ['/warframe cycle', msg(card(c.warframe, { title: T('warframe.title'), fields: [
+        { name: T('warframe.cetus'), value: fx('☀️ **Day**') + br + T('warframe.ends', { time: 'in 1 hour' }), inline: true },
+        { name: T('warframe.vallis'), value: fx('❄️ **Cold**') + br + T('warframe.ends', { time: 'in 8 minutes' }), inline: true },
+        { name: T('warframe.cambion'), value: fx('**Fass**') + br + T('warframe.ends', { time: 'in 1 hour' }), inline: true },
+        { name: T('warframe.zariman'), value: fx('**Corpus**') + br + T('warframe.ends', { time: 'in 2 hours' }), inline: true },
+        { name: T('warframe.duviri'), value: fx('**Joy**') + br + T('warframe.ends', { time: 'in 30 minutes' }), inline: true },
+        { name: T('warframe.steelPath'), value: fx('Umbra Forma') + br + T('warframe.ends', { time: 'in 3 days' }), inline: true },
+        { name: T('warframe.archon'), value: fx('Archon Nira') + br + T('warframe.ends', { time: 'in 4 days' }), inline: true },
+        { name: T('warframe.sortie'), value: fx('Grineer · Kuva Fortress') + br + T('warframe.ends', { time: 'in 9 hours' }), inline: true },
+        { name: T('warframe.baro'), value: T('warframe.baroHere', { time: 'in 2 days' }) + br + T('warframe.baroItems', { count: 24 }), inline: true },
+        { name: T('warframe.arbitration'), value: fx('Survival · Hydron') + br + T('warframe.tier', { tier: 'S' }), inline: true },
+        { name: T('warframe.darvo'), value: fx('Primed Pressure Point · 40% off'), inline: true },
+        { name: T('warframe.news'), value: fx('Update 39 is live') }
+      ], footer: T('warframe.footer') }))],
+      ['When Baro is on the way', msg(card(c.warframe, { fields: [{ name: T('warframe.baro'), value: T('warframe.baroComing', { time: 'in 5 days' }) }] }))]
+    ],
+    wow: () => [
+      ['/stats wow character, with more than one linked', msg(card(c.wow, { title: T('wow.characters', { user: 'Jankat' }), desc: fx('🧌🏹 **Joe Gun** · ') + T('wow.level', { level: 60 }) + fx(' · PvP · EU · <Aggressively Average>\n🧝🔮 **Aybars Brumbleback** · ') + T('wow.level', { level: 42 }) + fx(' · Normal · EU\n❔ **Old Alt** · US · ') + T('wow.notLoaded'), footer: T('wow.pick') }) + buttons([[fx('🏹 Joe Gun')], [fx('🔮 Aybars Brumbleback')], [fx('Old Alt')]]))],
+      ['/stats wow character', msg(card(c.wow, { author: fx('Joe Gun'), desc: fx('Troll Hunter · ') + T('wow.level', { level: 60 }) + fx(' · Marksmanship\nHorde · PvP · EU\n<Aggressively Average>') + br + T('wow.lastOnline', { time: '2 hours ago' }), fields: [
+        { name: T('wow.professions'), value: fx('Enchanting 256/300\nCooking 24/75'), inline: true },
+        { name: T('wow.stats'), value: T('wow.health') + fx(' 2847') + br + T('wow.power') + fx(' 3285') + br + T('wow.attackPower') + fx(' 694') + br + T('wow.spellPower') + fx(' 120') + br + T('wow.crit') + fx(' 10.9%'), inline: true },
+        { name: T('wow.pvp'), value: T('wow.kills', { count: 51 }) + br + T('wow.battlegrounds', { won: 1, played: 1 }) + br + T('wow.rank', { rank: 3 }), inline: true },
+        { name: T('wow.reputation'), value: fx('Ratchet · Revered\nBooty Bay · Revered') },
+        { name: T('wow.gear'), value: fx('🟪 Black Dragonscale Helm\n🟦 Mark of Fordring') }
+      ], footer: T('wow.footer', { region: 'EU' }) }) + buttons([[fx('↩️ ') + T('wow.back')]]))],
+      ['/stats wow guild', msg(card(c.wow, { title: fx('<Aggressively Average>'), desc: fx('Horde · PvP · EU') + br + T('wow.members', { count: 120 }) + br + T('wow.founded', { time: 'Nov 5, 2026' }), fields: [
+        { name: T('wow.classes'), value: fx('Priest 6 · Druid 6 · Rogue 5') },
+        { name: T('wow.levels'), value: T('wow.maxLevel', { count: 27, total: 40 }), inline: true },
+        { name: T('wow.leaders'), value: fx('Fifteencent Lock (') + T('wow.guildMaster') + fx(')'), inline: true }
+      ], footer: T('wow.footer', { region: 'EU' }) }))],
+      ['/price wow', msg(card(c.wow, { title: fx('Black Dragonscale Helm'), desc: fx('🟪 PvP · EU · ') + T('wow.updated', { time: '5 minutes ago' }), fields: [
+        { name: T('wow.alliance'), value: fx('1g 20s') + br + T('wow.forSale', { count: 3 }), inline: true },
+        { name: T('wow.horde'), value: T('wow.notListed'), inline: true },
+        { name: T('wow.blackwater'), value: fx('95s') + br + T('wow.forSale', { count: 1 }), inline: true }
+      ], footer: T('wow.footer', { region: 'EU' }) }))]
+    ],
+    link: () => [
+      ['After linking', msg(T('link.done') + fx('\nSteam: steamcommunity.com/profiles/7656…\nRiot: shark#bard'))],
+      ['One-click linking', msg(T('link.connect') + buttons([[T('link.connectButton')]]))],
+      ['/linkfor, after linking for a friend', msg(T('link.forDone', { user: '@Talha' }) + fx('\nWoW: Forever: Talha Tal (EU)'))]
+    ]
+  };
+  return S[group]?.() ?? [];
+}
+
+function groupKeys(group) {
+  return Object.keys(state.defaults.texts).filter(k => k.split('.')[0] === group);
+}
+
+function textGroups() {
+  const found = [...new Set(Object.keys(state.defaults.texts).map(k => k.split('.')[0]))];
+  return [...Object.keys(GROUPS).filter(g => found.includes(g)), ...found.filter(g => !GROUPS[g])];
+}
+
+function lines(keys) {
+  return `<div class="stage lines">${keys.map(key => `<div class="line"><div class="line-label"><b>${esc(label(key))}</b>${isOff(key) ? 'Turned off in Limits' : ''}</div>${msg(T(key))}</div>`).join('')}</div>`;
+}
+
+function renderTextNav() {
+  $('textNav').innerHTML = `<input id="textSearchBox" placeholder="Search texts" value="${esc(textSearch)}" oninput="textSearch = this.value; renderTextBody(); renderTextNavButtons()"><div id="textNavButtons"></div>`;
+  renderTextNavButtons();
+}
+
+function renderTextNavButtons() {
+  $('textNavButtons').innerHTML = textGroups().map(g => {
+    const keys = groupKeys(g);
+    const edited = keys.filter(isChanged).length;
+    return `<button class="${!textSearch && g === textGroup ? 'active' : ''}" onclick="textGroup = '${g}'; textSearch = ''; $('textSearchBox').value = ''; renderTextBody(); renderTextNavButtons(); window.scrollTo(0, 0)"><span>${esc(GROUPS[g] ?? g)}</span>${edited ? `<span class="edited">${edited} edited</span>` : `<span class="count">${keys.length}</span>`}</button>`;
+  }).join('');
+}
+
+function renderTextBody() {
+  const legend = `<div class="legend"><span><i class="tx" style="padding:0 6px">Text</i> click to edit</span><span><i class="var">Deadlock</i> filled in by the bot</span><span><i class="fx">Talha</i> example data</span><span><i class="tx changed" style="padding:0 6px">Text</i> changed</span></div>`;
+  if (textSearch.trim()) {
+    const q = textSearch.trim().toLowerCase();
+    const keys = Object.keys(state.defaults.texts).filter(k => [k, label(k), state.settings.texts[k], GROUPS[k.split('.')[0]] ?? ''].some(s => s.toLowerCase().includes(q)));
+    $('textBody').innerHTML = legend + (keys.length ? `<div class="scene"><div class="scene-title">${keys.length} found</div>${lines(keys)}</div>` : '<p class="hint">Nothing matches that.</p>');
+    return;
+  }
+  const list = scenes(textGroup);
+  const html = list.map(([title, inner]) => `<div class="scene"><div class="scene-title">${esc(title)}</div><div class="stage">${inner}</div></div>`).join('');
+  const shown = new Set([...html.matchAll(/data-key="([\w.]+)"/g)].map(m => m[1]));
+  const rest = groupKeys(textGroup).filter(k => !shown.has(k));
+  $('textBody').innerHTML = `<div class="row" style="margin-bottom:12px"><h2 class="grow" style="font-size:18px">${esc(GROUPS[textGroup] ?? textGroup)}</h2><button class="btn ghost small" onclick="resetGroup()">Reset this section</button></div>`
+    + legend + html + (rest.length ? `<div class="scene"><div class="scene-title">${list.length ? 'Other messages' : 'Messages'}</div>${lines(rest)}</div>` : '');
 }
 
 function renderTexts() {
-  let html = '';
-  let group = '';
-  for (const key of Object.keys(state.defaults.texts)) {
-    const g = key.split('.')[0];
-    if (g !== group) {
-      group = g;
-      html += `<div class="group-title">${GROUPS[g] ?? g}</div>`;
-    }
-    const value = state.settings.texts[key];
-    html += `
-      <div class="item">
-        <div class="label"><b>${ABOUT[key] ?? key}</b>
-          <textarea rows="${Math.min(6, value.split('\n').length + Math.floor(value.length / 40))}" oninput="setText('${key}', this.value)">${esc(value)}</textarea>
-          <div class="row" style="margin-top:4px"><button class="btn grey small" onclick="setText('${key}', state.defaults.texts['${key}'], true)">Reset</button></div>
-        </div>
-        <div id="tp-${key.replace('.', '-')}">${textPreview(key)}</div>
-      </div>`;
-  }
-  $('textList').innerHTML = html;
+  finishEdit();
+  renderTextNav();
+  renderTextBody();
 }
 
-function setText(key, value, redraw) {
-  state.settings.texts[key] = value;
-  if (redraw) return renderTexts();
-  $(`tp-${key.replace('.', '-')}`).innerHTML = textPreview(key);
+function resetGroup() {
+  for (const key of groupKeys(textGroup)) state.settings.texts[key] = state.defaults.texts[key];
+  renderTexts();
+  checkDirty();
 }
+
+function editHtml(value) {
+  return esc(value).replace(/\{(\w+)\}/g, (m, k) => `<span class="pill" contenteditable="false" data-var="${k}">${k}</span>`);
+}
+
+function serialize(el) {
+  let out = '';
+  el.childNodes.forEach(n => {
+    if (n.nodeType === 3) out += n.data;
+    else if (n.dataset?.var) out += `{${n.dataset.var}}`;
+    else if (n.nodeName === 'BR') out += n === el.lastChild ? '' : '\n';
+    else out += serialize(n) + (n.nodeName === 'DIV' ? '\n' : '');
+  });
+  return out;
+}
+
+function caretToEnd(el) {
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  const sel = getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+function startEdit(el) {
+  if (editing?.el === el) return;
+  finishEdit();
+  const key = el.dataset.key;
+  editing = { el, key, before: state.settings.texts[key] };
+  el.classList.add('editing');
+  el.classList.remove('empty');
+  el.innerHTML = editHtml(state.settings.texts[key]);
+  try {
+    el.contentEditable = 'plaintext-only';
+  } catch {
+    el.contentEditable = 'true';
+  }
+  el.oninput = editInput;
+  el.onkeydown = editKey;
+  el.onblur = () => setTimeout(() => editing?.el === el && document.activeElement !== el && finishEdit(), 0);
+  el.focus();
+  caretToEnd(el);
+  renderBar();
+  addEventListener('scroll', placeBar, true);
+}
+
+function editInput() {
+  state.settings.texts[editing.key] = serialize(editing.el);
+  renderBar();
+  checkDirty();
+}
+
+function editKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    editing.el.blur();
+    finishEdit();
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    document.execCommand('insertText', false, '\n');
+  } else if (e.key === 'Escape') {
+    state.settings.texts[editing.key] = editing.before;
+    finishEdit();
+  }
+}
+
+function insertVar(name) {
+  const { el } = editing;
+  const sel = getSelection();
+  if (!sel.rangeCount || !el.contains(sel.anchorNode)) caretToEnd(el);
+  const range = getSelection().getRangeAt(0);
+  const node = range.startContainer;
+  const inside = (node.nodeType === 3 ? node.parentElement : node).closest('.pill');
+  if (inside && el.contains(inside)) range.setStartAfter(inside);
+  range.collapse(true);
+  range.deleteContents();
+  const pill = document.createElement('span');
+  pill.className = 'pill';
+  pill.contentEditable = 'false';
+  pill.dataset.var = name;
+  pill.textContent = name;
+  range.insertNode(pill);
+  range.setStartAfter(pill);
+  range.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(range);
+  editInput();
+}
+
+function resetEditing() {
+  state.settings.texts[editing.key] = state.defaults.texts[editing.key];
+  editing.el.innerHTML = editHtml(state.defaults.texts[editing.key]);
+  caretToEnd(editing.el);
+  editInput();
+}
+
+function renderBar() {
+  const { key } = editing;
+  const vars = [...new Set([...state.defaults.texts[key].matchAll(/\{(\w+)\}/g)].map(m => m[1]))];
+  const used = state.settings.texts[key];
+  const missing = vars.filter(v => !used.includes(`{${v}}`));
+  const bar = $('txbar');
+  bar.innerHTML = `<div class="head"><b>${esc(label(key))}</b><code>${key}</code></div>`
+    + (vars.length ? `<div class="vars">Filled in by the bot:${vars.map(v => `<span class="pill" title="Add at the cursor" onclick="insertVar('${v}')">${v}</span>`).join('')}</div>` : '')
+    + (missing.length ? `<div class="warn">Not used: ${missing.map(v => `{${v}}`).join(' ')}</div>` : '')
+    + `<div class="foot"><span>Enter to finish · Shift+Enter for a new line · Esc to undo<br>**bold** · \`code\` · -# small text</span>${isChanged(key) ? '<button class="btn small" onclick="resetEditing()">Reset</button>' : ''}<button class="btn primary small" onclick="finishEdit()">Done</button></div>`;
+  bar.hidden = false;
+  bar.onmousedown = e => e.preventDefault();
+  placeBar();
+}
+
+function placeBar() {
+  if (!editing) return;
+  const r = editing.el.getBoundingClientRect();
+  const bar = $('txbar');
+  const below = r.bottom + 8 + bar.offsetHeight < innerHeight;
+  bar.style.top = `${below ? r.bottom + 8 : Math.max(8, r.top - bar.offsetHeight - 8)}px`;
+  bar.style.left = `${Math.max(8, Math.min(r.left, innerWidth - bar.offsetWidth - 8))}px`;
+}
+
+function finishEdit() {
+  if (!editing) return;
+  const { el, key } = editing;
+  editing = null;
+  removeEventListener('scroll', placeBar, true);
+  el.removeAttribute('contenteditable');
+  el.oninput = el.onkeydown = el.onblur = null;
+  el.classList.remove('editing');
+  $('txbar').hidden = true;
+  document.querySelectorAll(`.tx[data-key="${key}"]`).forEach(n => {
+    n.innerHTML = renderText(key, JSON.parse(n.dataset.vars));
+    n.classList.toggle('changed', isChanged(key));
+    n.classList.toggle('empty', !state.settings.texts[key]);
+  });
+  renderTextNavButtons();
+  checkDirty();
+}
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('.tx');
+  if (el && !el.classList.contains('off') && el.dataset.key) startEdit(el);
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.classList?.contains('tx') && !e.target.classList.contains('editing') && !e.target.classList.contains('off')) {
+    e.preventDefault();
+    startEdit(e.target);
+  }
+});
 
 function renderLimits() {
   $('limitList').innerHTML = Object.entries(LIMITS).map(([key, [name, help]]) => `
-    <label class="field"><b>${name}</b><input type="number" min="${key === 'voiceMinPeople' ? 2 : 1}" value="${state.settings.limits[key]}" oninput="state.settings.limits['${key}'] = Number(this.value)"><small>${help}</small></label>`).join('')
-    + `<div class="group-title">Optional messages</div>` + Object.entries(MESSAGES).map(([key, name]) => `
-    <label class="switch field"><input type="checkbox" ${state.settings.messages[key] ? 'checked' : ''} onchange="state.settings.messages['${key}'] = this.checked">${name}</label>`).join('')
-    + `<div class="group-title">Panel</div>` + Object.entries(PANEL_OPTIONS).map(([key, name]) => `
-    <label class="switch field"><input type="checkbox" ${state.settings.panel[key] ? 'checked' : ''} onchange="state.settings.panel['${key}'] = this.checked">${name}</label>`).join('')
-    + '<div id="appOptions"></div>';
+    <label class="field"><b>${name}</b><input type="number" min="${key === 'voiceMinPeople' ? 2 : 1}" value="${state.settings.limits[key]}" oninput="state.settings.limits['${key}'] = Number(this.value)"><small>${help}</small></label>`).join('');
+  $('messageList').innerHTML = Object.entries(MESSAGES).map(([key, name]) => `
+    <label class="toggle"><input type="checkbox" ${state.settings.messages[key] ? 'checked' : ''} onchange="state.settings.messages['${key}'] = this.checked; renderTexts(); renderResults()">${name}</label>`).join('');
+  $('commandList').innerHTML = Object.entries(COMMAND_OPTIONS).map(([key, name]) => `
+    <label class="toggle"><input type="checkbox" ${state.settings.commands[key] ? 'checked' : ''} onchange="state.settings.commands['${key}'] = this.checked">${name}</label>`).join('');
+  $('panelList').innerHTML = Object.entries(PANEL_OPTIONS).map(([key, name]) => `
+    <label class="toggle"><input type="checkbox" ${state.settings.panel[key] ? 'checked' : ''} onchange="state.settings.panel['${key}'] = this.checked">${name}</label>`).join('');
   renderAppOptions();
 }
 
 async function renderAppOptions() {
   if (!window.khutApp) return;
   const options = await khutApp.get();
-  $('appOptions').innerHTML = `<div class="group-title">Desktop app</div><p class="hint">Saved right away. With Start with Windows, also turn on Start the bot when the panel opens.</p>` + Object.entries(APP_OPTIONS).map(([key, name]) => `
-    <label class="switch field"><input type="checkbox" ${options[key] ? 'checked' : ''} ${key === 'startWithWindows' && !options.packaged ? 'disabled' : ''} onchange="khutApp.set('${key}', this.checked)">${name}</label>`).join('')
-    + `<button class="btn grey" onclick="khutApp.openData()">Open data folder</button>`;
+  $('appOptions').hidden = false;
+  $('appOptions').innerHTML = `<p class="subhead">Desktop app</p><p class="hint">Saved right away. With Start with Windows, also turn on Start the bot when the panel opens.</p>` + Object.entries(APP_OPTIONS).map(([key, name]) => `
+    <label class="toggle"><input type="checkbox" ${options[key] ? 'checked' : ''} ${key === 'startWithWindows' && !options.packaged ? 'disabled' : ''} onchange="khutApp.set('${key}', this.checked)">${name}</label>`).join('')
+    + `<button class="btn" style="margin-top:12px" onclick="khutApp.openData()">Open data folder</button>`;
 }
 
 const STATUS = { None: 'No status', Custom: 'Custom', Playing: 'Playing', Listening: 'Listening to', Watching: 'Watching', Competing: 'Competing in' };
@@ -603,23 +1040,17 @@ const STATUS = { None: 'No status', Custom: 'Custom', Playing: 'Playing', Listen
 function statusPreview() {
   const { type, text: words } = state.settings.status;
   $('statusText').disabled = type === 'None';
-  $('statusPreview').innerHTML = type !== 'None' && words ? `<div class="preview"><div class="msg"><div class="avatar">K</div><div class="content"><span class="name">Khut</span><span class="tag">APP</span><div style="color:#b5bac1;font-size:13px">${type === 'Custom' ? '' : STATUS[type] + ' '}<b>${esc(words)}</b></div></div></div></div>` : '';
-}
-
-function bioPreview() {
-  const bio = state.settings.status.bio;
-  $('bioCount').textContent = `${bio.length}/400`;
-  $('bioPreview').innerHTML = bio.trim() ? `<div class="preview">${md(bio)}</div>` : '';
+  $('statusPreview').innerHTML = type !== 'None' && words ? `<div class="stage"><div class="dmsg" style="align-items:center"><img class="av" src="${esc(bot.avatar)}" alt=""><div class="dbody"><div class="dname">${esc(bot.name)}</div><div style="color:#b5bac1;font-size:12.5px">${type === 'Custom' ? '' : STATUS[type] + ' '}<b>${esc(words)}</b></div></div></div></div>` : '';
 }
 
 function setBio(value) {
   state.settings.status.bio = value;
-  bioPreview();
+  $('bioCount').textContent = `${value.length}/400`;
 }
 
 function renderStatus() {
   $('bioText').value = state.settings.status.bio;
-  bioPreview();
+  setBio(state.settings.status.bio);
   $('statusType').innerHTML = Object.entries(STATUS).map(([key, name]) => `<option value="${key}" ${key === state.settings.status.type ? 'selected' : ''}>${name}</option>`).join('');
   $('statusText').value = state.settings.status.text;
   statusPreview();
@@ -657,9 +1088,9 @@ function renderStreak() {
   $('res-streak').innerHTML = state.settings.results.streak.map((row, i) => `
     <div class="item">
       <div class="label">
-        <div class="row">From<input type="number" min="1" style="width:80px" value="${row.min}" oninput="setStreak(${i}, 'min', Number(this.value))">days<span style="flex:1"></span><button class="btn red small" onclick="removeStreak(${i})">Remove</button></div>
-        <select style="margin-top:6px" onchange="setStreak(${i}, 'place', this.value)"><option value="before" ${row.place !== 'after' ? 'selected' : ''}>Before the message</option><option value="after" ${row.place === 'after' ? 'selected' : ''}>After the message</option></select>
-        <textarea rows="2" style="margin-top:6px" oninput="setStreak(${i}, 'text', this.value)">${esc(row.text)}</textarea>
+        <div class="row">From<input type="number" min="1" style="width:80px" value="${row.min}" oninput="setStreak(${i}, 'min', Number(this.value))">days<span class="grow"></span><button class="btn danger small" onclick="removeStreak(${i})">Remove</button></div>
+        <select style="margin-top:8px" onchange="setStreak(${i}, 'place', this.value)"><option value="before" ${row.place !== 'after' ? 'selected' : ''}>Before the message</option><option value="after" ${row.place === 'after' ? 'selected' : ''}>After the message</option></select>
+        <textarea rows="2" style="margin-top:8px" oninput="setStreak(${i}, 'text', this.value)">${esc(row.text)}</textarea>
       </div>
       <div id="sp-${i}">${streakPreview(i)}</div>
     </div>`).join('') || '<p class="hint" style="margin:0">No rows: streaks are not shown.</p>';
@@ -668,7 +1099,7 @@ function renderStreak() {
 function setStreak(i, field, value) {
   state.settings.results.streak[i][field] = value;
   state.settings.results.streak.forEach((_, n) => { $(`sp-${n}`).innerHTML = streakPreview(n); });
-  for (const [game] of Object.entries(RESULTS)) state.settings.results[game].forEach((_, n) => { $(`rp-${game}-${n}`).innerHTML = resultPreview(game, n); });
+  for (const game of Object.keys(RESULTS)) state.settings.results[game].forEach((_, n) => { $(`rp-${game}-${n}`).innerHTML = resultPreview(game, n); });
 }
 
 function addStreak() {
@@ -682,12 +1113,14 @@ function removeStreak(i) {
 }
 
 function renderResults() {
+  for (const game of Object.keys(RESULTS)) $(`box-${game}`).disabled = !state.settings.messages[`${game}Results`];
+  $('box-streak').disabled = Object.keys(RESULTS).every(game => !state.settings.messages[`${game}Results`]);
   for (const [game, [field, before, after]] of Object.entries(RESULTS)) {
     $(`res-${game}`).innerHTML = state.settings.results[game].map((row, i) => `
       <div class="item">
         <div class="label">
-          <div class="row">${before}<input type="number" min="0" style="width:80px" value="${row[field]}" oninput="setResult('${game}', ${i}, '${field}', Number(this.value))">${after}<span style="flex:1"></span><button class="btn red small" onclick="removeResult('${game}', ${i})">Remove</button></div>
-          <textarea rows="3" style="margin-top:6px" oninput="setResult('${game}', ${i}, 'text', this.value)">${esc(row.text)}</textarea>
+          <div class="row">${before}<input type="number" min="0" style="width:80px" value="${row[field]}" oninput="setResult('${game}', ${i}, '${field}', Number(this.value))">${after}<span class="grow"></span><button class="btn danger small" onclick="removeResult('${game}', ${i})">Remove</button></div>
+          <textarea rows="3" style="margin-top:8px" oninput="setResult('${game}', ${i}, 'text', this.value)">${esc(row.text)}</textarea>
         </div>
         <div id="rp-${game}-${i}">${resultPreview(game, i)}</div>
       </div>`).join('');
@@ -713,26 +1146,32 @@ function removeResult(game, i) {
 function iconPreview(i) {
   const game = state.settings.icons.games[i];
   const img = esc(game.url || '');
-  const thumb = game.big && game.url ? `<img class="thumb" src="${img}" alt="">` : '';
   const icon = game.big ? '' : game.url ? `<img src="${img}" alt="" style="width:20px;height:20px;vertical-align:-4px;object-fit:contain"> ` : '🎮 ';
-  return message('', `<div class="embed" style="border-color:${state.settings.colors.lfgOpen}">${thumb}<div class="title">${icon}${esc(game.name || 'Game')}</div>${md(t('lfg.host', { host: '@Jankat' }))}<div style="clear:both"></div></div>`);
+  return message('', embed({ color: state.settings.colors.lfgOpen, thumb: game.big && game.url, title: `${icon}${esc(game.name || 'Game')}`, desc: md(t('lfg.host', { host: '@Jankat' })) }));
 }
 
 function renderIcons() {
-  $('iconList').innerHTML = state.settings.icons.games.map((game, i) => `
-    <div class="item">
+  $('iconList').innerHTML = state.settings.icons.games.map((game, i) => {
+    const uploaded = game.url.startsWith('data:');
+    return `
+    <div class="item" style="grid-template-columns: 380px 1fr">
       <div class="label">
-        <div class="row"><input placeholder="Game name" value="${esc(game.name)}" oninput="setIcon(${i}, 'name', this.value)"><button class="btn red small" onclick="removeIcon(${i})">Remove</button></div>
-        <input placeholder="https://… image link" style="margin-top:6px" value="${esc(game.url)}" oninput="setIcon(${i}, 'url', this.value.trim())">
-        <label class="switch" style="margin-top:6px"><input type="checkbox" ${game.big ? 'checked' : ''} onchange="setIcon(${i}, 'big', this.checked)">Big icon at the top right</label>
+        <div class="row" style="margin-bottom:10px"><div class="icon-tile">${game.url ? `<img src="${esc(game.url)}" alt="">` : '🎮'}</div><input placeholder="Game name" value="${esc(game.name)}" oninput="setIcon(${i}, 'name', this.value)"><button class="btn ghost small" title="Remove" onclick="removeIcon(${i})">Remove</button></div>
+        ${uploaded
+          ? `<div class="row"><span class="grow muted">Uploaded image</span><button class="btn small" onclick="uploadIcon(${i})">Change</button><button class="btn ghost small" onclick="setIcon(${i}, 'url', ''); renderIcons()">Use a link instead</button></div>`
+          : `<div class="row"><input placeholder="https://… image link" value="${esc(game.url)}" onchange="setIcon(${i}, 'url', this.value.trim()); renderIcons()"><button class="btn small" onclick="uploadIcon(${i})">Upload</button></div>
+             <small class="muted" style="display:block;margin-top:5px">A link from the game's official wiki or wiki.gg, under 256 KB. Or upload an image and crop it.</small>`}
+        <label class="toggle" style="border:0;padding-bottom:0"><input type="checkbox" ${game.big ? 'checked' : ''} onchange="setIcon(${i}, 'big', this.checked)">Big icon at the top right</label>
       </div>
       <div id="ip-${i}">${iconPreview(i)}</div>
-    </div>`).join('') || '<p class="hint" style="margin:0">No icons yet. LFG posts use 🎮.</p>';
+    </div>`;
+  }).join('') || '<p class="hint" style="margin:0">No icons yet. LFG posts use 🎮.</p>';
 }
 
 function setIcon(i, field, value) {
   state.settings.icons.games[i][field] = value;
   $(`ip-${i}`).innerHTML = iconPreview(i);
+  checkDirty();
 }
 
 function addIcon() {
@@ -745,14 +1184,136 @@ function removeIcon(i) {
   renderIcons();
 }
 
+function uploadIcon(i) {
+  pickImage({ title: `Icon for ${state.settings.icons.games[i].name || 'this game'}`, round: false, size: 128, onDone: data => {
+    setIcon(i, 'url', data);
+    renderIcons();
+  } });
+}
+
+function changeAvatar() {
+  pickImage({ title: 'Profile picture', round: true, size: 512, onDone: async data => {
+    const result = await attempt(() => api('POST', '/api/avatar', { image: data }));
+    if (result) setBot({ ...bot, avatar: result.avatar });
+  } });
+}
+
+function pickImage(options) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/png,image/jpeg,image/webp,image/gif';
+  input.onchange = () => {
+    const file = input.files[0];
+    if (!file) return;
+    const img = $('cropImg');
+    img.onload = () => startCrop(options);
+    img.onerror = () => toast("That file couldn't be opened as an image.", true);
+    img.src = URL.createObjectURL(file);
+  };
+  input.click();
+}
+
+function startCrop(options) {
+  const img = $('cropImg');
+  const scale = Math.min(440 / img.naturalWidth, 440 / img.naturalHeight);
+  const w = img.naturalWidth * scale;
+  const h = img.naturalHeight * scale;
+  const side = Math.min(w, h);
+  crop = { ...options, scale, w, h, s: side, x: (w - side) / 2, y: (h - side) / 2, min: Math.min(side, 40) };
+  $('cropStage').style.width = `${w}px`;
+  $('cropStage').style.height = `${h}px`;
+  $('cropTitle').textContent = options.title;
+  $('crop').classList.toggle('round', options.round);
+  $('cropSize').min = crop.min;
+  $('cropSize').max = side;
+  $('cropSize').step = 'any';
+  $('cropMiniText').innerHTML = options.round ? `<b>${esc(bot.name)}</b>` : `<b>${esc(options.title.replace(/^Icon for /, ''))}</b>`;
+  $('crop').hidden = false;
+  drawCrop();
+}
+
+function drawCrop() {
+  const box = $('cropBox');
+  Object.assign(box.style, { left: `${crop.x}px`, top: `${crop.y}px`, width: `${crop.s}px`, height: `${crop.s}px` });
+  $('cropSize').value = crop.s;
+  for (const id of ['cropPreview', 'cropMini']) {
+    const canvas = $(id);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage($('cropImg'), crop.x / crop.scale, crop.y / crop.scale, crop.s / crop.scale, crop.s / crop.scale, 0, 0, canvas.width, canvas.height);
+  }
+  $('cropMini').style.borderRadius = crop.round ? '50%' : '6px';
+}
+
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+function cropResize(size) {
+  const cx = crop.x + crop.s / 2;
+  const cy = crop.y + crop.s / 2;
+  crop.s = clamp(size, crop.min, Math.min(crop.w, crop.h));
+  crop.x = clamp(cx - crop.s / 2, 0, crop.w - crop.s);
+  crop.y = clamp(cy - crop.s / 2, 0, crop.h - crop.s);
+  drawCrop();
+}
+
+$('cropBox').onpointerdown = e => {
+  e.preventDefault();
+  const stage = $('cropStage').getBoundingClientRect();
+  const corner = e.target.dataset.c;
+  const start = { ...crop, px: e.clientX, py: e.clientY };
+  $('cropBox').setPointerCapture(e.pointerId);
+  $('cropBox').onpointermove = m => {
+    const px = m.clientX - stage.left;
+    const py = m.clientY - stage.top;
+    if (!corner) {
+      crop.x = clamp(start.x + m.clientX - start.px, 0, crop.w - crop.s);
+      crop.y = clamp(start.y + m.clientY - start.py, 0, crop.h - crop.s);
+    } else {
+      const right = corner.endsWith('r');
+      const bottom = corner.startsWith('b');
+      const ax = right ? start.x : start.x + start.s;
+      const ay = bottom ? start.y : start.y + start.s;
+      const room = Math.min(right ? crop.w - ax : ax, bottom ? crop.h - ay : ay);
+      crop.s = clamp(Math.max(right ? px - ax : ax - px, bottom ? py - ay : ay - py), crop.min, room);
+      crop.x = right ? ax : ax - crop.s;
+      crop.y = bottom ? ay : ay - crop.s;
+    }
+    drawCrop();
+  };
+  $('cropBox').onpointerup = () => { $('cropBox').onpointermove = null; };
+};
+
+$('cropStage').onwheel = e => {
+  e.preventDefault();
+  cropResize(crop.s - e.deltaY * 0.4);
+};
+
+function closeCrop() {
+  $('crop').hidden = true;
+  URL.revokeObjectURL($('cropImg').src);
+  crop = null;
+}
+
+function finishCrop() {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = crop.size;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage($('cropImg'), crop.x / crop.scale, crop.y / crop.scale, crop.s / crop.scale, crop.s / crop.scale, 0, 0, crop.size, crop.size);
+  const { onDone } = crop;
+  const data = canvas.toDataURL('image/png');
+  closeCrop();
+  onDone(data);
+}
+
 function resetSection(section) {
   state.settings[section] = structuredClone(state.defaults[section]);
   renderAll();
-  toast('Reset. Click Save to keep it.');
+  checkDirty();
 }
 
 function renderAll() {
-  $('invite').value = state.invite ?? 'Add the Application ID on the Keys page first.';
   renderEnv();
   renderColours();
   renderTexts();
@@ -762,11 +1323,19 @@ function renderAll() {
   renderLimits();
 }
 
+function setBot(info) {
+  bot = { name: info.name || 'Khut', avatar: info.avatar || '/icon.png' };
+  $('sideAvatar').src = $('profileAvatar').src = bot.avatar;
+  $('sideName').textContent = $('profileName').textContent = bot.name;
+  document.querySelectorAll('.dmsg .av').forEach(img => img.src = bot.avatar);
+}
+
 function setRunning(running) {
   $('status').textContent = running ? 'Running' : 'Stopped';
   $('status').classList.toggle('on', running);
-  $('startBtn').disabled = running;
-  $('stopBtn').disabled = !running;
+  $('startBtn').hidden = running;
+  $('stopBtn').hidden = !running;
+  $('restartBtn').disabled = !running;
 }
 
 async function pollLogs() {
@@ -797,12 +1366,13 @@ function botAction(action) {
 
 async function backup() {
   const result = await attempt(() => api('POST', '/api/backup'));
-  if (result) $('backupResult').textContent = `Backup created at ${result.path}`;
+  if (result) $('backupResult').textContent = `Saved to ${result.path}`;
 }
 
 function copyInvite() {
-  navigator.clipboard.writeText($('invite').value);
-  toast('Copied.');
+  if (!state.invite) return toast('Add the Application ID on the Keys page first.', true);
+  navigator.clipboard.writeText(state.invite);
+  toast('Invite link copied.');
 }
 
 function saveEnv() {
@@ -810,55 +1380,67 @@ function saveEnv() {
   document.querySelectorAll('[data-env]').forEach(i => values[i.dataset.env] = i.value.trim());
   attempt(async () => {
     const result = await api('POST', '/api/env', values);
-    state = await api('GET', '/api/state');
-    $('invite').value = state.invite ?? '';
+    const fresh = await api('GET', '/api/state');
+    state.env = fresh.env;
+    state.invite = fresh.invite;
+    loadBot();
     return result;
   });
 }
 
-function saveSettings() {
+async function saveSettings() {
+  finishEdit();
   for (const [key, value] of Object.entries(state.settings.colors)) {
     if (!/^#[0-9A-Fa-f]{6}$/.test(value)) return toast(`${COLOURS[key]} needs a colour like #5865F2.`, true);
   }
   state.settings.icons.games = state.settings.icons.games.filter(g => g.name.trim() || g.url);
-  const bad = state.settings.icons.games.find(g => !g.name.trim() || !/^https:\/\//.test(g.url));
+  const bad = state.settings.icons.games.find(g => !g.name.trim() || !/^(https:\/\/|data:image\/png;base64,)/.test(g.url));
   renderIcons();
-  if (bad) return toast(`${bad.name || 'A game'} needs a name and an https:// image link.`, true);
-  attempt(() => api('POST', '/api/settings', state.settings));
+  if (bad) {
+    showTab('icons');
+    return toast(`${bad.name || 'A game'} needs a name and an image.`, true);
+  }
+  const result = await attempt(() => api('POST', '/api/settings', state.settings));
+  if (result) {
+    saved = JSON.stringify(state.settings);
+    checkDirty();
+  }
 }
 
 function renderGuilds(list) {
-  if (!list.length) return $('guildList').innerHTML = '<div class="box">The bot isn\'t in any server yet. Use the invite link on the Bot page.</div>';
+  guildsLoaded = true;
+  if (!list.length) return $('guildList').innerHTML = '<div class="card">The bot isn\'t in any server yet. Copy the invite link on the Bot page to add it.</div>';
   $('guildList').innerHTML = list.map(g => `
-    <div class="box guild">
-      ${g.icon ? `<img src="${g.icon}" alt="">` : `<div class="gi">${esc(g.name[0])}</div>`}
-      <div style="flex:1">
-        <h2>${esc(g.name)}</h2>
-        <div class="grid2" style="margin-top:10px">
-          <label class="field"><b>Timezone</b><div class="row"><input value="${esc(g.timezone)}" id="tz-${g.id}"><button class="btn grey" onclick="guild('${g.id}', { timezone: $('tz-${g.id}').value.trim() })">Save</button></div></label>
-          <div style="margin-top:22px">
-            <label class="switch field"><input type="checkbox" ${g.wrapped ? 'checked' : ''} onchange="guild('${g.id}', { wrapped: this.checked })">Post Wrapped automatically every month</label>
-            <label class="switch field"><input type="checkbox" ${g.roles ? 'checked' : ''} onchange="guild('${g.id}', { roles: this.checked })">Make a role for each game</label>
-          </div>
+    <div class="card">
+      <div class="guild-head">${g.icon ? `<img src="${g.icon}" alt="">` : `<div class="gi">${esc(g.name[0])}</div>`}<div><h2 style="font-size:17px">${esc(g.name)}</h2><small class="muted">${g.games.length} game${g.games.length === 1 ? '' : 's'}${g.roles ? ' · game roles on' : ''}</small></div></div>
+      <div class="grid2">
+        <div>
+          <label class="field"><b>Timezone</b><div class="row"><input value="${esc(g.timezone)}" id="tz-${g.id}"><button class="btn" onclick="guild('${g.id}', { timezone: $('tz-${g.id}').value.trim() })">Save</button></div><small>Used for LFG times, Wrapped and the daily /play reset.</small></label>
+          <label class="field"><b>Yesterday's /play answers</b>
+            <select onchange="guild('${g.id}', { playChannel: this.value })">
+              <option value="">Don't post</option>
+              ${g.channels.map(c => `<option value="${c.id}" ${c.id === g.playChannel ? 'selected' : ''}>#${esc(c.name)}</option>`).join('')}
+            </select>
+            <small>Posted after midnight in this server's timezone.</small>
+          </label>
         </div>
-        <label class="field" style="max-width:360px"><b>Yesterday's /play answers</b>
-          <select onchange="guild('${g.id}', { playChannel: this.value })">
-            <option value="">Don't post</option>
-            ${g.channels.map(c => `<option value="${c.id}" ${c.id === g.playChannel ? 'selected' : ''}>#${esc(c.name)}</option>`).join('')}
-          </select>
-          <small>Posted after midnight in this server's timezone.</small>
-        </label>
-        <p class="hint">${g.roles ? 'LFG posts ping the game\'s role. Khut needs the Manage Roles permission. Changes apply within 30 seconds while the bot runs.' : 'LFG posts quietly ping each subscriber. Turn on game roles to ping a role instead.'}</p>
-        <b>Games</b>${g.picker ? ' <small style="color:var(--muted)">(the game picker updates by itself)</small>' : ''}
-        <div class="chips">${g.games.map(x => `<span class="chip">${esc(x.name)} <small>${x.subs}</small><button title="Remove" onclick="removeGame('${g.id}', this.dataset.name)" data-name="${esc(x.name)}">×</button></span>`).join('') || '<small style="color:var(--muted)">No games yet</small>'}</div>
-        <div class="row" style="max-width:360px"><input id="add-${g.id}" placeholder="Game name" maxlength="50" onkeydown="event.key === 'Enter' && addGame('${g.id}')"><button class="btn" onclick="addGame('${g.id}')">Add</button></div>
+        <div>
+          <label class="toggle"><input type="checkbox" ${g.wrapped ? 'checked' : ''} onchange="guild('${g.id}', { wrapped: this.checked })">Post Wrapped automatically every month</label>
+          <label class="toggle"><input type="checkbox" ${g.roles ? 'checked' : ''} onchange="guild('${g.id}', { roles: this.checked })">Make a role for each game</label>
+          <p class="hint" style="margin-top:8px">${g.roles ? 'LFG posts ping the game\'s role. Khut needs the Manage Roles permission.' : 'LFG posts quietly ping each subscriber. Turn on game roles to ping a role instead.'}</p>
+        </div>
       </div>
-    </div>`).join('') + '<button class="btn grey" onclick="loadGuilds()">Refresh</button>';
+      <b>Games</b>${g.picker ? ' <small class="muted">· the game picker updates by itself</small>' : ''}
+      <div class="chips">${g.games.map(x => `<span class="chip">${esc(x.name)} <small>${x.subs}</small><button title="Remove" onclick="removeGame('${g.id}', this.dataset.name)" data-name="${esc(x.name)}">×</button></span>`).join('') || '<small class="muted">No games yet</small>'}</div>
+      <div class="row" style="max-width:380px"><input id="add-${g.id}" placeholder="Game name" maxlength="50" onkeydown="event.key === 'Enter' && addGame('${g.id}')"><button class="btn" onclick="addGame('${g.id}')">Add</button></div>
+    </div>`).join('');
 }
 
 async function loadGuilds() {
+  $('guildList').innerHTML = '<div class="loading">Loading servers…</div>';
   const list = await attempt(() => api('GET', '/api/guilds'));
   if (list) renderGuilds(list);
+  else $('guildList').innerHTML = '<div class="card">Couldn\'t load the servers. Check the bot token on the Keys page, then press Refresh.</div>';
 }
 
 async function guild(id, change) {
@@ -874,11 +1456,22 @@ function removeGame(id, name) {
   if (confirm(`Remove ${name}? Everyone's subscription to it goes too.`)) guild(id, { removeGame: name });
 }
 
+async function loadBot() {
+  try {
+    setBot(await api('GET', '/api/bot'));
+  } catch {}
+}
+
+['input', 'change'].forEach(type => document.addEventListener(type, () => setTimeout(checkDirty), true));
+document.addEventListener('click', () => setTimeout(checkDirty), true);
+
 (async () => {
   state = await api('GET', '/api/state');
+  saved = JSON.stringify(state.settings);
   renderTabs();
   renderAll();
   pollLogs();
+  loadBot();
 })();
 </script>
 </body>

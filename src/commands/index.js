@@ -4,12 +4,14 @@ const list = [
   require('./play'),
   require('./leaderboard'),
   require('./warframe'),
-  require('./wow'),
+  require('./price'),
   require('./lfg'),
   require('./lfg').games,
   require('./dm'),
   require('./wrapped'),
   require('./link'),
+  require('./link').forOthers,
+  require('./unlink'),
   require('./mydata'),
   require('./setup')
 ];

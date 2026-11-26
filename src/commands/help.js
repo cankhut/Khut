@@ -6,12 +6,12 @@ const data = new SlashCommandBuilder()
 
 const sections = [
   ['📊 Stats', [
-    '`/stats game:Deadlock` — your Deadlock stats',
-    '`/stats game:League player:Name#Tag` — someone\'s League stats',
-    '`/stats game:CS2 player:@Talha` — works with @mentions, Steam links and friend codes',
-    '`/stats game:Brawlhalla player:1234567` — lifetime, ranked 1v1/2v2/3v3, combat and legend stats',
-    '`/stats game:Discord player:@Talha` — their voice time',
-    '`/stats game:Discord player:@Talha with:@Jankat` — voice time between two people'
+    '`/stats deadlock` — your Deadlock stats',
+    '`/stats league player:Name#Tag` — someone\'s League stats',
+    '`/stats cs2 player:@Talha` — works with @mentions, Steam links and friend codes',
+    '`/stats brawlhalla player:1234567` — lifetime, ranked 1v1/2v2/3v3, combat and legend stats',
+    '`/stats discord player:@Talha` — their voice time',
+    '`/stats discord player:@Talha with:@Jankat` — voice time between two people'
   ]],
   ['🎲 Games', [
     '`/play dlbuild mode:High rank guess:Haze` — guess Deadlock heroes from their items in a real match',
@@ -32,12 +32,13 @@ const sections = [
     '`/wrapped` — server voice Wrapped for this month, last month, this year or all time'
   ]],
   ['🐉 WoW: Forever', [
-    '`/wow character name:<Name Surname>` — a character\'s class, guild, professions, PvP, reputation and gear',
-    '`/wow guild name:<guild>` — a guild\'s members, classes and leaders',
-    '`/wow price item:<item>` — auction house prices for Alliance, Horde and Blackwater'
+    '`/stats wow character` — your linked characters. Add `name:@Talha` for theirs, or `name:<Name Surname>` for anyone',
+    '`/stats wow guild name:<guild>` — a guild\'s members, classes and leaders',
+    '`/price wow item:<item>` — auction house prices for Alliance, Horde and Blackwater'
   ]],
   ['🔗 Accounts', [
-    '`/link steam:<profile link> riot:<Name#Tag> brawlhalla:<ID> wow:<Name Surname>` — link accounts for @mentions',
+    '`/link steam:<profile link> riot:<Name#Tag> brawlhalla:<ID> wow:<Name Surname>` — link accounts for @mentions (repeat `wow:` for more characters)',
+    '`/unlink account:<account>` — remove one linked account or character',
     '`/mydata` — see, pause or delete what Khut stores about you'
   ]],
   ['⚙️ Admins', [

@@ -181,6 +181,15 @@ const routes = {
     db.exec(`VACUUM INTO '${path.join(folder, 'data.db').replace(/'/g, "''")}'`);
     return { message: 'Backup created.', path: folder };
   },
+  'GET /api/bot': async () => {
+    const me = await discord('GET', '/users/@me');
+    return { name: me.global_name ?? me.username, avatar: me.avatar ? `https://cdn.discordapp.com/avatars/${me.id}/${me.avatar}.png?size=256` : null };
+  },
+  'POST /api/avatar': async body => {
+    if (!/^data:image\/png;base64,/.test(body.image ?? '')) throw new Error('Pick an image first.');
+    const me = await discord('PATCH', '/users/@me', { avatar: body.image });
+    return { message: 'Profile picture updated.', avatar: `https://cdn.discordapp.com/avatars/${me.id}/${me.avatar}.png?size=256` };
+  },
   'GET /api/guilds': guilds,
   'POST /api/guild': async body => {
     if (body.timezone !== undefined) {
