@@ -27,6 +27,7 @@ db.exec(`
 
 for (const sql of [
   'ALTER TABLE links ADD COLUMN brawlhalla_id TEXT',
+  'ALTER TABLE links ADD COLUMN wow_character TEXT',
   'ALTER TABLE lfg ADD COLUMN extra INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE lfg ADD COLUMN image TEXT',
   'ALTER TABLE lfg ADD COLUMN ended_at INTEGER',
@@ -60,14 +61,15 @@ function getLinks(discordId) {
   return db.prepare('SELECT * FROM links WHERE discord_id = ?').get(discordId);
 }
 
-function saveLinks(discordId, steamId, riotId, brawlhallaId) {
+function saveLinks(discordId, steamId, riotId, brawlhallaId, wowCharacter) {
   db.prepare(`
-    INSERT INTO links (discord_id, steam_id, riot_id, brawlhalla_id) VALUES (?, ?, ?, ?)
+    INSERT INTO links (discord_id, steam_id, riot_id, brawlhalla_id, wow_character) VALUES (?, ?, ?, ?, ?)
     ON CONFLICT(discord_id) DO UPDATE SET
       steam_id = COALESCE(excluded.steam_id, steam_id),
       riot_id = COALESCE(excluded.riot_id, riot_id),
-      brawlhalla_id = COALESCE(excluded.brawlhalla_id, brawlhalla_id)
-  `).run(discordId, steamId ?? null, riotId ?? null, brawlhallaId ?? null);
+      brawlhalla_id = COALESCE(excluded.brawlhalla_id, brawlhalla_id),
+      wow_character = COALESCE(excluded.wow_character, wow_character)
+  `).run(discordId, steamId ?? null, riotId ?? null, brawlhallaId ?? null, wowCharacter ?? null);
 }
 
 module.exports = { db, guildSettings, setGuild, getLinks, saveLinks };

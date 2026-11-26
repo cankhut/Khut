@@ -187,6 +187,8 @@ const ENV = [
   ['STEAM_KEY', 'Steam key', 'For Deadlock and CS2 stats.', 'https://steamcommunity.com/dev/apikey', true],
   ['RIOT_KEY', 'Riot key', 'For League stats. Apply for a Personal API Key.', 'https://developer.riotgames.com', true],
   ['FACEIT_KEY', 'FACEIT key', 'Optional. Create an app, then a Server side key.', 'https://developers.faceit.com', true],
+  ['BLIZZARD_ID', 'Blizzard client ID', 'For WoW: Forever. Create a client on the Battle.net developer portal.', 'https://develop.battle.net/access/clients'],
+  ['BLIZZARD_SECRET', 'Blizzard client secret', 'The secret of the same Battle.net client.', 'https://develop.battle.net/access/clients', true],
   ['LEETIFY_KEY', 'Leetify key', 'Optional. Higher rate limits for Leetify.', 'https://leetify.com/app/developer', true],
   ['CLIENT_SECRET', 'Client secret', 'Optional, for one-click /link. Developer Portal > OAuth2.', null, true],
   ['PUBLIC_URL', 'Public URL', 'Optional, for one-click /link. Like https://your-address'],
@@ -197,7 +199,7 @@ const ENV = [
 
 const COLOURS = {
   deadlock: 'Deadlock card', cs2: 'CS2 card', lol: 'League card', brawlhalla: 'Brawlhalla card', discord: 'Discord voice card', wrapped: 'Wrapped', help: '/help',
-  play: '/play games', leaderboard: '/leaderboard', warframe: '/warframe cycle',
+  play: '/play games', leaderboard: '/leaderboard', warframe: '/warframe cycle', wow: 'WoW: Forever',
   lfgOpen: 'LFG open', lfgFull: 'LFG full', lfgClosed: 'LFG closed', lfgCancelled: 'LFG cancelled'
 };
 
@@ -230,7 +232,7 @@ const APP_OPTIONS = {
   startWithWindows: 'Start Khut with Windows, in the tray'
 };
 
-const GROUPS = { error: 'General', stats: '/stats', play: '/play games', lfg: 'LFG', games: '/games and the game picker', dm: '/dm', link: '/link', mydata: '/mydata', wrapped: '/wrapped', setup: '/setup', leaderboard: '/leaderboard', warframe: '/warframe cycle', card: 'Stat cards' };
+const GROUPS = { error: 'General', stats: '/stats', play: '/play games', lfg: 'LFG', games: '/games and the game picker', dm: '/dm', link: '/link', mydata: '/mydata', wrapped: '/wrapped', setup: '/setup', leaderboard: '/leaderboard', warframe: '/warframe cycle', wow: 'WoW: Forever', card: 'Stat cards' };
 
 const ABOUT = {
   'error': 'Any unexpected error',
@@ -331,6 +333,14 @@ const ABOUT = {
   'warframe.tier': 'Arbitration tier',
   'warframe.darvo': 'Darvo deal',
   'warframe.news': 'News',
+  'wow.noKeys': 'Blizzard keys missing',
+  'wow.notLinked': 'No character given and none linked',
+  'wow.notFound': 'Character not found',
+  'wow.guildNotFound': 'Guild not found',
+  'wow.itemNotFound': 'Item not found',
+  'wow.unavailable': "Blizzard's API didn't answer",
+  'wow.footer': 'Footer',
+  'link.badWow': 'WoW: Forever character not found',
   'play.dlHint': 'dlbuild: how to guess',
   'play.answersTitle': "Yesterday's answers post: title",
   'play.answersFound': "Yesterday's answers post: players count",
@@ -467,6 +477,7 @@ function colourPreview(key) {
     wrapped: { title: '📊 November 2026 Wrapped', desc: '⏱️ 120h in voice together\n🤝 Top duo: @Jankat + @Talha (40h)', fields: [{ name: '🏆 Most time in voice', value: '🥇 @Jankat — 60h\n🥈 @Talha — 52h' }] },
     play: { title: 'dlbuild · High rank · Round 1/4', desc: 'Type your guess with `/play dlbuild mode:High rank guess:`', fields: [{ name: '🟠 Hidden King', value: 'Oracle 3\n👤 3.5k\n➡️ 👤 **2.8k**\n👤 3.1k', inline: true }, { name: '⠀', value: '🟠 **21.5k**\n🕘 **6:00**\n🔵 **22.8k**', inline: true }, { name: '🔵 Archmother', value: 'Oracle 5\n👤 3.9k\n👤 3.4k\n👤 3.6k', inline: true }, { name: '🛒 Items at 6:00', value: '🟫 🟫 ⬛ ⬛ ⬛ ⬛\nHigh-Velocity Rounds · Mystic Burst' }], footer: 'Match played 2026-11-04 · Data from deadlock-api.com' },
     help: { title: 'Khut commands', fields: [{ name: '📊 Stats', value: '`/stats game:Deadlock` — your Deadlock stats' }], footer: 'Khut · Open source (AGPL-3.0)' },
+    wow: { author: 'Joe Gun', desc: `Troll Hunter · ${t('wow.level', { level: 60 })} · Marksmanship\nHorde · PvP · EU\n<Aggressively Average>`, fields: [{ name: t('wow.professions'), value: 'Enchanting 256/300', inline: true }, { name: t('wow.pvp'), value: t('wow.kills', { count: 51 }), inline: true }], footer: t('wow.footer', { region: 'EU' }) },
     warframe: { title: t('warframe.title'), fields: [{ name: t('warframe.cetus'), value: '☀️ **Day**\n' + t('warframe.ends', { time: 'in 1 hour' }), inline: true }, { name: t('warframe.vallis'), value: '❄️ **Cold**\n' + t('warframe.ends', { time: 'in 8 minutes' }), inline: true }, { name: t('warframe.cambion'), value: '**Fass**\n' + t('warframe.ends', { time: 'in 1 hour' }), inline: true }], footer: t('warframe.footer') },
     leaderboard: { title: t('leaderboard.title', { game: 'dlbuild', period: 'This week' }), desc: [t('leaderboard.dlRow', { place: '🥇', user: '@Jankat', points: 250, games: 3 }), t('leaderboard.dlRow', { place: '🥈', user: '@Talha', points: 180, games: 3 })].join('\n'), footer: t('leaderboard.footer') }
   };

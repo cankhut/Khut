@@ -31,8 +31,13 @@ const sections = [
   ['🔄 Wrapped', [
     '`/wrapped` — server voice Wrapped for this month, last month, this year or all time'
   ]],
+  ['🐉 WoW: Forever', [
+    '`/wow character name:<Name Surname>` — a character\'s class, guild, professions, PvP, reputation and gear',
+    '`/wow guild name:<guild>` — a guild\'s members, classes and leaders',
+    '`/wow price item:<item>` — auction house prices for Alliance, Horde and Blackwater'
+  ]],
   ['🔗 Accounts', [
-    '`/link steam:<profile link> riot:<Name#Tag> brawlhalla:<ID>` — link accounts for @mentions',
+    '`/link steam:<profile link> riot:<Name#Tag> brawlhalla:<ID> wow:<Name Surname>` — link accounts for @mentions',
     '`/mydata` — see, pause or delete what Khut stores about you'
   ]],
   ['⚙️ Admins', [

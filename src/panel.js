@@ -9,7 +9,7 @@ const root = process.env.KHUT_DATA || appDir;
 process.chdir(root);
 
 const ENV_FILE = path.join(root, '.env');
-const ENV_KEYS = ['DISCORD_TOKEN', 'CLIENT_ID', 'DEV_GUILD_ID', 'STEAM_KEY', 'RIOT_KEY', 'LEETIFY_KEY', 'FACEIT_KEY', 'CLIENT_SECRET', 'PUBLIC_URL', 'PORT', 'LOG_LEVEL', 'PANEL_PORT'];
+const ENV_KEYS = ['DISCORD_TOKEN', 'CLIENT_ID', 'DEV_GUILD_ID', 'STEAM_KEY', 'RIOT_KEY', 'LEETIFY_KEY', 'FACEIT_KEY', 'BLIZZARD_ID', 'BLIZZARD_SECRET', 'CLIENT_SECRET', 'PUBLIC_URL', 'PORT', 'LOG_LEVEL', 'PANEL_PORT'];
 
 function readEnv() {
   const env = {};

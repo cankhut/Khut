@@ -16,11 +16,14 @@ All commands work in any channel. `/help` shows this list in Discord.
 | `/play framedle mode guess` | Daily Warframe game: Classic (Warframe properties) or Ability (a rotated, greyed ability card). |
 | `/leaderboard game period` | The best `/play` players in this server: dlbuild by points, lolhero and framedle by days solved (fewer guesses wins ties). This week, this month or all time. Counts games played in any server you share with Khut. |
 | `/warframe cycle` | Warframe (PC) right now: Cetus, Orb Vallis, Cambion Drift, Zariman and Duviri cycles, Steel Path reward, Archon Hunt, Sortie, Baro Ki'Teer, Arbitration (with its tier), Darvo's deal and the 5 latest news posts. Countdowns update live in Discord. |
+| `/wow character name:<Name Surname>` | A WoW: Forever character: race, class, spec, guild, professions, stats, PvP, reputation, gear (linked to Wowhead) and the character render. Leave the name empty for your linked character. |
+| `/wow guild name:<guild>` | A WoW: Forever guild: members, class spread, how many are level 60, and its leaders. |
+| `/wow price item:<item>` | Auction house prices for an item on Alliance, Horde and Blackwater, for one ruleset. Pick the item from the list while typing. Uses your linked character's ruleset, or Normal. |
 | `/lfg game time players note image` | Look for players. Time: `now`, `30m`, `2h`, `21:00`, `9pm`. Players: `3/6` if 3 of you are already together, or just `6`. A picture attached as `image`, or a GIF or image link in `note` (Tenor, Giphy, Discord), shows on the post. Quietly pings everyone subscribed to that game, pings the group when full and reminds them 10 minutes before. Closes 2 hours after the start time and is deleted 12 hours after it closes or is cancelled. |
 | `/games` | Subscribe to games so you get pinged when someone uses `/lfg` for them. Only you see it. |
 | `/dm on` / `/dm off` | Also get those pings as a DM. |
 | `/wrapped period` | Server voice Wrapped: this month, last month, this year or all time. |
-| `/link` | Link your Steam, Riot and Brawlhalla accounts so people can use `player:@you`. |
+| `/link` | Link your Steam, Riot, Brawlhalla and WoW: Forever accounts so people can use `player:@you`. |
 | `/mydata` | See, pause or delete what Khut stores about you. |
 | `/setup` | Admins: `games`, `roles`, `answers`, `addgame`, `removegame`, `wrapped`, `timezone`. |
 
@@ -78,6 +81,7 @@ Hero and champion icons gets added to the bot as app emojis the first time it st
 | `STEAM_KEY` | <https://steamcommunity.com/dev/apikey> | Domain can be `localhost`. Your Steam account must not be limited. |
 | `RIOT_KEY` | <https://developer.riotgames.com> | Register a product and apply for a **Personal API Key**. The default development key works for testing but it expires every 24 hours. |
 | `FACEIT_KEY` | <https://developers.faceit.com> | Optional. Create an app, then a **Server side** API key. Adds FACEIT level, Elo and stats to CS2 cards. |
+| `BLIZZARD_ID`, `BLIZZARD_SECRET` | <https://develop.battle.net/access/clients> | Optional, for WoW: Forever. Click **Create Client**, give it any name, leave the redirect URL empty, then copy the client ID and secret. |
 | `LEETIFY_KEY` | <https://leetify.com/app/developer> | Optional. Gives higher rate limits for Leetify. |
 
 Deadlock stats come from deadlock-api.com and need no key.
@@ -200,7 +204,7 @@ npm start
 1. Developer Portal > **OAuth2**: copy **Client Secret** > `CLIENT_SECRET`, and add the redirect `https://your-address/callback`.
 2. Set `PUBLIC_URL=https://your-address` in `.env`.
 
-Without this, `/link steam:... riot:...` works the same way. Brawlhalla IDs are always linked manually with `/link brawlhalla:<ID>`; Discord OAuth does not expose them.
+Without this, `/link steam:... riot:...` works the same way. Brawlhalla IDs and WoW: Forever characters are always linked manually with `/link brawlhalla:<ID>` and `/link wow:<Name Surname>`; Discord OAuth does not expose them.
 
 ## 6. Keep the keys private
 
@@ -213,6 +217,7 @@ Without this, `/link steam:... riot:...` works the same way. Brawlhalla IDs are 
 - Khut isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
 - CS2 data from the Steam Web API, [FACEIT](https://www.faceit.com) and [Leetify](https://leetify.com/) (Data Provided by Leetify). Not affiliated with Valve, FACEIT or Leetify.
 - League champion properties in `data/lol-champions.json` are compiled from the [League of Legends Wiki](https://wiki.leagueoflegends.com) (CC BY-SA). Ability icons come from Riot's Data Dragon.
+- WoW: Forever data from Blizzard's [Battle.net API](https://develop.battle.net). Forever isn't officially documented there yet, so things may change. Class, profession and item icons come from Blizzard; race, faction and coin icons from [Warcraft Wiki](https://warcraft.wiki.gg); item links go to [Wowhead](https://www.wowhead.com/forever). Not affiliated with Blizzard Entertainment.
 - Warframe world state from Digital Extremes' public world state, translated with [warframe-worldstate-data](https://github.com/WFCD/warframe-worldstate-data) by WFCD (MIT). The Zariman faction and the Arbitration schedule come from [browse.wf](https://browse.wf/live), Arbitration tiers from the [Arbitration Goons](https://arbi.guide/).
 - Warframe properties in `data/warframes.json` are compiled from the [Warframe Wiki](https://wiki.warframe.com) (CC BY-SA). Portraits, ability images and the Warframe icon emojis (damage types, factions and more, listed in `data/warframe-icons.json`) are loaded from the wiki. The bot is not affiliated with Digital Extremes.
 - Deadlock data from [deadlock-api.com](https://deadlock-api.com), with links to [Statlocker](https://statlocker.gg) profiles. Not affiliated with Valve.

@@ -28,6 +28,7 @@ async function execute(interaction) {
       `Steam: ${links?.steam_id ?? '-'}`,
       `Riot: ${links?.riot_id ?? '-'}`,
       `Brawlhalla ID: ${links?.brawlhalla_id ?? '-'}`,
+      `WoW: Forever: ${links?.wow_character ?? '-'}`,
       `Voice minutes stored: ${minutes}`,
       `Voice tracking: ${paused ? 'paused' : 'on'}`,
       `LFG pings here: ${subs.join(', ') || '-'}`,
