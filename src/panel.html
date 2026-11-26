@@ -9,7 +9,7 @@
   :root {
     --bg: #0f1116; --side: #13161d; --surface: #171a22; --raised: #1f232d; --line: #272c37; --line2: #343a48;
     --text: #e7e9ef; --muted: #8c93a6; --faint: #5d6476;
-    --accent: #f2b48c; --accent-ink: #2a1a10; --accent-soft: rgba(242,180,140,.12); --blue: #6d8bff; --green: #3fb27f; --red: #e5534b;
+    --accent: #4d8dff; --accent-ink: #fff; --accent-soft: rgba(77,141,255,.14); --blue: #7aa7ff; --changed: #e2b341; --green: #3fb27f; --red: #e5534b;
     --dc-bg: #1b1e25; --dc-embed: #23262f;
   }
   * { box-sizing: border-box; }
@@ -64,6 +64,7 @@
   .btn.danger:hover { border-color: var(--red); }
   .btn.ghost { background: none; border-color: transparent; color: var(--muted); }
   .btn.ghost:hover { color: var(--text); background: var(--raised); }
+  .btn.reset:hover { color: #ff8a84; background: rgba(229,83,75,.12); border-color: rgba(229,83,75,.45); }
   .btn.small { padding: 4px 10px; font-size: 12px; }
   .btn:disabled { opacity: .4; cursor: default; filter: none; }
 
@@ -137,9 +138,9 @@
   .tnav input { margin-bottom: 10px; }
   .tnav button { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 8px; background: none; border: 0; color: var(--muted); font: inherit; text-align: left; padding: 7px 10px; border-radius: 8px; cursor: pointer; }
   .tnav button:hover { background: var(--surface); color: var(--text); }
-  .tnav button.active { background: var(--surface); color: var(--text); box-shadow: inset 3px 0 0 var(--accent); }
+  .tnav button.active { background: var(--accent-soft); color: var(--accent); }
   .tnav .count { font-size: 11px; color: var(--faint); }
-  .tnav .edited { font-size: 11px; color: var(--accent); }
+  .tnav .edited { font-size: 11px; color: var(--changed); }
   .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12px; color: var(--muted); margin-bottom: 16px; }
   .legend span { display: inline-flex; align-items: center; gap: 6px; }
   .legend i { font-style: normal; }
@@ -152,16 +153,17 @@
   .line-label b { color: var(--text); font-weight: 600; display: block; }
 
   .fx { opacity: .5; }
-  .var { background: rgba(109,139,255,.16); color: #b7c6ff; border-radius: 4px; padding: 0 3px; border-bottom: 1px dashed rgba(109,139,255,.7); }
-  .tx { border-radius: 4px; cursor: text; transition: background .1s, box-shadow .1s; box-shadow: 0 0 0 1px rgba(242,180,140,.28); position: relative; }
+  .var { background: rgba(167,139,250,.16); color: #d4c5ff; border-radius: 4px; padding: 0 3px; border-bottom: 1px dashed rgba(167,139,250,.7); -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  .tx { border-radius: 4px; cursor: text; transition: background .1s, box-shadow .1s; box-shadow: 0 0 0 1px rgba(77,141,255,.35); position: relative; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
   .tx:hover, .tx:focus-visible { background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent); outline: none; }
-  .tx.changed { box-shadow: 0 0 0 1px rgba(242,180,140,.28), inset 0 -2px 0 var(--accent); }
+  .tx.changed { background: rgba(226,179,65,.08); box-shadow: 0 0 0 1px rgba(226,179,65,.8); }
+  .tx.changed:hover { background: rgba(226,179,65,.14); box-shadow: 0 0 0 1px var(--changed); }
   .tx.empty::before { content: 'empty'; color: var(--faint); font-style: italic; }
   .tx.off { cursor: not-allowed; opacity: .35; box-shadow: 0 0 0 1px var(--line2); }
   .tx.off:hover { background: none; }
   .tx.off::after { content: 'off'; font-size: 10px; font-weight: 700; text-transform: uppercase; background: var(--line2); color: var(--muted); border-radius: 3px; padding: 0 4px; margin-left: 4px; vertical-align: 1px; }
   .tx.editing { white-space: pre-wrap; background: #11131a; box-shadow: none; cursor: text; display: inline-block; min-width: 60px; padding: 0 4px; opacity: 1; }
-  .pill { display: inline-block; background: rgba(109,139,255,.22); color: #c9d4ff; border-radius: 4px; padding: 0 5px; font-size: 12px; font-family: Consolas, monospace; margin: 0 1px; user-select: all; }
+  .pill { display: inline-block; background: rgba(167,139,250,.22); color: #e0d6ff; border-radius: 4px; padding: 0 5px; font-size: 12px; font-family: Consolas, monospace; margin: 0 1px; user-select: all; }
   #txbar { position: fixed; z-index: 30; width: 380px; background: var(--raised); border: 1px solid var(--line2); border-radius: 10px; padding: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.5); font-size: 13px; }
   #txbar .head { display: flex; gap: 8px; align-items: baseline; margin-bottom: 8px; }
   #txbar .head b { flex: 1; }
@@ -277,12 +279,12 @@
   </section>
 
   <section id="colours">
-    <div class="page-head"><div><h1>Colours</h1><p>The colour strip on the side of each card the bot posts.</p></div><button class="btn ghost" onclick="resetSection('colors')">Reset all</button></div>
+    <div class="page-head"><div><h1>Colours</h1><p>The colour strip on the side of each card the bot posts.</p></div><button class="btn ghost reset" onclick="resetSection('colors')">Reset all</button></div>
     <div class="card" id="colourList"></div>
   </section>
 
   <section id="texts">
-    <div class="page-head"><div><h1>Texts</h1><p>Everything the bot says, shown where it appears. Click any highlighted text to change it.</p></div><button class="btn ghost" onclick="resetSection('texts')">Reset all</button></div>
+    <div class="page-head"><div><h1>Texts</h1><p>Everything the bot says, shown where it appears. Click any highlighted text to change it.</p></div><button class="btn ghost reset" onclick="resetSection('texts')">Reset all</button></div>
     <div class="texts">
       <div class="tnav" id="textNav"></div>
       <div id="textBody"></div>
@@ -290,7 +292,7 @@
   </section>
 
   <section id="results">
-    <div class="page-head"><div><h1>Game results</h1><p>What the bot posts in the channel when someone finishes a /play game. It uses the first row that fits; the last row covers everything after it.</p></div><button class="btn ghost" onclick="resetSection('results')">Reset all</button></div>
+    <div class="page-head"><div><h1>Game results</h1><p>What the bot posts in the channel when someone finishes a /play game. It uses the first row that fits; the last row covers everything after it.</p></div><button class="btn ghost reset" onclick="resetSection('results')">Reset all</button></div>
     <fieldset class="card" id="box-lolhero"><h2>lolhero</h2><p class="off-note">Turned off in Limits.</p><p class="hint">By number of guesses. You can use {user} {mode} {count} {guesses}</p><div id="res-lolhero"></div><button class="btn small" style="margin-top:14px" onclick="addResult('lolhero')">Add row</button></fieldset>
     <fieldset class="card" id="box-framedle"><h2>framedle</h2><p class="off-note">Turned off in Limits.</p><p class="hint">By number of guesses. You can use {user} {mode} {count} {guesses}</p><div id="res-framedle"></div><button class="btn small" style="margin-top:14px" onclick="addResult('framedle')">Add row</button></fieldset>
     <fieldset class="card" id="box-dlbuild"><h2>dlbuild</h2><p class="off-note">Turned off in Limits.</p><p class="hint">By total points: 100 for the 4 rounds, more with bonus rounds. You can use {user} {mode} {points} {grid}</p><div id="res-dlbuild"></div><button class="btn small" style="margin-top:14px" onclick="addResult('dlbuild')">Add row</button></fieldset>
@@ -303,7 +305,7 @@
   </section>
 
   <section id="limits">
-    <div class="page-head"><div><h1>Limits</h1><p>Timings, optional messages and how the panel and app behave.</p></div><button class="btn ghost" onclick="resetSection('limits'); resetSection('messages'); resetSection('commands')">Reset all</button></div>
+    <div class="page-head"><div><h1>Limits</h1><p>Timings, optional messages and how the panel and app behave.</p></div><button class="btn ghost reset" onclick="resetSection('limits'); resetSection('messages'); resetSection('commands')">Reset all</button></div>
     <div class="card"><div class="grid2" id="limitList"></div></div>
     <div class="grid2">
       <div class="card"><p class="subhead">Optional messages</p><p class="hint">Turned-off messages are greyed out on the Texts and Game results pages.</p><div id="messageList"></div></div>
@@ -634,7 +636,7 @@ function renderColours() {
         <div class="swatch">
           <input type="color" value="${state.settings.colors[key]}" oninput="setColour('${key}', this.value)">
           <input value="${state.settings.colors[key]}" maxlength="7" oninput="/^#[0-9a-fA-F]{6}$/.test(this.value) && setColour('${key}', this.value)">
-          <button class="btn ghost small" onclick="setColour('${key}', state.defaults.colors['${key}'], true)">Reset</button>
+          <button class="btn ghost small reset" onclick="setColour('${key}', state.defaults.colors['${key}'], true)">Reset</button>
         </div>
       </div>
       <div id="cp-${key}">${colourPreview(key)}</div>
@@ -849,7 +851,7 @@ function renderTextBody() {
   const html = list.map(([title, inner]) => `<div class="scene"><div class="scene-title">${esc(title)}</div><div class="stage">${inner}</div></div>`).join('');
   const shown = new Set([...html.matchAll(/data-key="([\w.]+)"/g)].map(m => m[1]));
   const rest = groupKeys(textGroup).filter(k => !shown.has(k));
-  $('textBody').innerHTML = `<div class="row" style="margin-bottom:12px"><h2 class="grow" style="font-size:18px">${esc(GROUPS[textGroup] ?? textGroup)}</h2><button class="btn ghost small" onclick="resetGroup()">Reset this section</button></div>`
+  $('textBody').innerHTML = `<div class="row" style="margin-bottom:12px"><h2 class="grow" style="font-size:18px">${esc(GROUPS[textGroup] ?? textGroup)}</h2><button class="btn ghost small reset" onclick="resetGroup()">Reset this section</button></div>`
     + legend + html + (rest.length ? `<div class="scene"><div class="scene-title">${list.length ? 'Other messages' : 'Messages'}</div>${lines(rest)}</div>` : '');
 }
 
@@ -970,7 +972,7 @@ function renderBar() {
   bar.innerHTML = `<div class="head"><b>${esc(label(key))}</b><code>${key}</code></div>`
     + (vars.length ? `<div class="vars">Filled in by the bot:${vars.map(v => `<span class="pill" title="Add at the cursor" onclick="insertVar('${v}')">${v}</span>`).join('')}</div>` : '')
     + (missing.length ? `<div class="warn">Not used: ${missing.map(v => `{${v}}`).join(' ')}</div>` : '')
-    + `<div class="foot"><span>Enter to finish · Shift+Enter for a new line · Esc to undo<br>**bold** · \`code\` · -# small text</span>${isChanged(key) ? '<button class="btn small" onclick="resetEditing()">Reset</button>' : ''}<button class="btn primary small" onclick="finishEdit()">Done</button></div>`;
+    + `<div class="foot"><span>Enter to finish · Shift+Enter for a new line · Esc to undo<br>**bold** · \`code\` · -# small text</span>${isChanged(key) ? '<button class="btn small reset" onclick="resetEditing()">Reset</button>' : ''}<button class="btn primary small" onclick="finishEdit()">Done</button></div>`;
   bar.hidden = false;
   bar.onmousedown = e => e.preventDefault();
   placeBar();
@@ -1156,7 +1158,7 @@ function renderIcons() {
     return `
     <div class="item" style="grid-template-columns: 380px 1fr">
       <div class="label">
-        <div class="row" style="margin-bottom:10px"><div class="icon-tile">${game.url ? `<img src="${esc(game.url)}" alt="">` : '🎮'}</div><input placeholder="Game name" value="${esc(game.name)}" oninput="setIcon(${i}, 'name', this.value)"><button class="btn ghost small" title="Remove" onclick="removeIcon(${i})">Remove</button></div>
+        <div class="row" style="margin-bottom:10px"><div class="icon-tile">${game.url ? `<img src="${esc(game.url)}" alt="">` : '🎮'}</div><input placeholder="Game name" value="${esc(game.name)}" oninput="setIcon(${i}, 'name', this.value)"><button class="btn ghost small reset" title="Remove" onclick="removeIcon(${i})">Remove</button></div>
         ${uploaded
           ? `<div class="row"><span class="grow muted">Uploaded image</span><button class="btn small" onclick="uploadIcon(${i})">Change</button><button class="btn ghost small" onclick="setIcon(${i}, 'url', ''); renderIcons()">Use a link instead</button></div>`
           : `<div class="row"><input placeholder="https://… image link" value="${esc(game.url)}" onchange="setIcon(${i}, 'url', this.value.trim()); renderIcons()"><button class="btn small" onclick="uploadIcon(${i})">Upload</button></div>
