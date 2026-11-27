@@ -66,7 +66,8 @@ const defaults = {
   status: {
     type: 'None',
     text: '',
-    bio: ''
+    bio: '',
+    device: 'default'
   },
   commands: {
     linkFor: false

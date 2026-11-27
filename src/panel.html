@@ -241,6 +241,7 @@
         <p class="hint">Shown under the bot's name in the member list.</p>
         <div class="row"><select id="statusType" style="width:150px" onchange="setStatus('type', this.value)"></select><input id="statusText" placeholder="Deadlock" oninput="setStatus('text', this.value)"></div>
         <div id="statusPreview" style="margin-top:12px"></div>
+        <label class="field" style="margin:16px 0 0"><b>Online on</b><select id="statusDevice" onchange="state.settings.status.device = this.value"></select><small>The device icon next to the bot's status dot. Restart the bot after changing it.</small></label>
       </div>
       <div class="card">
         <h2>Bio</h2>
@@ -1037,6 +1038,8 @@ async function renderAppOptions() {
     + `<button class="btn" style="margin-top:12px" onclick="khutApp.openData()">Open data folder</button>`;
 }
 
+const DEVICES = { default: 'Nothing (plain dot)', desktop: 'Computer', mobile: 'Phone', console: 'Console (Xbox / PlayStation)', vr: 'VR headset' };
+
 const STATUS = { None: 'No status', Custom: 'Custom', Playing: 'Playing', Listening: 'Listening to', Watching: 'Watching', Competing: 'Competing in' };
 
 function statusPreview() {
@@ -1055,6 +1058,7 @@ function renderStatus() {
   setBio(state.settings.status.bio);
   $('statusType').innerHTML = Object.entries(STATUS).map(([key, name]) => `<option value="${key}" ${key === state.settings.status.type ? 'selected' : ''}>${name}</option>`).join('');
   $('statusText').value = state.settings.status.text;
+  $('statusDevice').innerHTML = Object.entries(DEVICES).map(([key, name]) => `<option value="${key}" ${key === state.settings.status.device ? 'selected' : ''}>${name}</option>`).join('');
   statusPreview();
 }
 

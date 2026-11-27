@@ -1,5 +1,6 @@
 process.loadEnvFile();
 const { Client, GatewayIntentBits, Events, MessageFlags, ActivityType } = require('discord.js');
+const { SimpleShardingStrategy } = require('@discordjs/ws');
 const commands = require('./commands');
 const lfg = require('./commands/lfg');
 const tracker = require('./tracker');
@@ -15,8 +16,21 @@ const { syncEmojis } = require('./assets');
 process.on('unhandledRejection', err => log.error('Unhandled promise rejection:', err));
 process.on('uncaughtException', err => log.error('Uncaught exception:', err));
 
+const DEVICES = {
+  desktop: { os: 'Windows', browser: 'Discord Client', device: '' },
+  mobile: { os: 'Android', browser: 'Discord Android', device: '' },
+  console: { os: 'Xbox', browser: 'Discord Embedded', device: '' },
+  vr: { os: 'Android', browser: 'Discord VR', device: '' }
+};
+
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildPresences]
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildPresences],
+  ws: {
+    buildStrategy: manager => {
+      if (DEVICES[settings.status.device]) manager.options.identifyProperties = DEVICES[settings.status.device];
+      return new SimpleShardingStrategy(manager);
+    }
+  }
 });
 
 const buttons = {
