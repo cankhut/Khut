@@ -17,9 +17,7 @@ process.on('unhandledRejection', err => log.error('Unhandled promise rejection:'
 process.on('uncaughtException', err => log.error('Uncaught exception:', err));
 
 const DEVICES = {
-  desktop: { os: 'Windows', browser: 'Discord Client', device: '' },
   mobile: { os: 'Android', browser: 'Discord Android', device: '' },
-  console: { os: 'Xbox', browser: 'Discord Embedded', device: '' },
   vr: { os: 'Android', browser: 'Discord VR', device: '' }
 };
 
